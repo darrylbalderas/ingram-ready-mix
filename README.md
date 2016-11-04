@@ -18,7 +18,8 @@ Darryl Balderas ( Computer Engineer )
 
 sudo apt-get install python-dev python-rpi.gpio
 
-#how to install Xbee libraries for Raspberry Pi 
+#how to install Xbee libraries for Raspberry Pi
+run this command in the terminal ----> sudo apt-get install python-serial
 website https://pypi.python.org/pypi/XBee
 run this command in the termial ----> python setup.py install
 put this command in the terminal to test xbee  ----> python setup.py test
