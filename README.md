@@ -12,3 +12,13 @@ Michael Rodriguez ( Project Manager and Computer Engineer )
 Alison Chan ( Computer Engineer )
 
 Darryl Balderas ( Computer Engineer )
+
+
+#how to install GPIO libraries for Raspberry Pi 
+
+sudo apt-get install python-dev python-rpi.gpio
+
+#how to install Xbee libraries for Raspberry Pi 
+website https://pypi.python.org/pypi/XBee
+run this command in the termial ----> python setup.py install
+put this command in the terminal to test xbee  ----> python setup.py test
