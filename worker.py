@@ -2,6 +2,7 @@ import sys
 import os 
 import alarmSystem 
 import Buzzer
+import math 
 
 class Worker:
   
@@ -10,7 +11,7 @@ class Worker:
   
   def __init__(self, alarmSystem):
     self.alarmsystem = alarmSystem
-  
+    
   def startAlarmSystem(self, gpioPins):
     print "Function Not Done"
     
@@ -19,8 +20,4 @@ class Worker:
     
   def ResetSystem(self, gpioPins):
     print "Function Not Done"
-    
-    
-    
-    
-print "hello"
+  
