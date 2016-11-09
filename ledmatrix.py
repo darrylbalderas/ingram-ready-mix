@@ -12,9 +12,11 @@
 # After completing the steps this is a program that will test the functionality of the raspberry pi 
 
 from sense_hat import SenseHat
+import xbee
 import os
 import time
 import sys 
+import math
 
 
 sense = SenseHat()
