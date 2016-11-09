@@ -23,3 +23,9 @@ run this command in the terminal ----> sudo apt-get install python-serial
 website https://pypi.python.org/pypi/XBee
 run this command in the termial ----> python setup.py install
 put this command in the terminal to test xbee  ----> python setup.py test
+
+#how to get this repository to your computer 
+
+git clone <this should be located under the clone or download green button >  in a directory in your computer 
+
+whenever there is updates to someone branch or use this command: git pull <branch name>
