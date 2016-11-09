@@ -5,8 +5,6 @@ import xbee
 import time 
 
 class XBee:
-  
-  
   def __init__(self, serialConnection, xbee_id, rainfall_xbee):
     self.connection = serialConnection
     self.id = xbee_id
@@ -29,10 +27,4 @@ class XBee:
   
   def resetUsbConnection():
     print "Function Not Done"
-
     
-
-
-
-print "hello"
-
