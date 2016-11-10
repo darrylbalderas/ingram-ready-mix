@@ -27,4 +27,4 @@ sense.clear()
 #sense.set_pixels(pixels)
 sense.show_message("Hello world!")
 
-print "hello"
+print "1"
