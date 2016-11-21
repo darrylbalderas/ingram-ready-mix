@@ -9,5 +9,3 @@ sense.clear()
 
 #sense.set_pixels(pixels)
 sense.show_message("Hello world!")
-
-print "1"
