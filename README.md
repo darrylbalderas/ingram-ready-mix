@@ -5,11 +5,11 @@ Developing a Rainfall Alarm system that will alert the user when there is a cert
 
 Equipment used
 -----------------
-xbee 
-Sense Hat
-Raspberry Pi 3B
-piezo buzzer
-LCD screen
+* xbee 
+* Sense Hat
+* Raspberry Pi 3B
+* piezo buzzer
+* LCD screen
 
 #Python Style Guide ( PEP 8)
 * Our code will be update and following this programming style:
