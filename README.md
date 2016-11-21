@@ -28,7 +28,8 @@ sudo pip install xbee
 
 #How to get this repository to your computer 
 
-git clone <this should be located under the clone or download green button >  in a desired directory in your computer 
+git clone [should be located under the clone or download green button ]
+* this should be cloned in a desired directory in your computer 
 
 #How to get the updates from your team member 
 git pull <branch name>
