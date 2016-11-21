@@ -48,5 +48,5 @@ Equipment used
 * We will be using the api from this website 
 - http://openweathermap.org/
 
-#Amazon Implementation 
+#Amazon Alexa Implementation 
 * website: https://developer.amazon.com/public/solutions/alexa/alexa-voice-service/content/avs-api-overview
