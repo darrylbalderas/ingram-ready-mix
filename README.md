@@ -12,38 +12,38 @@ piezo buzzer
 LCD screen
 
 #Python Style Guide ( PEP 8)
-https://www.python.org/dev/peps/pep-0008/
-Our code will be update and following this programming style:
-Libraries being used can be found under the python website
-https://www.python.org/
+* Our code will be update and following this programming style:
+- https://www.python.org/dev/peps/pep-0008/
+* Libraries being used can be found under the python website
+- https://www.python.org/
 
 
 #How to install GPIO libraries for Raspberry Pi 
-sudo apt-get install python-dev python-rpi.gpio
+* sudo apt-get install python-dev python-rpi.gpio
 
 #How to install Xbee module for Raspberry Pi
-We will be using this python module from provide from this github account:
-https://github.com/nioinnovation/python-xbee
-Commands:
-sudo apt-get install python-serial
-sudo pip install xbee
+* We will be using this python module from provide from this github account:
+- https://github.com/nioinnovation/python-xbee
+* Commands:
+- sudo apt-get install python-serial
+- sudo pip install xbee
 
 #How to get this repository to your computer 
-git clone [should be located under the clone or download green button]
 - this should be cloned in a desired directory in your computer 
+* git clone [should be located under the clone or download green button]
 
 #How to get the updates from your team member 
-git pull [branch name]
+* git pull [branch name]
 
 #How to get the SenseHat module
-sudo apt-get update 
-sudo apt-get upgrade
-sudo apt-get install sense-hat
-sudo pip3 install pillow
-sudo reboot 
+* sudo apt-get update 
+* sudo apt-get upgrade
+* sudo apt-get install sense-hat
+* sudo pip3 install pillow
+* sudo reboot 
 
 #Weather information obtain for San Marcos 
-We will be using this python module from provide from this github account:
-https://github.com/csparpa/pyowm
-We will be using the api from this website 
-http://openweathermap.org/
+* We will be using this python module from provide from this github account:
+- https://github.com/csparpa/pyowm
+* We will be using the api from this website 
+- http://openweathermap.org/
