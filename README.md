@@ -47,3 +47,6 @@ Equipment used
 - https://github.com/csparpa/pyowm
 * We will be using the api from this website 
 - http://openweathermap.org/
+
+#Amazon Implementation 
+* website: https://developer.amazon.com/public/solutions/alexa/alexa-voice-service/content/avs-api-overview
