@@ -50,3 +50,6 @@ Equipment used
 
 #Amazon Alexa Implementation 
 * website: https://developer.amazon.com/public/solutions/alexa/alexa-voice-service/content/avs-api-overview
+
+# Possible sketching tool for our case
+* http://www.sketchup.com/
