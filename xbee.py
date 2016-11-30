@@ -2,34 +2,31 @@ import serial
 import glob
 import sys
 import requests
+from xbee import XBee
 
 system_name = sys.platform
-baud_Rate = 9600
 
-class XBee:
-  def __init__(self, baudRate, xbee_id, rainfall_xbee):
-    self.connection = serialConnection
-    self.id = xbee_id
-    self.rainfallXbee = rainfall_xbee
+class Transmitter:
+  def __init__(self, baudRate, xbee_id):
     self.port_Number = self.xbee_Usb_Port()
-    
+    self.baudRate = baudRate
+    self.connection = serial.Serial(self.port_Number, baud_Rate, timeout=0.5)
+    self.id = xbee_id
+    self.xb = XBee(connection)
+
   def stopUsbConnection(self):
-    print "Function Not Done"
+    self.connection.close()
     
-  def resetUsbConnection():
-    print "Function Not Done"
-    
-  def showUsbData():
-    print "Function Not Done"
+  def resetUsbConnection(self):
+    self.connection.close()
+    self.connection = serial(self.port_Number,self.baudRate, timeout =0.5)
+
+  def readXbeeData(self):
+    self.xb.wait_read_frame()
     
   def establishXbeeConnection():
     print "Function Not Done"
     
-  def stopXbeeConnection():
-    print "Function Not Done"
-  
-  def resetUsbConnection():
-    print "Function Not Done"
     
 
   def xbee_Usb_Port():
@@ -44,7 +41,7 @@ class XBee:
               pass
       return result[0]
 
-xbee_Bravo = serial.Serial(port_Name, baud_Rate, timeout=0.5)
+
 
 
 
