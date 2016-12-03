@@ -1,6 +1,7 @@
 import serial
 import glob
 import sys
+from time import sleep 
 import requests
 from xbee import XBee
 
@@ -10,7 +11,7 @@ class Transmitter:
     self.port_Number = self.xbee_Usb_Port()
     self.baudRate = baudRate
     self.connection = serial.Serial(self.port_Number, baudRate)
-    self.xb = XBee(connection)
+    self.xb = XBee(self.connection)
     self.dest_id = dest_id
 
   def stopUsbConnection(self):
@@ -21,14 +22,18 @@ class Transmitter:
     self.connection = serial(self.port_Number,self.baudRate)
 
   def sendXbeeData(self,command):
-    self.xb.send('at',frame_id = self.dest_id, command = command)
+    self.xb.at(frame_id = self.dest_id, command = command)
 
   def readXbeeData(self):
-    self.xb.wait_read_frame()
+    return self.xb.wait_read_frame()
 
     
   def xbee_Usb_Port(self):
-      ports = glob.glob('/dev/tty[A-Za-z]*')
+      if sys.platform.startswith('darwin'):
+        ports = glob.glob('/dev/tty.usb*')
+      else:
+        ports = glob.glob('/dev/tty[A-Za-z]*')
+
       result = []
       for port in ports:
           try:
@@ -37,13 +42,16 @@ class Transmitter:
               result.append(port)
           except( OSError, serial.SerialException):
               pass
-      print result
-      
+      return result[0]
 
 
 def message_received(data):
   print data
 
 xb = Transmitter(9600,'A')
+
+xb.sendXbeeData('ID')
+sleep(1)
+print xb.readXbeeData()
 
 
