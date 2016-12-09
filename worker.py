@@ -1,24 +1,25 @@
 import sys
 import os 
-import alarmSystem 
 import time 
-import Buzzer
+import buzzer
 import math 
+import transmitter 
+import ledmatrix
 
 class Worker:
   
-  name = "Ingram Employee"
   def __init__(self, alarmSystem,buzzer):
     self.alarmsystem = alarmSystem
     self.start_time = 0
     self.end_time = 0
     self.buzzer = buzzer
+    self.name = "Ingram Worker" 
    
   def start_AlarmSystem(self, gpioPins):
     print "Function Not Done"
     
   def stop_AlarmSystem(self, gpioPins):
-    print "Function Not Done
+    print "Function Not Done"
     
   def sample_collected(self, gpioPins):
     print "Function Not Done"
