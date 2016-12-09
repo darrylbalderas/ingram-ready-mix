@@ -4,7 +4,6 @@ import time
 import math 
 from RPi import GPIO
 
-
 class Buzzer:
   
   def __init__(self,gpioPin, delay, pause,frequency):

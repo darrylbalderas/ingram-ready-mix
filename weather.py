@@ -9,13 +9,13 @@ san_marcos_id = 4726491
 
 class Weather:
 
-	def __init__(self, city_id):
-		self.owm = pyowm.OWM(API_key)
+    def __init__(self, city_id):
+    	self.owm = pyowm.OWM(API_key)
         self.observations = self.owm.weather_at_id(city_id)
         self.weather = self.owm.get_weather()
-    
+
     def get_rain(self):
-    	return self.weather.get_rain()
+        return self.weather.get_rain()
 
     def get_cloudCoverage(self):
     	return self.weather.get_clouds
