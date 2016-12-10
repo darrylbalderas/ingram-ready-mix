@@ -6,34 +6,41 @@ from RPi import GPIO
 
 class Buzzer:
   
-  def __init__(self,gpioPin, delay, pause,frequency):
-    self.buzzerDelay = delay
-    self.pauseTime = pause
-    self.gpioPin = gpioPin
-    self.frequency = frequency 
+  def __init__(self, gpio_pin):
+    self.__buzzer_pin = gpio_pin
+    self.__frequencies = [261, 294, 329, 349, 392, 440, 493, 423]
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(self.__buzzer_pin, GPIO.OUT)
     
-  def stopBuzzer(self):
-    print "Function Not Done"
     
-  def startBuzzer(self):
-    print "Function Not Done"
+  def stop_buzzer(self):
+    GPIO.output(self.__buzzer_pin,False)
     
-  def getFrequency(self):
-    return self.frequency
-  
-  def setFrequency(self,newFrequency):
-    self.frequency = newFrequency 
     
-  def getBuzzerDelay(self):
-    return self.buzzerDelay
+  def start_buzzer(self):
+    GPIO.output(self.__buzzer_pin,True)
+    
+    
+  def get_frequencies(self):
+    return self.__frequencies
   
-  def setBuzzerDelay(self, newBuzzerDelay):
-    self.buzzerDelay = newBuzzerDelay
+  def set_frequencies(self,new_frequency):
+    self.__frequencies = new_frequency 
+    
+def main():
+   
+  GPIO.setmode(GPIO.BOARD)
+  GPIO.setup(12, GPIO.OUT)
+  p = GPIO.PWM(12, 100)  
+  p.start(100)
   
-  def getPauseTime(self):
-    return self.pauseTime
-  
-  def setPauseTime(self,newPauseTime):
-    self.pauseTime = newPauseTime
+
+
+
+
+if __name__ == '__main__':
+  main()
+
+    
     
     
