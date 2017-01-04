@@ -39,7 +39,7 @@ def xbee_Usb_Port():
 def main():
   usb_list = xbee_Usb_Port()
   # Create API object
-  xbee = Transmitter(9600,usb_list[0])
+  xbee = Transmitter(9600,usb_list[1])
 
 
 if __name__ == '__main__':
