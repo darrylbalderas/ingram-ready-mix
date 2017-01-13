@@ -53,6 +53,7 @@ def xbee_Usb_Port():
 
 
 
+
 def main():
   bravo_SHSL = b'\x00\x13\xA2\x00\x41\x03\xF0\xFF'
   default_coordinator = b'\x00\x00\x00\x00\x00\x00\x00\x00'
@@ -68,14 +69,21 @@ def main():
   usb_list = xbee_Usb_Port()
 
   xbee = Transmitter(9600,usb_list[0],bravo_SHSL)
-  
-  xbee.xbee.send('tx',dest_addr_long = default_broadcaster, dest_addr=broadcaster, data=sending_data)
-  
-  data = xbee.receive_data()
-  if data['id'] == 'tx_status':
-    print(data['deliver_status'])
-  elif data['id'] == 'rx':
-    print(data['rf_data'])
+  flag = False
+  while not flag:
+    try:
+      xbee.xbee.send('tx',dest_addr_long = default_broadcaster, dest_addr=broadcaster, data=sending_data)
+      data = xbee.receive_data()    
+      # print(data)
+      if data['deliver_status'] != b'"':
+        flag = True
+        print("Data has been received ")
+      else:
+        print("Data has not been received")
+
+    except KeyboardInterrupt:
+      break
+
   xbee.stopZigBee()
 
 

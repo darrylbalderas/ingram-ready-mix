@@ -63,21 +63,24 @@ def main():
 
   usb_list = xbee_Usb_Port()
   charlie_xbee = Receiver(9600,usb_list[0],charlie_SHSL)
-  charlie_xbee.xbee.send('tx',dest_addr_long = default_coordinator,
-                         dest_addr = coordinator, data = b'\x11')
-  data = charlie_xbee.receive_data()
+  # charlie_xbee.xbee.send('tx',dest_addr_long = default_coordinator,
+  #                        dest_addr = coordinator, data = b'\x11')
+  # data = charlie_xbee.receive_data()
 
   flag = False
 
   while not flag:
-    data = charlie_xbee.receive_data()
-    if data['id'] == 'tx_status':
-      charlie_xbee.xbee.send('tx', dest_addr_long = default_coordinator,dest_addr = coordinator, data =sending_data)
+    try:
       data = charlie_xbee.receive_data()
-      print(data['deliver_status'])
-    elif data['id'] == 'rx':
-      print(data['rf_data'])
-      flag = True
+      if data['deliver_status'] != b'"':
+        flag = True
+        print("Data has been received")
+      else:
+        print("Data has not been received")
+    except KeyboardInterrupt:
+      break
+
+
   charlie_xbee.stopZigBee()
     
 
