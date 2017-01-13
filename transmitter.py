@@ -1,41 +1,40 @@
 import serial
 import glob
 import sys
-from time import sleep 
+from xbee.base import XBeeBase
+from xbee.frame import APIFrame
 from xbee import ZigBee
 # from time import sleep
 
 class Transmitter:
-  def __init__(self, baud_rate,port_num,SHSL):
+  def __init__(self, baud_rate, port_path, SHSL):
     self.SHSL = SHSL
-    self.port_number = port_num
+    self.port_path = port_path
     self.baud_rate = baud_rate
-    self.connection = serial.Serial(self.port_number, self.baud_rate)
-    self.xb = ZigBee(self.connection)
+    self.ser = serial.Serial(self.port_path, self.baud_rate)
+    self.xbee = ZigBee(self.ser)
 
   def stopZigBee(self):
-    self.xb.halt()
-    self.connection.close()
+    self.xbee.halt()
+    self.ser.close()
     
   def resetZigBee(self):
-    self.connection.close()
-    self.connection = serial(self.port_number,self.baud_rate)
+    self.ser.close()
+    self.ser = serial(self.port_number,self.baud_rate)
 
-  def send_data(self,frame_id,dest_addr_long,dest_addr,data):
-    self.xb.send('tx',frame_id=frame_id,
-                 dest_addr_long = dest_addr_long,
-                 dest_addr=dest_addr,
-                 data = data)
+  def send_data(dest_addr_long, dest_addr, data):
+    self.xbee.send('tx',dest_addr_long = dest_addr_long, dest_addr=dest_addr, data=data)
 
   def receive_data(self):
-    message = self.xb.wait_read_frame()
-    print(message)
+    message = self.xbee.wait_read_frame()
+    return message
 
   def get_SHSL(self):
     return self.SHSL
 
   def set_SHSL(self,SHSL):
     self.SHSL = SHSL
+
 
 def xbee_Usb_Port():
   if sys.platform.startswith('darwin'):
@@ -53,20 +52,30 @@ def xbee_Usb_Port():
   return result
 
 
+
 def main():
   bravo_SHSL = b'\x00\x13\xA2\x00\x41\x03\xF0\xFF'
+  default_coordinator = b'\x00\x00\x00\x00\x00\x00\x00\x00'
 
   charlie_SHSL = b'\x00\x13\xA2\x00\x41\x04\x96\x6E'
+  default_broadcaster = b'\x00\x00\x00\x00\x00\x00\xFF\xFF'
 
-  broadcaster = b'\xFF\xFE'
-  coordinator = b'\x00\x00'
+  broadcaster = b'\xff\xff'
+  sending_data = b'\x11'
+  # coordinator = b'\x00\x00'
+
 
   usb_list = xbee_Usb_Port()
+
   xbee = Transmitter(9600,usb_list[0],bravo_SHSL)
-  xbee.send_data(frame_id = b'\x01', 
-            dest_addr_long = charlie_SHSL,
-            dest_addr = broadcaster, data= b'\x11')
-  xbee.receive_data()
+  
+  xbee.xbee.send('tx',dest_addr_long = default_broadcaster, dest_addr=broadcaster, data=sending_data)
+  
+  data = xbee.receive_data()
+  if data['id'] == 'tx_status':
+    print(data['deliver_status'])
+  elif data['id'] == 'rx':
+    print(data['rf_data'])
   xbee.stopZigBee()
 
 
