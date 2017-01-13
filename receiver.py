@@ -3,35 +3,34 @@ import glob
 import sys
 from time import sleep 
 from xbee import ZigBee
-import pprint 
 
 # from time import sleep
 
 class Receiver:
-  def __init__(self, baud_rate,port_num,SHSL):
+  def __init__(self, baud_rate,port_path,SHSL):
     self.SHSL = SHSL
-    self.port_number = port_num
+    self.port_path = port_path
     self.baud_rate = baud_rate
-    self.connection = serial.Serial(self.port_number, baud_rate, timeout = 1)
-    self.xb = ZigBee(self.connection)
+    self.ser = serial.Serial(self.port_path, baud_rate, timeout = 1)
+    self.xbee = ZigBee(self.ser)
 
   def stopZigBee(self):
-    self.xb.halt()
-    self.connection.close()
+    self.xbee.halt()
+    self.ser.close()
     
   def resetZigBee(self):
-    self.connection.close()
-    self.connection = serial(self.port_number,self.baud_rate)
+    self.ser.close()
+    self.ser = serial(self.port_path,self.baud_rate)
  
   def send_data(self,frame_id,dest_addr_long,dest_addr,data):
-    self.xb.send('tx',frame_id=frame_id,
+    self.xbee.send('tx',frame_id=frame_id,
                  dest_addr_long = dest_addr_long,
                  dest_addr=dest_addr,
                  data = data)
 
   def receive_data(self):
-    message = self.xb.wait_read_frame()
-    print(message)
+    message = self.xbee.wait_read_frame()
+    return message
 
   def get_SHSL(self):
     return self.SHSL
@@ -57,20 +56,30 @@ def xbee_Usb_Port():
 def main():
 
   charlie_SHSL = b'\x00\x13\xA2\x00\x41\x04\x96\x6E'
-
-  broadcaster = b'\xFF\xFE'
-
+  default_coordinator = b'\x00\x00\x00\x00\x00\x00\x00\x00'
   bravo_SHSL = b'\x00\x13\xA2\x00\x41\x03\xF0\xFF'
   coordinator = b'\x00\x00'
+  sending_data = b'\x11'
 
   usb_list = xbee_Usb_Port()
-  charlie_xbee = Receiver(9600,usb_list.pop(),charlie_SHSL)
-  charlie_xbee.send_data(frame_id = b'\x01', 
-                         dest_addr_long = bravo_SHSL,
+  charlie_xbee = Receiver(9600,usb_list[0],charlie_SHSL)
+  charlie_xbee.xbee.send('tx',dest_addr_long = default_coordinator,
                          dest_addr = coordinator, data = b'\x11')
+  data = charlie_xbee.receive_data()
 
-  charlie_xbee.receive_data()
+  flag = False
+
+  while not flag:
+    data = charlie_xbee.receive_data()
+    if data['id'] == 'tx_status':
+      charlie_xbee.xbee.send('tx', dest_addr_long = default_coordinator,dest_addr = coordinator, data =sending_data)
+      data = charlie_xbee.receive_data()
+      print(data['deliver_status'])
+    elif data['id'] == 'rx':
+      print(data['rf_data'])
+      flag = True
   charlie_xbee.stopZigBee()
+    
 
 if __name__ == '__main__':
   main()
