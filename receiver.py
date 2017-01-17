@@ -3,30 +3,27 @@ import glob
 import sys
 from time import sleep 
 from xbee import ZigBee
-
-# from time import sleep
+from xbee import XBee 
 
 class Receiver:
   def __init__(self, baud_rate,port_path,SHSL):
     self.SHSL = SHSL
     self.port_path = port_path
     self.baud_rate = baud_rate
-    self.ser = serial.Serial(self.port_path, baud_rate, timeout = 1)
-    self.xbee = ZigBee(self.ser)
+    self.ser = serial.Serial(self.port_path, baud_rate)
+    self.xbee = XBee(self.ser, escaped=True)
 
-  def stopZigBee(self):
+  def stopXBee(self):
     self.xbee.halt()
     self.ser.close()
     
-  def resetZigBee(self):
+  def resetXBee(self):
+    self.xbee.halt()
     self.ser.close()
     self.ser = serial(self.port_path,self.baud_rate)
  
-  def send_data(self,frame_id,dest_addr_long,dest_addr,data):
-    self.xbee.send('tx',frame_id=frame_id,
-                 dest_addr_long = dest_addr_long,
-                 dest_addr=dest_addr,
-                 data = data)
+  def send_data(self,dest_addr_long, data):
+    self.xbee.tx_long_addr( dest_addr_long = dest_addr_long, data = data)
 
   def receive_data(self):
     message = self.xbee.wait_read_frame()
@@ -37,6 +34,7 @@ class Receiver:
 
   def set_SHSL(self,SHSL):
     self.SHSL = SHSL
+
 
 def xbee_Usb_Port():
   if sys.platform.startswith('darwin'):
@@ -53,18 +51,34 @@ def xbee_Usb_Port():
           pass
   return result
 
-def main():
+def toHex(s):
+    lst = []
+    for ch in s:
+        hv = hex(ord(ch)).replace('0x', '')
+        if len(hv) == 1:
+            hv = '0'+hv
+        hv = '0x' + hv
+        lst.append(hv)
 
+def decodeReceivedFrame(data):
+            source_addr_long = toHex(data['source_addr_long'])
+            source_addr = toHex(data['source_addr'])
+            id = data['id']
+            samples = data['samples']
+            options = toHex(data['options'])
+            return [source_addr_long, source_addr, id, samples]
+
+def main():
   charlie_SHSL = b'\x00\x13\xA2\x00\x41\x04\x96\x6E'
+
   default_coordinator = b'\x00\x00\x00\x00\x00\x00\x00\x00'
+  
   bravo_SHSL = b'\x00\x13\xA2\x00\x41\x03\xF0\xFF'
-  coordinator = b'\x00\x00'
-  sending_data = b'\x11'
 
   usb_list = xbee_Usb_Port()
   charlie_xbee = Receiver(9600,usb_list[0],charlie_SHSL)
-  # charlie_xbee.xbee.send('tx',dest_addr_long = default_coordinator,
-  #                        dest_addr = coordinator, data = b'\x11')
+
+  # charlie_xbee.xbee.send('tx',dest_addr_long = default_coordinator, data = b'\x11')
   # data = charlie_xbee.receive_data()
 
   flag = False
@@ -81,7 +95,7 @@ def main():
       break
 
 
-  charlie_xbee.stopZigBee()
+  charlie_xbee.stopXBee()
     
 
 if __name__ == '__main__':
