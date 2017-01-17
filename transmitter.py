@@ -1,10 +1,10 @@
 import serial
 import glob
 import sys
-from xbee.base import XBeeBase
-from xbee.frame import APIFrame
-from xbee import ZigBee
 from xbee import XBee 
+# from xbee.base import XBeeBase
+# from xbee.frame import APIFrame
+# from xbee import ZigBee
 # from time import sleep
 
 class Transmitter:
@@ -37,10 +37,11 @@ class Transmitter:
   def set_SHSL(self,SHSL):
     self.SHSL = SHSL
 
-def toHex(s):
+
+def toHex(sample):
     lst = []
-    for ch in s:
-        hv = hex(ord(ch)).replace('0x', '')
+    for character in sample:
+        hv = hex(ord(character)).replace('0x', '')
         if len(hv) == 1:
             hv = '0'+hv
         hv = '0x' + hv
@@ -49,57 +50,56 @@ def toHex(s):
 def decodeReceivedFrame(data):
             source_addr_long = toHex(data['source_addr_long'])
             source_addr = toHex(data['source_addr'])
-            id = data['id']
-            samples = data['samples']
-            options = toHex(data['options'])
-            return [source_addr_long, source_addr, id, samples]
+            xBee_id = toHex(data['id'])
+            samples = toHex(data['samples'])
+            return [source_addr_long, source_addr, xBee_id, samples]
+
 
 def xbee_Usb_Port():
+  result = []
   if sys.platform.startswith('darwin'):
     ports = glob.glob('/dev/tty.usb*')
-  else:
+  elif sys.platform.startswith('linux'):
     ports = glob.glob('/dev/tty[A-Za-z]*')
-  result = []
   for port in ports:
       try:
-          s = serial.Serial(port)
-          s.close()
+          ser = serial.Serial(port)
+          ser.close()
           result.append(port)
       except( OSError, serial.SerialException):
           pass
+
   return result
 
 
 def main():
   bravo_SHSL = b'\x00\x13\xA2\x00\x41\x03\xF0\xFF'
-  default_coordinator = b'\x00\x00\x00\x00\x00\x00\x00\x00'
-
-  charlie_SHSL = b'\x00\x13\xA2\x00\x41\x04\x96\x6E'
+  #charlie_SHSL = b'\x00\x13\xA2\x00\x41\x04\x96\x6E'
   default_broadcaster = b'\x00\x00\x00\x00\x00\x00\xFF\xFF'
-
   sending_data = b'\x11'
-  # coordinator = b'\x00\x00'
-
 
   usb_list = xbee_Usb_Port()
 
-  xbee = Transmitter(9600,usb_list[0],bravo_SHSL)
+  bravo_xbee = Transmitter(9600,usb_list[0],bravo_SHSL)
+
   flag = False
+
   while not flag:
     try:
-      xbee.xbee.send('tx',dest_addr_long = default_broadcaster, data=sending_data)
-      data = xbee.receive_data()    
-      print(data)
+      bravo_xbee.send_data(dest_addr_long = default_broadcaster, data=sending_data)
+      #sleep(0.1)
+      data = bravo_xbee.receive_data()    
+
       if data['deliver_status'] != b'"':
-        flag = True
         print("Data has been received ")
+        flag = True
       else:
         print("Data has not been received")
 
     except KeyboardInterrupt:
       break
 
-  xbee.stopXBee()
+  bravo_xbee.stopXBee()
 
 
 if __name__ == '__main__':
