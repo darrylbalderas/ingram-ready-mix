@@ -1,0 +1,6 @@
+References: 
+https://learn.adafruit.com/piezo-ring-tones-with-raspberry-pi/assemble
+
+To connect the raspberry pi with the piezo:
+1) Connect the red wire of piezo to GPIO pin 22
+2) Connect the black wire of piezo to GPIO any ground
