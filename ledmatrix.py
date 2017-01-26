@@ -1,8 +1,5 @@
 from sense_hat import SenseHat
-import os
 from time import time,sleep
-import math
-import sys
 
 class LedMatrix:
   def __init__(self):
@@ -70,16 +67,16 @@ class LedMatrix:
     else:
       return 1
 
-  def get_row_duration():
+  def get_row_duration(self):
     return self.__row_time
 
-  def set_row_duration(new_row_duration):
-    self.__row_time = new_row_time
+  def set_row_duration(self,new_row_duration):
+    self.__row_time = new_row_duration
 
-  def get_max_time():
+  def get_max_time(self):
     return self.__max_time
 
-  def set_max_time():
+  def set_max_time(self):
     return self.__max_time
     
   def show_collect_message(self):

@@ -67,6 +67,7 @@ class Receiver:
         print('not received')
         self.write('no')
         message.self.readline()
+        print(message)
 
     return message 
 
