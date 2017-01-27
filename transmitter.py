@@ -33,7 +33,6 @@ class Transmitter:
 
   def send_message(self,message):
     self.ser.write(message)
-    sleep(1)
 
   def check_message(code,message):
 
