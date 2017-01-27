@@ -32,25 +32,20 @@ def lcd_serial_port():
 	port =  glob.glob('/dev/tty.usbmodem*')
 	return port[0]
 
-
-
 def main():
-	xbee_port = xbee_Usb_Port()
-	lcd_port = lcd_serial_port()
-	lcd = LCD(lcd_port,9600)
-	xbee = Transmitter(9600,xbee_port,b"\x00\x13\xA2\x00\x41\x03\xF0\xFF")
-	messgae = " "
-	flag = False
-	print("Start process")
-	while not flag:
-		message = xbee.receive_message()
-		if message != "":
-			lcd.send_command("CLEAR")
-			sleep(1)
-			lcd.send_message(message)
-
-
-
+  xbee_port = xbee_Usb_Port()
+  lcd_port = lcd_serial_port()
+  lcd = LCD(lcd_port,9600)
+  xbee = Transmitter(9600,xbee_port,b"\x00\x13\xA2\x00\x41\x03\xF0\xFF")
+  messgae = " "
+  flag = False
+  print("Start process")
+  while not flag:
+    message = xbee.receive_message()
+    print("1 :  " + message)
+    if message != "": 
+    	lcd.send_message(message)
+      xbee.send_message("got it")
 
 
 if __name__ == "__main__":

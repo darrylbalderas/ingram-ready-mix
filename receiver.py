@@ -9,7 +9,6 @@ from time import sleep
 This Receiver class will resemble our bravo xbee module.
 '''
 
-
 class Receiver:
   def __init__(self, baud_rate,port_path,xbee_SHSL, xbee_MY):
     self.SHSL = xbee_SHSL
@@ -149,39 +148,9 @@ def main():
 
   charlie_xbee = Receiver(9600,usb_list[0],charlie_SHSL,charlie_MY)
 
-  while 1:
-    charlie_xbee.receive_data('hello from receive')
-
-  # while True:
-  #   try:
-  #     print('f')
-  #     bytestoREad = charlie_xbee.ser.inWaiting()
-  #     x = charlie_xbee.ser.read(bytestoREad)
-  #   except:
-  #     pass
     
 
 
-  # charlie_xbee.xbee.send('tx',dest_addr_long = default_coordinator, data = b'\x11')
-  # data = charlie_xbee.receive_data()
-
-  # flag = False
-
-  # while not flag:
-  #   print('.')
-  #   try:
-  #     data = charlie_xbee.receive_data()
-  #     if data['rf_data'] != b'"':
-  #       print("Data has been received")
-  #       flag = True
-  #     else:
-  #       print("Data has not been received")
-
-  #   except KeyboardInterrupt:
-  #     break
-
-
-  # charlie_xbee.stopXBee()
     
 
 if __name__ == '__main__':

@@ -25,6 +25,7 @@ class LCD:
 
   def send_command(self,command):
     self.ser.write(self.commands[command])
+
   def send_message(self,message):
     self.ser.write(message)
 

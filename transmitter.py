@@ -15,8 +15,8 @@ class Transmitter:
     self.addr = xbee_addr
     self.port_path = port_path
     self.baud_rate = baud_rate
-    self.ser = serial.Serial(self.port_path, baud_rate, timeout=1, writeTimeout = 1)
-    sleep(1)  #this is to ensure that serial communication is initialize 
+    self.ser = serial.Serial(self.port_path, baud_rate, timeout=1)
+    sleep(3)  #this is to ensure that serial communication is initialize 
 
   def close_serial(self):
     '''
@@ -33,18 +33,16 @@ class Transmitter:
 
   def send_message(self,message):
     self.ser.write(message)
-    sleep(1)
-
-  def check_message(code,message):
-
-    return code == message
 
   def receive_message(self):
-
-    message = self.ser.readline()
+    message = self.ser.read()
      # sent message must have a newline character
     self.ser.flush()
     return message 
+
+  def check_connection():
+    return self.ser.isopen 
+
 
 
 
