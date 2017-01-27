@@ -33,6 +33,19 @@ class Transmitter:
 
   def send_message(self,message):
     self.ser.write(message)
+<<<<<<< HEAD
+||||||| merged common ancestors
+    sleep(1)
+
+  def check_message(code,message):
+
+    return code == message
+=======
+
+  def check_message(code,message):
+
+    return code == message
+>>>>>>> f20d123595b27cb80c96c418e8dd21efbe35f0d2
 
   def receive_message(self):
     message = self.ser.read()
