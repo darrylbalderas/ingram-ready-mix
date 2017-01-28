@@ -2,42 +2,32 @@ import os
 import sys
 import time 
 import math 
-from RPi import GPIO
+import RPi.GPIO as gpio
 
 class Buzzer:
   
-  def __init__(self, gpio_pin):
+  def __init__(self, gpio_pin, board_type):
     self.__buzzer_pin = gpio_pin
-    self.__frequencies = [261, 294, 329, 349, 392, 440, 493, 423]
-    GPIO.setmode(GPIO.BCM)
-    GPIO.setup(self.__buzzer_pin, GPIO.OUT)
+
+    if board_type.lower() == "bcm":
+      gpio.setmode(gpio.BCM)
+    elif board_type.lower() == "board":
+      gpio.setmode(gpio.BOARD)
+    gpio.setup(self.__buzzer_pin, gpio.OUT)
     
+  def stop(self):
+    gpio.output(self.__buzzer_pin,False)
     
-  def stop_buzzer(self):
-    GPIO.output(self.__buzzer_pin,False)
-    
-    
-  def start_buzzer(self):
-    GPIO.output(self.__buzzer_pin,True)
-    
-    
-  def get_frequencies(self):
-    return self.__frequencies
-  
-  def set_frequencies(self,new_frequency):
-    self.__frequencies = new_frequency 
-    
-def main():
-   
-  GPIO.setmode(GPIO.BOARD)
-  GPIO.setup(12, GPIO.OUT)
-  p = GPIO.PWM(12, 100)  
-  p.start(100)
+  def start(self):
+    gpio.output(self.__buzzer_pin,True)
+
+  def set_pin(self, gpio_pin):
+    self.__buzzer_pin = gpio_pin
+
+  def get_pin(self):
+    return self.__buzzer_pin
   
 
-if __name__ == '__main__':
-  main()
 
-    
     
     
