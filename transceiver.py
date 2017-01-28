@@ -50,7 +50,10 @@ class Transceiver:
   #   return message 
   def receive_message(self):
     if self.ser.isOpen():
-      message = self.ser.read(ser.inWaiting())
+      message = self.ser.read(self.ser.inWaiting())
+      return message
+    else:
+      message = ""
 
 
 
