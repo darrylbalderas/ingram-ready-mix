@@ -50,10 +50,20 @@ class Transceiver:
   #   return message 
   def receive_message(self):
     if self.ser.isOpen():
+<<<<<<< HEAD
       message = self.ser.read(self.ser.inWaiting())
       return message
     else:
       message = ""
+||||||| merged common ancestors
+      message = self.ser.read(ser.inWaiting())
+=======
+      message = self.ser.read()
+      self.ser.flush()
+      return message
+    else:
+      return ""
+>>>>>>> e7817aee0d07cbcce6129c279964178a68dd9610
 
 
 
