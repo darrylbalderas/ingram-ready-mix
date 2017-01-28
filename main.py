@@ -44,7 +44,7 @@ def main():
     message = xbee.receive_message()
     print("1 :  " + message)
     if message != "": 
-    	lcd.send_message(message)
+      lcd.send_message(message)
       xbee.send_message("got it")
 
 
