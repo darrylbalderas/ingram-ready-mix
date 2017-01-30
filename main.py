@@ -38,7 +38,6 @@ def main():
   while True:
     try:
       xbee.send_message("rain")
-      sleep(1)
     except KeyboardInterrupt:
       break
 

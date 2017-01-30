@@ -43,18 +43,16 @@ class Transceiver:
     # if not '\n' in message:
     #   message = message + '\n'
       self.ser.write(message)
-
-  # def receive_message(self):     
-  # # sent message must have a newline character
-  #   message = self.ser.readline()
-  #   return message 
+ 
   def receive_message(self):
+    message = ""
     if self.ser.isOpen():
       message = self.ser.read()
       self.ser.flush()
       return message
     else:
-      return ""
+      return message
+
 
 
 
