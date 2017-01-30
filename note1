@@ -36,4 +36,17 @@ Notes 1-31-2017
 
 * incorporate restart button. 
 
-* perform crc functionality for the message received. 
+* perform crc functionality for the message received.
+
+
+Notes 2-1-2017
+
+* Record Susan's Voice for reminder
+
+* implement a two minute reminder 
+
+* take into consideration the time difference for raspberryPi and normal time
+ 
+* include a check complete confirmation function 
+ 
+

@@ -7,6 +7,8 @@ from transceiver import Transceiver
 from lcd import LCD
 from ledmatrix import LedMatrix
 from time import time
+import datetime
+from calendar import monthrange
 
 buzzers = [4,17,22,5,6,13] ## wiring in beardboard
 complete = 21 
@@ -32,7 +34,7 @@ nocomm_message = "NoComm establish"
 def check_complete():
   return not gpio.input(complete)
 
-def check_missed():
+def check_miss():
   return not gpio.input(miss)
 
 def check_mute():
@@ -128,6 +130,9 @@ def invoke_system(led_matrix,color_array, colors,lcd):
       lcd.send_message(complete_message)
       complete_state(led_matrix,color_array)
       break
+
+    if check_mute():
+      stop_buzzer()
     
     current_time = time() - previous_time
     print_message(current_time,voltage,lcd)
@@ -135,10 +140,10 @@ def invoke_system(led_matrix,color_array, colors,lcd):
           led_matrix.change_color_row(invoke_color,colors[1], count_row)
           count_row += 1
 
-  if count_row >= 8:  ## change to a wait statement 
-    missed_state(led_matrix,color_array)
+  if count_row >= 8:  ## change to a wait statement
+    lcd.send_command("CLEAR")
     lcd.send_message(miss_message)
-    sleep(2)
+    missed_state(led_matrix,color_array)
     lcd.send_command("CLEAR")
     #change ledmatrix to green 
 
@@ -165,6 +170,8 @@ def missed_state(led_matrix, color_array):
   ## close logger
   ## calculate the time need for the rest of the day and sleep for that
   #amount of time
+  while not check_miss():
+    pass
 
 
 def restart_state():
@@ -172,35 +179,66 @@ def restart_state():
   pass
 
 
+  
 
-# def main():
-#   initalize_buzzers(buzzers)
-#   xbee_port = xbee_usb_port()
-#   lcd_port = lcd_serial_port()
-#   lcd = LCD(lcd_port,9600)
-#   bravo_xbee = Transceiver(9600,xbee_port,b"\x00\x13\xA2\x00\x41\x04\x96\x6E")
-#   led_matrix = LedMatrix()
-  
-#   color_images = led_matrix.get_color_images()
-#   color_info = led_matrix.get_colors()
-#   color_array = [color_images['green'], color_images['red'], color_images['yellow']]
-#   colors = [color_info['g'], color_info['r'], color_info['y']]
-#   led_matrix.change_color(color_array[0])
-#   while True:
-#     try:      
-#       message = bravo_xbee.receive_message()
-#       if message == "b":
-#         for i in range(3):
-#           bravo_xbee.send_message("a\n")
-#         invoke_system(led_matrix,color_array,colors,lcd)
+
+def main():
+   initalize_buzzers(buzzers)
+   xbee_port = xbee_usb_port()
+   lcd_port = lcd_serial_port()
+   lcd = LCD(lcd_port,9600)
+   bravo_xbee = Transceiver(9600,xbee_port,b"\x00\x13\xA2\x00\x41\x04\x96\x6E")
+   led_matrix = LedMatrix()
+    
+   color_images = led_matrix.get_color_images()
+   color_info = led_matrix.get_colors()
+   color_array = [color_images['green'], color_images['red'], color_images['yellow']]
+   colors = [color_info['g'], color_info['r'], color_info['y']]
+   led_matrix.change_color(color_array[0])
+   while True:
+     try:      
+       message = bravo_xbee.receive_message()
+       if message == "b":
+         for i in range(3):
+           bravo_xbee.send_message("a\n")
+         invoke_system(led_matrix,color_array,colors,lcd)
       
-#     except KeyboardInterrupt:
-#       lcd.send_command("CLEAR")
-#       led_matrix.clear_matrix()
-#       stop_buzzer()
-#       gpio.cleanup()
-#       break
+     except KeyboardInterrupt:
+       lcd.send_command("CLEAR")
+       led_matrix.clear_matrix()
+       stop_buzzer()
+       gpio.cleanup()
+       break
+   gpio.cleanup()
+
+def calculate_nextday():
+  time =  datetime.datetime.now()
+  hour_sec = (24 - time.hour) * 60 * 60
+  minute_sec = (60-time.minute) * 60
+  second_sec = (60-time.second)
+  total_sleep = hour_sec + minute_sec + second_sec
   
+  return total_sleep
+   
+def calculate_nextmonth():
+  #time object
+  time = datetime.datetime.now()
+  
+  #the values for the time object
+  hour_sec = (24-time.hour) *60 *60
+  minute_sec = (60 - time.minute) * 60
+  second_sec = (60-time.second)
+
+  #calculates the number
+  month_range = monthrange(time.year,time.month)
+  total_days = month_range[1]
+  
+  day_sec = (total_days - time.day) *24*60*60
+
+  total_sleep = day_sec + second_sec + minute_sec + hour_sec
+  
+  return total_sleep
+
 
 if __name__ == '__main__':
-  main()
+
