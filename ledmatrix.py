@@ -28,7 +28,6 @@ class LedMatrix:
 
     self.__max_time = 60*15
     
-##These are the different type of colors 
   def make_image(self,color):
       image = [] 
       for i in range(self.__row*self.__column):
@@ -82,40 +81,40 @@ class LedMatrix:
     return self.__max_time
 
   def show_message(self,message):
-    return self.__sense_hat.show_message(message,text_colour = [0,255,0])
+    return self.__sense_hat.show_message(message,text_colour = [255,255,255])
 ##  def show_collect_message(self):
 ##    self.__sense_hat.show_message('Sample collected')
 ##
 ##  def missed_sample(self):
 ##    self.__sense_hat.show_message('Missed Sample')
 
-##def test_case():
-##  visual_lights = LedMatrix()
-##  color_row = visual_lights.get_colors()['r']
-##  color_image = visual_lights.get_color_images()['green']
-##  visual_lights.change_Color(color_image)
-##  sleep(3)
-##  color_image = visual_lights.get_color_images()['yellow']
-##  visual_lights.change_Color(color_image)
-##
-##  row_duration  = 1.875*2
-##  count_row = 1
-##  max_time = 15*2
-##  previous_time = time()
-##  current_time = 0
-##  
-##  while current_time <= max_time:
-##      
-##    if visual_lights.check_reset():
-##      count_row = 1
-##      visual_lights.show_collect_message()
-##      break
-##    current_time = time() - previous_time
-##    if current_time >= row_duration*count_row:
-##          print current_time
-##          print row_duration*count_row
-##          color_image = visual_lights.change_color_row(color_image,color_row,count_row)
-##          count_row += 1
-##      
-##  visual_lights.missed_sample()
+def test_case():
+  visual_lights = LedMatrix()
+  color_row = visual_lights.get_colors()['r']
+  color_image = visual_lights.get_color_images()['green']
+  visual_lights.change_Color(color_image)
+  sleep(3)
+  color_image = visual_lights.get_color_images()['yellow']
+  visual_lights.change_Color(color_image)
+
+  row_duration  = 1.875*2
+  count_row = 1
+  max_time = 15*2
+  previous_time = time()
+  current_time = 0
+  
+  while current_time <= max_time:
+      
+    if visual_lights.check_reset():
+      count_row = 1
+      visual_lights.show_collect_message()
+      break
+    current_time = time() - previous_time
+    if current_time >= row_duration*count_row:
+          print current_time
+          print row_duration*count_row
+          color_image = visual_lights.change_color_row(color_image,color_row,count_row)
+          count_row += 1
+      
+  visual_lights.missed_sample()
 

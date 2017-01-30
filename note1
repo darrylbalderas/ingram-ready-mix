@@ -1,0 +1,26 @@
+Notes 1-26-2017
+
+sudo apt-get install python-dev python-rpi.gpio
+
+
+Notes 1-28-2017
+
+* split the lcd screen for showing  diagonally voltage and time 
+
+* how to grab the voltage from the raspberry pi 
+
+* how to create a flash program at start up 
+
+* how to set raspberry pi to lower power 
+
+* implement restart, complete, and missed functionality with sense hat 
+onboard joystick 
+
+* implement the buzzers 
+
+* pressing the missed button will be record as a missed sample 
+
+* implement log file for: 
+	* timestamp  data
+	* collected or missed 
+	* rain measurement

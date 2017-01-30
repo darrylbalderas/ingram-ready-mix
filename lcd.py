@@ -25,9 +25,8 @@ class LCD:
                     ,'SET_BACKLIGHT': b'\xFE\xD0'}
 
     if self.ser.isOpen():
-        self.ser.write(self.commands['AUTOSCROLL_ON'])
-        self.ser.write(self.commands['CLEAR'])
-
+      self.ser.write(self.commands['CLEAR'])
+      
   def send_command(self,command):
     if self.ser.isOpen():
         self.ser.write(self.commands[command])
