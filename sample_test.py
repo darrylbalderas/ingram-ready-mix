@@ -152,7 +152,7 @@ def main():
       message = bravo_xbee.receive_message()
       if message == "b":
         for i in range(10):
-          xbee.write("a")
+          bravo_xbee.send_message("a\n")
         lcd.send_command("CLEAR")
         sleep(0.5)
         lcd.send_message(comm_message)
