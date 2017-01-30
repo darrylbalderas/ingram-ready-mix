@@ -48,7 +48,6 @@ class Transceiver:
     message = ""
     if self.ser.isOpen():
       message = self.ser.read()
-      self.ser.flush()
       return message
     else:
       return message
