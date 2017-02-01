@@ -22,20 +22,30 @@ class LCD:
                     ,'BACKLIGHT_RED' : b'\xFE\xD0\xFF\x00\x00'
                     ,'BACKLIGHT_WHITE': b'\xFE\xD0\xFF\xFF\xFF'
                     ,'BACKLIGHT_BLUE': b'\xFE\xD0\x00\x00\xFF'
-                    ,'SET_BACKLIGHT': b'\xFE\xD0'}
+                    ,'SET_BACKLIGHT': b'\xFE\xD0'
+                    ,'MOVE_CURSOR' : b'\xFE\x4D'
+                    ,'BACK_CURSOR': b'\xFE\x4C'
+                    ,'HOME': b'\xFE\x48'
+                    ,'ON_CURSOR': b'\xFE\x53'
+                    ,'OFF_CURSOR': b'\xFE\x54'}
 
     if self.ser.isOpen():
       self.ser.write(self.commands['CLEAR'])
+      self.ser.write(self.commands['AUTOSCROLL_OFF'])
       
   def send_command(self,command):
     if self.ser.isOpen():
         self.ser.write(self.commands[command])
+        usleep(1)
 
   def send_message(self,message):
     if self.ser.isOpen():
         self.ser.write(message)
+        usleep(1)
 
 
-
+def usleep(seconds):
+    number = seconds/float(1000)
+    sleep(number)
 
 

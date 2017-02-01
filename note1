@@ -24,3 +24,16 @@ onboard joystick
 	* timestamp  data
 	* collected or missed 
 	* rain measurement
+
+
+Notes 1-31-2017
+
+* Incorporate a mute button to silence the buzzers 
+
+* create a missed time day functions
+	* this will find the current hour of the day and will find the number of hours it needs to 
+	sleep for.
+
+* incorporate restart button. 
+
+* perform crc functionality for the message received. 

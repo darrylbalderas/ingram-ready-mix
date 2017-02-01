@@ -1,5 +1,5 @@
 import os 
-import time 
+from time import time
 import sys 
 from transceiver import Transceiver
 from lcd import LCD
@@ -7,7 +7,7 @@ import glob
 import serial
 from time import sleep
 
-def xbee_Usb_Port():
+def find_ports():
   '''
   Search in your file directory to find Usb port 
   that your Xbee is connected to. Supports MacOs and 
@@ -15,7 +15,7 @@ def xbee_Usb_Port():
   '''
   result = []
   if sys.platform.startswith('darwin'):
-    ports = glob.glob('/dev/tty.usbserial*')
+    ports = glob.glob('/dev/tty.usb*')
   elif sys.platform.startswith('linux'):
     ports = glob.glob('/dev/tty[A-Za-z]*')
 
@@ -29,19 +29,36 @@ def xbee_Usb_Port():
   return result[0]
 
 
+def fappend_blanks(message):
+  '''
+  appends blank spaces in the beginning of the message
+  '''
+  if len(message) != 16:
+    blanks = 16 - len(message)
+    return (blanks*" " + message)
+
+def bappend_blanks(message):
+  '''
+  appends blanks spaces at the end of the message
+  '''
+  if len(message) != 16:
+    blanks = 16 - len(message)
+    return (blanks*" " + message)
+
+def move_cursor(lcd,spaces):
+  for num in range(spaces):
+    lcd.send_command("MOVE_CURSOR")
+
+def print_message(num_time,voltage,lcd):
+  time_m = "{0:.3f}\r".format(num_time)
+  lcd.send_message(time_m)
+  message = fappend_blanks(str(voltage)+'V')
+  lcd.send_message(message)
+  lcd.send_command("HOME")
+
 def main():
-  xbee_port = xbee_Usb_Port()
-  xbee = Transceiver(9600,xbee_port,b"\x00\x13\xA2\x00\x41\x03\xF0\xFF")
-
-  print("Starting process")
-
-  while True:
-    try:
-      xbee.send_message("rain")
-    except KeyboardInterrupt:
-      break
-
-  print("Ending process")
+  port = find_ports()
+  lcd = LCD(port,9600)
 
 
 if __name__ == "__main__":

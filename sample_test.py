@@ -5,17 +5,21 @@ import glob
 import serial
 from transceiver import Transceiver
 from lcd import LCD
-from buzzer import Buzzer
 from ledmatrix import LedMatrix
 from time import time
 
-buzzers = [4,17,22,5,6,13]
-reset = 21
+buzzers = [4,17,22,5,6,13] ## wiring in beardboard
+complete = 21 
+mute = 20
+miss = 16
 yellow = [255,135,0]
 green = [0,255,0]
 red = [255,0,0]
+
 gpio.setmode(gpio.BCM)
-gpio.setup(reset,gpio.IN)
+gpio.setup(complete,gpio.IN)
+gpio.setup(mute,gpio.IN)
+gpio.setup(miss,gpio.IN)
 
 miss_message="missed sample   "
 complete_message = "complete sample "
@@ -25,8 +29,14 @@ comm_message = "Comm establish  "
 nocomm_message = "NoComm establish"
 
 
-def check_reset():
-  return not gpio.input(reset)
+def check_complete():
+  return not gpio.input(complete)
+
+def check_missed():
+  return not gpio.input(miss)
+
+def check_mute():
+  return not gpio.input(mute)
 
 def initalize_buzzers(buzzers):
   for buzzer in buzzers:
@@ -76,114 +86,120 @@ def make_newcolor(color):
     elif color.lower() == "green":
       image.append(green)
   return image
-    
+
+def fappend_blanks(message):
+  '''
+  appends blank spaces in the beginning of the message
+  '''
+  if len(message) != 16:
+    blanks = 16 - len(message)
+    return (blanks*" " + message)
+
+def bappend_blanks(message):
+  '''
+  appends blanks spaces at the end of the message
+  '''
+  if len(message) != 16:
+    blanks = 16 - len(message)
+    return (blanks*" " + message)
+
+def print_message(num_time,voltage,lcd):
+  time_m = "{0:.3f}\r".format(num_time)
+  lcd.send_message(time_m)
+  message = fappend_blanks(str(voltage)+'V')
+  lcd.send_message(message)
+  lcd.send_command("HOME")
 
 def invoke_system(led_matrix,color_array, colors,lcd):
+  voltage = 5
+  minutes = 2
   invoke_color = make_newcolor("yellow")
-  led_matrix.clear_matrix()
   led_matrix.change_color(invoke_color)
   start_buzzer()
-  row_duration  = 1.875*2
+  row_duration  = 1.875*minutes
   count_row = 1
-  max_time = 15*2
+  max_time = 15*minutes
   previous_time = time()
   current_time = 0
-  timer = ""
   while current_time <= max_time:
-    if check_reset():
-      lcd.send_command("CLEAR")
-      sleep(0.5)
-      lcd.send_message(complete_message)
+    if check_complete():
       count_row = 1
-      reset_button(led_matrix,color_array)
+      lcd.send_command("CLEAR")
+      lcd.send_message(complete_message)
+      complete_state(led_matrix,color_array)
       break
     
     current_time = time() - previous_time
-    timer = "{0:.4f}".format(current_time)
-    blank_spaces = 16 - len(timer)
-    message = timer + blank_spaces*" "
-    lcd.send_message(message)
+    print_message(current_time,voltage,lcd)
     if current_time >= row_duration*count_row:
-          print current_time
-          print row_duration*count_row
-          color_image = led_matrix.change_color_row(invoke_color,colors[1], count_row)
+          led_matrix.change_color_row(invoke_color,colors[1], count_row)
           count_row += 1
 
-  if count_row >= 8:
-    missed_button(led_matrix,color_array)
-    sleep(0.5)
-    lcd.send_command("CLEAR")
-    sleep(1)
+  if count_row >= 8:  ## change to a wait statement 
+    missed_state(led_matrix,color_array)
     lcd.send_message(miss_message)
     sleep(2)
-    lcd.send_message("sleep rest day  ")
-    sleep(3)
-    lcd.send_message("ready           ")
-    reset_button(led_matrix,color_array)
+    lcd.send_command("CLEAR")
+    #change ledmatrix to green 
+
 
   
 
-def reset_button(led_matrix,color_array):
+def complete_state(led_matrix,color_array):
+  stop_buzzer()
   led_matrix.clear_matrix()
   led_matrix.change_color(color_array[0])
-  stop_buzzer()
+  ## create a log 
+  ## open logger
+  ##record data and put complete to the log 
+  ##calculate the time need for the rest of the month and sleep for that 
+  ## amount of time
 
-def missed_button(led_matrix, color_array):
+def missed_state(led_matrix, color_array):
+  stop_buzzer()
   led_matrix.clear_matrix()
   led_matrix.change_color(color_array[1])
-  stop_buzzer()
+  ## create a logger
+  ## open logger
+  ## recorde data and put missed to the log
+  ## close logger
+  ## calculate the time need for the rest of the day and sleep for that
+  #amount of time
 
-def main():
-  initalize_buzzers(buzzers)
-  xbee_port = xbee_usb_port()
-  lcd_port = lcd_serial_port()
-  lcd = LCD(lcd_port,9600)
-  bravo_xbee = Transceiver(9600,xbee_port,b"\x00\x13\xA2\x00\x41\x04\x96\x6E")
-  led_matrix = LedMatrix()
+
+def restart_state():
+  ## do a system command to restart system
+  pass
+
+
+
+# def main():
+#   initalize_buzzers(buzzers)
+#   xbee_port = xbee_usb_port()
+#   lcd_port = lcd_serial_port()
+#   lcd = LCD(lcd_port,9600)
+#   bravo_xbee = Transceiver(9600,xbee_port,b"\x00\x13\xA2\x00\x41\x04\x96\x6E")
+#   led_matrix = LedMatrix()
   
-  color_images = led_matrix.get_color_images()
-  color_info = led_matrix.get_colors()
-  color_array = [color_images['green'], color_images['red'], color_images['yellow']]
-  colors = [color_info['g'], color_info['r'], color_info['y']]
-  lcd.send_message(nocomm_message)
-  led_matrix.change_color(color_array[0])
-  while True:
-    try:      
-      message = bravo_xbee.receive_message()
-      if message == "b":
-        for i in range(10):
-          bravo_xbee.send_message("a\n")
-        lcd.send_command("CLEAR")
-        sleep(0.5)
-        lcd.send_message(comm_message)
-        sleep(2)
-        invoke_system(led_matrix,color_array,colors,lcd)
+#   color_images = led_matrix.get_color_images()
+#   color_info = led_matrix.get_colors()
+#   color_array = [color_images['green'], color_images['red'], color_images['yellow']]
+#   colors = [color_info['g'], color_info['r'], color_info['y']]
+#   led_matrix.change_color(color_array[0])
+#   while True:
+#     try:      
+#       message = bravo_xbee.receive_message()
+#       if message == "b":
+#         for i in range(3):
+#           bravo_xbee.send_message("a\n")
+#         invoke_system(led_matrix,color_array,colors,lcd)
       
-    except KeyboardInterrupt:
-      lcd.send_command("CLEAR")
-      led_matrix.clear_matrix()
-      stop_buzzer()
-      gpio.cleanup()
-      break
-
-##def sample():
-##  led_matrix = LedMatrix()
-##  color_images = led_matrix.get_color_images()
-##  color_info = led_matrix.get_colors()
-##  color_array = [color_images['green'], color_images['red'], color_images['yellow']]
-##  colors = [color_info['g'], color_info['r'], color_info['y']]
-##
-##  while True:
-##    led_matrix.change_color(color_array[0])
-##    sleep(2)
-##    led_matrix.clear_matrix()
-##    led_matrix.change_color(color_array[1])
-##    sleep(2)
-##    led_matrix.clear_matrix()
-##    led_matrix.change_color(color_array[2])
-##    sleep(2)
-##    led_matrix.clear_matrix()
-
+#     except KeyboardInterrupt:
+#       lcd.send_command("CLEAR")
+#       led_matrix.clear_matrix()
+#       stop_buzzer()
+#       gpio.cleanup()
+#       break
   
 
 if __name__ == '__main__':
