@@ -1,4 +1,5 @@
 import sys
+import os
 import RPi.GPIO as gpio
 from time import sleep
 import glob
@@ -175,8 +176,7 @@ def missed_state(led_matrix, color_array):
 
 
 def restart_state():
-  ## do a system command to restart system
-  pass
+  os.system("sudo reboot")
 
 
   
@@ -240,5 +240,14 @@ def calculate_nextmonth():
   return total_sleep
 
 
+def state():
+  print("About to restart")
+  sleep(5)
+  restart_state()
+
+
+
+
 if __name__ == '__main__':
+  state()
 
