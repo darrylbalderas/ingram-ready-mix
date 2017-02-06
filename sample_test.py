@@ -12,6 +12,7 @@ import datetime
 from calendar import monthrange
 from threading import Thread
 import re
+import threading
 
 global RESTART_HOLD 
 RESTART_HOLD = 3
@@ -19,7 +20,8 @@ global COLLECT_TIME
 COLLECT_TIME = 2 #minutes
 
 #logger file
-file_name = "./collect_data.txt"  
+collect_datafile = "./collect_data.txt"
+
 ## gpio pins used 
 buzzers = [4,17,22,5,6,13] ## wiring in beardboard
 complete = 21 
@@ -149,15 +151,28 @@ def invoke_system(led_matrix,color_array, colors,lcd):
     if current_time >= row_duration*count_row:
           led_matrix.change_color_row(invoke_color,colors[1], count_row)
           count_row += 1
-
   if count_row >= 8: 
     lcd.send_command("CLEAR")
     lcd.send_message(miss_message)
     missed_state(led_matrix,color_array)
     lcd.send_command("CLEAR")
 
+def create_logger():
+  pass
+
+def file_counter():
+  if "FILE_COUNT" in os.environ:
+    value = int(os.environ['FILE_COUNT'])
+    value += 1
+    
+    os.environ['FILE_COUNT'] = str(value)
+    
+  else:
+    
+  pass
+
 def logger(time,rain,status):
-  fopen = open(file_name, 'w')
+  fopen = open(collect_datafile, 'a')
   fopen.write("{}         {}       {}".format(time,rain, status))
   fopen.write("\n")
   fopen.close()
@@ -166,7 +181,7 @@ def complete_state(led_matrix,color_array):
   stop_buzzer()
   led_matrix.clear_matrix()
   led_matrix.change_color(color_array[0])
-  rain = 3.45     #sample value
+  rain = 3.45   #sample value
   status = "complete"    #sample value
   time = datetime.datetime.now()     #sample value
   logger(time,rain,status)
@@ -180,6 +195,7 @@ def missed_state(led_matrix, color_array):
   rain = 3.45  #sample value
   status = "missed"   #sample value
   time = datetime.datetime.now()  #sample value
+  #check if file is create 
   logger(time,rain,status)
 ##  next_day = calculate_nextday()
 ##  sleep(next_day)
@@ -202,16 +218,20 @@ def missed_state(led_matrix, color_array):
 ##  lcd.send_command('CLEAR')
 ##  print("reset") #os.system("sudo reboot")
 
-def thread_restart():
-  while True:
+def thread_restart(t1,run_event):
+  while run_event.is_set():
+    sleep(0.01)
     previous = time()
     while check_restart():
       current = time() - previous
       if current >= RESTART_HOLD:
-        print("reset") #os.system("sudo reboot")
+        print('reset')
+        ## os.system("sudo reboot")
+      else:
+        pass
 
 def checkmonth_sample():
-  fopen = open(file_name, 'r')
+  fopen = open(collect_datafile, 'r')
   lines  = fopen.read()
   fopen.close()
   time = datetime.datetime.now()
@@ -222,47 +242,44 @@ def checkmonth_sample():
   status = tmp[len(tmp)-1]
   if status.lower() == 'complete':
     return 1
-  elif status.lower() == 'miss':
+  elif status.lower() == 'missed':
     return 0
   else:
     return -1
 
-def main():
-   initalize_buzzers(buzzers)
-   xbee_port = xbee_usb_port()
-   lcd_port = lcd_serial_port()
-   lcd = LCD(lcd_port,9600)
-   bravo_xbee = Transceiver(9600,xbee_port,b"\x00\x13\xA2\x00\x41\x04\x96\x6E")
-   led_matrix = LedMatrix()
-   color_images = led_matrix.get_color_images()
-   color_info = led_matrix.get_colors()
-   color_array = [color_images['green'], color_images['red'], color_images['yellow']]
-   colors = [color_info['g'], color_info['r'], color_info['y']]
-   led_matrix.change_color(color_array[0])
-   initial = 0
-   while True:
-     try:
-       message = bravo_xbee.receive_message()
-       if message == "b":
-         for i in range(3):
-           bravo_xbee.send_message("a\n")
-         invoke_system(led_matrix,color_array,colors,lcd)
-         thread.join()
-     except KeyboardInterrupt:
-       lcd.send_command("CLEAR")
-       led_matrix.clear_matrix()
-       stop_buzzer()
-       gpio.cleanup()
-       break
-   gpio.cleanup()
+def main(t2,run_event):  
+  initalize_buzzers(buzzers)
+  xbee_port = xbee_usb_port()
+  lcd_port = lcd_serial_port()
+  lcd = LCD(lcd_port,9600)
+  bravo_xbee = Transceiver(9600,xbee_port,b"\x00\x13\xA2\x00\x41\x04\x96\x6E")
+  led_matrix = LedMatrix()
+  color_images = led_matrix.get_color_images()
+  color_info = led_matrix.get_colors()
+  color_array = [color_images['green'], color_images['red'], color_images['yellow']]
+  colors = [color_info['g'], color_info['r'], color_info['y']]
+  led_matrix.change_color(color_array[0])
+  while run_event.is_set():
+    message = bravo_xbee.receive_message()
+    if message == "b":
+      for i in range(3):
+        bravo_xbee.send_message("a\n")
+      invoke_system(led_matrix,color_array,colors,lcd)
+      bravo_xbee.clear_serial()
+        
+  if not run_event.is_set():
+    lcd.send_command("CLEAR")
+    led_matrix.clear_matrix()
+    stop_buzzer()
+    gpio.cleanup()
 
 def calculate_nextday():
-    time =  datetime.datetime.now()
-    hour_sec = (24 - time.hour) * 60 * 60
-    minute_sec = (60-time.minute) * 60
-    second_sec = (60-time.second)
-    total_sleep = hour_sec + minute_sec + second_sec
-    return total_sleep
+  time =  datetime.datetime.now()
+  hour_sec = (24 - time.hour) * 60 * 60
+  minute_sec = (60-time.minute) * 60
+  second_sec = (60-time.second)
+  total_sleep = hour_sec + minute_sec + second_sec
+  return total_sleep
   
 def calculate_nextmonth():
   time = datetime.datetime.now()
@@ -276,5 +293,22 @@ def calculate_nextmonth():
   return total_sleep
 
 if __name__ == '__main__':
-  print(checkmonth_sample())
-  main()
+  run_event = threading.Event()
+  run_event.set()
+  t1=1
+  thread1 = Thread(target=thread_restart, args= (t1,run_event))
+  t2 = 2
+  thread2 = Thread(target=main,args= (t2,run_event))
+  thread2.start()
+  sleep(0.2)
+  thread1.start()
+
+  while True:
+    try:
+      x=0
+      pass
+    except KeyboardInterrupt:
+      run_event.clear()
+      thread2.join()
+      thread1.join()
+      break

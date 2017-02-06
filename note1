@@ -48,5 +48,18 @@ Notes 2-1-2017
 * take into consideration the time difference for raspberryPi and normal time
  
 * include a check complete confirmation function 
+
+Notes 2-13-17
+* create a receipt text file 
+	* check if file is created
+	* if it is created then append to it 
+	* it if is not created then create the header and write the sample 
+* create a counter file that will hold the number of file created 
+	* check if file is created
+	* if it is created then read the number increment the number then write back the file with 
+	changed number 
+	* if there is no file created 
+	the you will create a new variable and write to it
+*create crc implementation for message transfer 
  
 

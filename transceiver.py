@@ -52,6 +52,9 @@ class Transceiver:
     else:
       return message
 
+  def clear_serial(self):
+    self.ser.flush()
+
 
 
 
