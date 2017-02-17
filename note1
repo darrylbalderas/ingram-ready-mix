@@ -61,5 +61,11 @@ Notes 2-13-17
 	* if there is no file created 
 	the you will create a new variable and write to it
 *create crc implementation for message transfer 
+
+Notes 2-16-17
+* create a daily sample csv file 
+* update sending and receive data 
+* create a welcoming message
+* change restart function to shut down running applications  
  
 

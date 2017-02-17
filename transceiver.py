@@ -11,8 +11,8 @@ since we have to wait for their signal to invoke our functionality
 '''
 
 class Transceiver:
-  def __init__(self, baud_rate,port_path,xbee_addr):
-    self.addr = xbee_addr
+  def __init__(self, baud_rate,port_path):#,xbee_addr):
+    #self.addr = xbee_addr
     self.port_path = port_path
     self.baud_rate = baud_rate
     self.ser = serial.Serial(self.port_path, 
@@ -47,17 +47,22 @@ class Transceiver:
   def receive_message(self):
     message = ""
     if self.ser.isOpen():
-      message = self.ser.read()
+      message = self.ser.readline()
       return message
     else:
       return message
 
   def clear_serial(self):
-    self.ser.flush()
+    self.ser.flushInput()
+    self.ser.flushOutput()
+
+  def waitingbytes(self):
+    return (self.ser.in_waiting, self.ser.out_waiting)
 
 
-
-
+def usleep(seconds):
+    number = seconds/float(1000)
+    sleep(number)
 
 
 

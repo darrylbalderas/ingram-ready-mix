@@ -1,7 +1,8 @@
 import serial 
-import sys
-import glob
 from time import sleep
+import glob 
+from math import floor
+from time import time
 
 class LCD:
   def __init__(self,lcd_port,baudrate):
@@ -43,9 +44,109 @@ class LCD:
         self.ser.write(message)
         usleep(1)
 
+  def bappend_blanks(self,message):
+    '''
+    appends blanks spaces at the end of the message
+    '''
+    if len(message) != 16:
+        blanks = 16 - len(message)
+        return (blanks*" " + message)
+
+  def center_message(self,message):
+    '''
+    appends blanks spaces in order to center the message
+    '''
+    length = len(message)
+    if length < 16 and length > 0:
+        blanks = int(floor((16 - length)/2))
+        return (blanks*" " + message)
+
+  def welcome_message(self):
+    '''
+    creates a default message to 
+    '''
+    self.send_message(self.center_message('Welcome to'))
+    self.send_command('ENTER')
+    self.send_message(self.center_message("IngramReady Mix"))
+    # lcd.send_message(self.center_message("Mix\r"))
+    sleep(3)
+    self.send_command('CLEAR')
+
+  def waiting_message(self):
+    self.send_message(self.center_message("waiting on"))
+    self.send_command('ENTER')
+    self.send_message(self.center_message("message..."))
+    sleep(2)
+    self.send_command('CLEAR')
+
+  def complete_message(self):
+    self.send_message(self.center_message('completed'))
+    self.send_command('ENTER')
+    self.send_message(self.center_message('sample'))
+    sleep(2)
+    self.send_command('CLEAR')
+    self.send_message(self.center_message("sleep for rest"))
+    self.send_command('ENTER')
+    self.send_message(self.center_message("of the month"))
+    sleep(2)
+    self.send_command('CLEAR')
+
+  def missed_message(self):
+    self.send_message(self.center_message(' missed'))
+    self.send_command('ENTER')
+    self.send_message(self.center_message('sample'))
+    sleep(2)
+    self.send_command('CLEAR')
+    self.send_message(self.center_message("sleep for rest"))
+    self.send_command('ENTER')
+    self.send_message(self.center_message("of the day"))
+    sleep(2)
+    self.send_command('CLEAR')
+
+  def restart_message(self):
+    self.send_message(self.center_message("Restarting"))
+    self.send_command('ENTER')
+    self.send_message(self.center_message("System"))
+    sleep(2)
+    self.send_command('CLEAR')
+
+  def display_timer(self,num_time):
+    hour = str(int(floor(num_time/3600))).zfill(2)
+    minute = str(int(floor(num_time/60))).zfill(2)
+    seconds =  str(int(floor(num_time))%60).zfill(2)
+
+    # time_m = "{0:.3f}\r".format(num_time)
+    time_m = "%s:%s:%s"%(hour,minute,seconds)
+    self.send_message(self.center_message('Timer'))
+    self.send_command('ENTER')
+    self.send_message(self.center_message(time_m))
+    self.send_command("HOME")
 
 def usleep(seconds):
     number = seconds/float(1000)
     sleep(number)
 
+def lcd_serial_port():
+    port =  glob.glob('/dev/tty.usbmodem*')
+    return port
+
+def test_case():
+    '''
+    '''
+    port =  lcd_serial_port()
+    lcd  = LCD(port.pop(),9600)
+    previous = time()
+    while True:
+        try:
+            lcd.display_timer(time()-previous)
+        except KeyboardInterrupt:
+            break
+            lcd.send_command('CLEAR')
+    # lcd.welcome_message()
+    # lcd.waiting_message()
+    # lcd.complete_message()
+    # lcd.missed_message()
+    # lcd.restart_message()
+
+test_case()
 

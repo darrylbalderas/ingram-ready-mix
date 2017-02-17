@@ -82,11 +82,6 @@ class LedMatrix:
 
   def show_message(self,message):
     return self.__sense_hat.show_message(message,text_colour = [255,255,255])
-##  def show_collect_message(self):
-##    self.__sense_hat.show_message('Sample collected')
-##
-##  def missed_sample(self):
-##    self.__sense_hat.show_message('Missed Sample')
 
 def test_case():
   visual_lights = LedMatrix()

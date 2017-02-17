@@ -168,8 +168,7 @@ def file_counter():
     os.environ['FILE_COUNT'] = str(value)
     
   else:
-    
-  pass
+    pass
 
 def logger(time,rain,status):
   fopen = open(collect_datafile, 'a')
