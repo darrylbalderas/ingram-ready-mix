@@ -10,14 +10,15 @@ from ledmatrix import LedMatrix
 from time import time
 import datetime
 from calendar import monthrange
-from threading import Thread
-import re
-import threading
+
 
 global RESTART_HOLD 
 RESTART_HOLD = 3
 global COLLECT_TIME
-COLLECT_TIME = 2 #minutes
+COLLECT_TIME = 1 #minutes
+
+level = 2.3
+rain = 3.2
 
 ## gpio pins used 
 buzzers = [4,17,22,5,6,13] ## wiring in beardboard
@@ -31,6 +32,8 @@ gpio.setup(complete,gpio.IN)
 gpio.setup(mute,gpio.IN)
 gpio.setup(miss,gpio.IN)
 gpio.setup(restart,gpio.IN)
+
+
 
 def check_complete():
   return not gpio.input(complete)
@@ -87,13 +90,36 @@ def xbee_usb_port():
           pass
   return result[0]
 
+def logger(time, amount_rain, pool_level, tag=None, outfall=None, status=None):
+  directory = '~/Desktop/log_data/'
+  if not os.path.exists(directory):
+    os.system('mkdir ' + directory)
+  date_message = '%s/%s/%s' %(time.month, time.day, time.year)
+  time_message = '%s:%s:%s' %(time.hour,time.minute,time.second)
+  file_name = '%s-%s-%s' %(time.month, time.day, time.year)
+  if tag == 'C':
+    collect_datafile = directory + file_name+'_completed.csv'
+  elif tag == 'M':
+    collect_datafile = directory + file_name+'_missed.csv'
+  else:
+    collect_datafile = directory + file_name+'.csv'
+
+  if os.path.exists(collect_datafile):
+    fopen = open(collect_datafile, 'a')
+  else:
+    fopen = open(collect_datafile, 'w')
+  fopen.write("{},{},{},{},{},{}".format(date_message, time_message, amount_rain 
+                                         ,pool_level, outfall, status))
+  fopen.write("\n")
+  fopen.close()
+
 def invoke_system(led_matrix,lcd):
   count_row = 1
   invoke_color = led_matrix.ingram_colors("yellow")
   led_matrix.change_color(led_matrix.get_yellowImage())
   start_buzzer()
   row_duration  = 1.875*COLLECT_TIME
-  max_time = 15*COLLECT_TIME
+  max_time = 15*COLLECT_TIME  #change 15 to 60
   current_time = 0
   start_time = time()
   while current_time <= max_time:
@@ -104,8 +130,8 @@ def invoke_system(led_matrix,lcd):
       break
     if check_mute():
       stop_buzzer()
-##    if check_restart():
-##      restart_state(lcd)
+    if check_restart():
+      restart_state(lcd)
     current_time = time() - start_time
     lcd.display_timer(max_time-current_time)
     if current_time >= row_duration*count_row:
@@ -118,40 +144,16 @@ def invoke_system(led_matrix,lcd):
     missed_state(led_matrix)
     lcd.send_command("CLEAR")
 
-
-def logger(time, amount_rain, pool_level, tag=None, outfall=None, status=None):
-  directory = '~/Desktop/log_data/'
-  if not os.path.exists(directory):
-    os.system('mkdir ' + directory)
-  date_message = '%s/%s/%s' %(time.month, time.day, time.year)
-  time_message = '%s:%s:%s' %(time.hour,time.minute,time.second)
-  if tag == 'C':
-    collect_datafile = directory + date_message+'_completed.csv'
-  elif tag == 'M':
-    collect_datafile = directory + date_message+'_missed.csv'
-  else:
-    collect_datafile = directory + date_message+'.csv'
-
-  if os.path.exists(collect_datafile):
-    fopen = open(collect_datafile, 'a')
-  else:
-    fopen = open(collect_datafile, 'w')
-  fopen.write("{},{},{},{},{},{}".format(date_message, time_message, amount_rain 
-                                         ,pool_level, outfall, status))
-  fopen.write("\n")
-  fopen.close()
     
 def complete_state(led_matrix):
   #grab the amount of rain 
-  #grab the holding level 
-  #grab the outfall  
-  #grab the time and date 
+  #grab the holding level  
   stop_buzzer()
   led_matrix.clear_matrix()
   led_matrix.change_color(led_matrix.get_greenImage())
   outfall = 'Yes'
-  pool_level = 1.23 # sample value
-  amount_rain = 3.45  #sample value
+  pool_level = level # sample value
+  amount_rain = rain  #sample value
   status = "completed"   #sample value
   time = datetime.datetime.now() 
   logger(time,amount_rain, pool_level, outfall, status)
@@ -167,13 +169,11 @@ def missed_state(led_matrix):
   led_matrix.clear_matrix()
   led_matrix.change_color(led_matrix.get_redImage())
   outfall = 'Yes'
-  pool_level = 1.23 # sample value
-  amount_rain = 3.45  #sample value
+  pool_level = level # sample value
+  amount_rain = rain  #sample value
   status = "missed"   #sample value #sample value
   time = datetime.datetime.now() 
   logger(time,amount_rain, pool_level, outfall, status)
-  ##  next_day = calculate_nextday()
-  ##  sleep(next_day)
   while not check_miss():
     pass
   led_matrix.change_color(led_matrix.get_greenImage())
@@ -191,59 +191,22 @@ def restart_state(lcd):
     return
   lcd.send_command('CLEAR')
   lcd.restart_message()
-  print("reset")
-  #  os.system("sudo reboot")
-
-def thread_restart(t1,run_event):
-  while run_event.is_set():
-    sleep(0.01)
-    previous = time()
-    while check_restart():
-      current = time() - previous
-      if current >= RESTART_HOLD:
-        print('reset')
-        ## os.system("sudo reboot")
-      else:
-        pass
+  print("reset") #os.system("sudo reboot")
 
 def checkmonth_sample():
-  fopen = open(collect_datafile, 'r')
-  lines  = fopen.read()
-  fopen.close()
-  time = datetime.datetime.now()
-  pattern = re.compile(r'%s.*%s-.*' %(str(time.year),str(time.month)))
-  matches = pattern.findall(lines)
-  final_sample = matches[len(matches)-1]
-  tmp = final_sample.split()
-  status = tmp[len(tmp)-1]
-  if status.lower() == 'complete':
-    return 1
-  elif status.lower() == 'missed':
-    return 0
-  else:
-    return -1
+  date_time = datetime.datetime.now()
+  value  = None 
+  complete_files = glob.glob('~/Desktop/log_data/' + date_time.month + '*' + date_time.year + 'C.csv')
+  miss_files = glob.glob('~/Desktop/log_data/' + date_time.month + date_time.day + date_time.year + 'M.csv')
 
-def main(t2,run_event):  
-  initalize_buzzers(buzzers)
-  xbee_port = xbee_usb_port()
-  lcd_port = lcd_serial_port()
-  lcd = LCD(lcd_port,9600)
-  bravo_xbee = Transceiver(9600,xbee_port,b"\x00\x13\xA2\x00\x41\x04\x96\x6E")
-  led_matrix = LedMatrix()
-  led_matrix.change_color(led_matrix.get_greenImage())
-  while run_event.is_set():
-    message = bravo_xbee.receive_message()
-    if message == "b":
-      for i in range(3):
-        bravo_xbee.send_message("a\n")
-      invoke_system(led_matrix, lcd)
-      bravo_xbee.clear_serial()
-        
-  if not run_event.is_set():
-    lcd.send_command("CLEAR")
-    led_matrix.clear_matrix()
-    stop_buzzer()
-    gpio.cleanup()
+  if len(complete_files) > 0:
+    value = 1
+    return value
+  if len(miss_files) > 0:
+    value = 0
+    return value
+
+  return value
 
 def calculate_nextday():
   time =  datetime.datetime.now()
@@ -264,23 +227,30 @@ def calculate_nextmonth():
   total_sleep = day_sec + second_sec + minute_sec + hour_sec
   return total_sleep
 
-if __name__ == '__main__':
-  run_event = threading.Event()
-  run_event.set()
-  t1=1
-  thread1 = Thread(target=thread_restart, args= (t1,run_event))
-  t2 = 2
-  thread2 = Thread(target=main,args= (t2,run_event))
-  thread2.start()
-  sleep(0.2)
-  thread1.start()
+def flow_sensor(status):
+  ##create sender and receiver thread
+  # try:
+  #   message = bravo_xbee.receive_message()
+  #   if message == "b":
+  #     for i in range(3):
+  #       bravo_xbee.send_message("a\n")
+  #     invoke_system(led_matrix, lcd)
+  #     bravo_xbee.clear_serial()
+  # except KeyboardInterrupt:
+  #   lcd.send_command("CLEAR")
+  #   led_matrix.clear_matrix()
+  #   stop_buzzer()
+  #   gpio.cleanup()
+  pass
 
-  while True:
-    try:
-      x=0
-      pass
-    except KeyboardInterrupt:
-      run_event.clear()
-      thread2.join()
-      thread1.join()
-      break
+def rain_gauge():
+  ## create sender and receiver thread
+  pass
+
+def sender():
+  pass
+
+def receiver():
+  pass
+
+

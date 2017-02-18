@@ -3,8 +3,7 @@ import glob
 import serial
 from transceiver import Transceiver
 from time import sleep
-
-
+from test import print_hello
 
 def xbee_usb_port():
   '''
@@ -29,15 +28,15 @@ def xbee_usb_port():
 
 
 
-ports = xbee_usb_port()
-end = ports[0]
+# ports = xbee_usb_port()
+# end = ports[0]
 
-xbee1 = Transceiver(9600,end)
+# xbee1 = Transceiver(9600,end)
 
-while True:
-  xbee1.send_message("rain\n")
-  confirm_message = xbee1.receive_message()
+# while True:
+#   xbee1.send_message("rain\n")
+#   confirm_message = xbee1.receive_message()
 
-  if confirm_message == "what":
-    for i  in range(0,10):
-      xbee1.send_message(str(2.341)+'\n')
+#   if confirm_message == "what":
+#     for i  in range(0,10):
+#       xbee1.send_message(str(2.341)+'\n')
