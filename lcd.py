@@ -103,10 +103,17 @@ class LCD:
     sleep(2)
     self.send_command('CLEAR')
 
+  def holding_restart(self,num_time):
+    self.send_message(self.center_message("RESTART HOLD"))
+    self.send_command('ENTER')
+    seconds = str(int(floor(num_time)%3)).zfill(2)
+    self.send_message(self.center_message(seconds))
+    self.send_command('HOME')
+
   def restart_message(self):
     self.send_message(self.center_message("Restarting"))
     self.send_command('ENTER')
-    self.send_message(self.center_message("System"))
+    self.send_message(self.center_message('System'))
     sleep(2)
     self.send_command('CLEAR')
 
@@ -114,7 +121,6 @@ class LCD:
     hour = str(int(floor(num_time/3600))).zfill(2)
     minute = str(int(floor(num_time/60))).zfill(2)
     seconds =  str(int(floor(num_time))%60).zfill(2)
-
     # time_m = "{0:.3f}\r".format(num_time)
     time_m = "%s:%s:%s"%(hour,minute,seconds)
     self.send_message(self.center_message('Timer'))

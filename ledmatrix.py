@@ -1,5 +1,6 @@
 from sense_hat import SenseHat
-from time import time,sleep
+# from time import time,
+# from time import sleep
 
 class LedMatrix:
   def __init__(self):
@@ -16,16 +17,14 @@ class LedMatrix:
     self.__row = 8
     self.__column = 8
     
-    self.__color_images = { 'red' : self.make_image('r'),
+    self.__color_images = {'red' : self.make_image('r'),
                           'yellow' : self.make_image('y'),
                           'green' : self.make_image('g'),
                           'violet' : self.make_image('v'),
                           'blue' : self.make_image('b'),
                           'white' : self.make_image('w')  
                         }
-    
     self.__row_duration = 1.875*60
-
     self.__max_time = 60*15
     
   def make_image(self,color):
@@ -61,13 +60,6 @@ class LedMatrix:
   def set_color_images(self,color_images):
     self.__color_images = color_images
 
-  def check_reset(self):
-    events = self.__sense_hat.stick.get_events()
-    if len(events) == 0:
-      return 0
-    else:
-      return 1
-
   def get_row_duration(self):
     return self.__row_time
 
@@ -83,33 +75,68 @@ class LedMatrix:
   def show_message(self,message):
     return self.__sense_hat.show_message(message,text_colour = [255,255,255])
 
-def test_case():
-  visual_lights = LedMatrix()
-  color_row = visual_lights.get_colors()['r']
-  color_image = visual_lights.get_color_images()['green']
-  visual_lights.change_Color(color_image)
-  sleep(3)
-  color_image = visual_lights.get_color_images()['yellow']
-  visual_lights.change_Color(color_image)
+  def ingram_colors(color):
+    yellow = [255,135,0]
+    green = [0,255,0]
+    red = [255,0,0]
+    image = []
+    for i in range(64):
+      if color.lower() == "yellow":
+        image.append(yellow)
+      elif color.lower() == "red":
+        image.append(red)
+      elif color.lower() == "green":
+        image.append(green)
+    return image
 
-  row_duration  = 1.875*2
-  count_row = 1
-  max_time = 15*2
-  previous_time = time()
-  current_time = 0
+  def get_greenImage(self):
+    return self.__color_images['green']
+
+  def get_redImage(self):
+    return self.__color_images['red']
+
+  def get_yellowImage(self):
+    return self.__color_images['yellow']
+
+  def get_green(self):
+    return self.__colors['g']
+
+  def get_red(self):
+    return self.__colors['r']
+
+  def get_yellow(self):
+    return self.__colors['y']
+
+
+
+
+# def test_case():
+#   visual_lights = LedMatrix()
+#   color_row = visual_lights.get_colors()['r']
+#   color_image = visual_lights.get_color_images()['green']
+#   visual_lights.change_Color(color_image)
+#   sleep(3)
+#   color_image = visual_lights.get_color_images()['yellow']
+#   visual_lights.change_Color(color_image)
+
+#   row_duration  = 1.875*2
+#   count_row = 1
+#   max_time = 15*2
+#   previous_time = time()
+#   current_time = 0
   
-  while current_time <= max_time:
+#   while current_time <= max_time:
       
-    if visual_lights.check_reset():
-      count_row = 1
-      visual_lights.show_collect_message()
-      break
-    current_time = time() - previous_time
-    if current_time >= row_duration*count_row:
-          print current_time
-          print row_duration*count_row
-          color_image = visual_lights.change_color_row(color_image,color_row,count_row)
-          count_row += 1
+#     if visual_lights.check_reset():
+#       count_row = 1
+#       visual_lights.show_collect_message()
+#       break
+#     current_time = time() - previous_time
+#     if current_time >= row_duration*count_row:
+#           print current_time
+#           print row_duration*count_row
+#           color_image = visual_lights.change_color_row(color_image,color_row,count_row)
+#           count_row += 1
       
-  visual_lights.missed_sample()
+#   visual_lights.missed_sample()
 

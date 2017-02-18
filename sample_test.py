@@ -19,20 +19,12 @@ RESTART_HOLD = 3
 global COLLECT_TIME
 COLLECT_TIME = 2 #minutes
 
-#logger file
-collect_datafile = "./collect_data.txt"
-
 ## gpio pins used 
 buzzers = [4,17,22,5,6,13] ## wiring in beardboard
 complete = 21 
 mute = 20
 miss = 16
 restart = 12
-miss_message="missed sample   "
-complete_message = "complete sample "
-restart_message = "Restart system  "
-comm_message = "Comm establish  "
-nocomm_message = "NoComm establish"
 
 gpio.setmode(gpio.BCM)
 gpio.setup(complete,gpio.IN)
@@ -65,14 +57,20 @@ def stop_buzzer():
     gpio.output(buzzer,False)
 
 def lcd_serial_port():
+  '''
+  Search in your file directory to find usb port 
+  that your lcd screen is connected. 
+  Supports Mac and Linux operating system 
+  Returns a port
+  '''
   port =  glob.glob('/dev/ttyACM*')
   return port[0]
 
 def xbee_usb_port():
   '''
-  Search in your file directory to find Usb port 
+  Search in your file directory to find usb port 
   that your Xbee is connected to. Supports MacOs and 
-  linux operating system. Returns a list of usb ports. 
+  linux operating system. Returns a port
   '''
   result = []
   if sys.platform.startswith('darwin'):
@@ -89,133 +87,112 @@ def xbee_usb_port():
           pass
   return result[0]
 
-def make_newcolor(color):
-  yellow = [255,135,0]
-  green = [0,255,0]
-  red = [255,0,0]
-  image = []
-  for i in range(64):
-    if color.lower() == "yellow":
-      image.append(yellow)
-    elif color.lower() == "red":
-      image.append(red)
-    elif color.lower() == "green":
-      image.append(green)
-  return image
-
-def fappend_blanks(message):
-  '''
-  appends blank spaces in the beginning of the message
-  '''
-  if len(message) != 16:
-    blanks = 16 - len(message)
-    return (blanks*" " + message)
-
-def bappend_blanks(message):
-  '''
-  appends blanks spaces at the end of the message
-  '''
-  if len(message) != 16:
-    blanks = 16 - len(message)
-    return (blanks*" " + message)
-
-def print_message(num_time,voltage,lcd):
-  time_m = "{0:.3f}\r".format(num_time)
-  lcd.send_message(time_m)
-  message = fappend_blanks(str(voltage)+'V')
-  lcd.send_message(message)
-  lcd.send_command("HOME")
-
-def invoke_system(led_matrix,color_array, colors,lcd):
-  voltage = 5   #sample voltage
+def invoke_system(led_matrix,lcd):
   count_row = 1
-  invoke_color = make_newcolor("yellow")
-  led_matrix.change_color(invoke_color)
+  invoke_color = led_matrix.ingram_colors("yellow")
+  led_matrix.change_color(led_matrix.get_yellowImage())
   start_buzzer()
   row_duration  = 1.875*COLLECT_TIME
   max_time = 15*COLLECT_TIME
-  previous_time = time()
   current_time = 0
+  start_time = time()
   while current_time <= max_time:
     if check_complete():
       lcd.send_command("CLEAR")
-      lcd.send_message(complete_message)
-      complete_state(led_matrix,color_array)
+      lcd.complete_message()
+      complete_state(led_matrix)
       break
     if check_mute():
       stop_buzzer()
 ##    if check_restart():
 ##      restart_state(lcd)
-    current_time = time() - previous_time
-    print_message(max_time-current_time,voltage,lcd)
+    current_time = time() - start_time
+    lcd.display_timer(max_time-current_time)
     if current_time >= row_duration*count_row:
-          led_matrix.change_color_row(invoke_color,colors[1], count_row)
+          led_matrix.change_color_row(invoke_color,led_matrix.get_red(),count_row)
           count_row += 1
+
   if count_row >= 8: 
     lcd.send_command("CLEAR")
-    lcd.send_message(miss_message)
-    missed_state(led_matrix,color_array)
+    lcd.missed_message()
+    missed_state(led_matrix)
     lcd.send_command("CLEAR")
 
-def create_logger():
-  pass
 
-def file_counter():
-  if "FILE_COUNT" in os.environ:
-    value = int(os.environ['FILE_COUNT'])
-    value += 1
-    
-    os.environ['FILE_COUNT'] = str(value)
-    
+def logger(time, amount_rain, pool_level, tag=None, outfall=None, status=None):
+  directory = '~/Desktop/log_data/'
+  if not os.path.exists(directory):
+    os.system('mkdir ' + directory)
+  date_message = '%s/%s/%s' %(time.month, time.day, time.year)
+  time_message = '%s:%s:%s' %(time.hour,time.minute,time.second)
+  if tag == 'C':
+    collect_datafile = directory + date_message+'_completed.csv'
+  elif tag == 'M':
+    collect_datafile = directory + date_message+'_missed.csv'
   else:
-    pass
+    collect_datafile = directory + date_message+'.csv'
 
-def logger(time,rain,status):
-  fopen = open(collect_datafile, 'a')
-  fopen.write("{}         {}       {}".format(time,rain, status))
+  if os.path.exists(collect_datafile):
+    fopen = open(collect_datafile, 'a')
+  else:
+    fopen = open(collect_datafile, 'w')
+  fopen.write("{},{},{},{},{},{}".format(date_message, time_message, amount_rain 
+                                         ,pool_level, outfall, status))
   fopen.write("\n")
   fopen.close()
     
-def complete_state(led_matrix,color_array):
+def complete_state(led_matrix):
+  #grab the amount of rain 
+  #grab the holding level 
+  #grab the outfall  
+  #grab the time and date 
   stop_buzzer()
   led_matrix.clear_matrix()
-  led_matrix.change_color(color_array[0])
-  rain = 3.45   #sample value
-  status = "complete"    #sample value
-  time = datetime.datetime.now()     #sample value
-  logger(time,rain,status)
-##  next_month = calculate_nextmonth()
-##  sleep(next_month)
+  led_matrix.change_color(led_matrix.get_greenImage())
+  outfall = 'Yes'
+  pool_level = 1.23 # sample value
+  amount_rain = 3.45  #sample value
+  status = "completed"   #sample value
+  time = datetime.datetime.now() 
+  logger(time,amount_rain, pool_level, outfall, status)
+  ## next_month = calculate_nextmonth()
+  ## sleep(next_month)
 
-def missed_state(led_matrix, color_array):
+def missed_state(led_matrix):
+  #  grab the amount of rain 
+  #  grab the holding level 
+  #  grab the outfall  
+  #  grab the time and date
   stop_buzzer()
   led_matrix.clear_matrix()
-  led_matrix.change_color(color_array[1])
-  rain = 3.45  #sample value
-  status = "missed"   #sample value
-  time = datetime.datetime.now()  #sample value
-  #check if file is create 
-  logger(time,rain,status)
-##  next_day = calculate_nextday()
-##  sleep(next_day)
+  led_matrix.change_color(led_matrix.get_redImage())
+  outfall = 'Yes'
+  pool_level = 1.23 # sample value
+  amount_rain = 3.45  #sample value
+  status = "missed"   #sample value #sample value
+  time = datetime.datetime.now() 
+  logger(time,amount_rain, pool_level, outfall, status)
+  ##  next_day = calculate_nextday()
+  ##  sleep(next_day)
   while not check_miss():
     pass
-  led_matrix.change_color(color_array[0])
+  led_matrix.change_color(led_matrix.get_greenImage())
   
-##def restart_state(lcd):
-##  state  = 0
-##  previous = time()
-##  current = 0
-##  while current < RESTART_HOLD:
-##    current = time()-previous
-##    state = check_restart()
-##    if not state:
-##      return
-##  lcd.send_command('CLEAR')
-##  lcd.send_message(restart_message)
-##  sleep(2)
-##  lcd.send_command('CLEAR')
-##  print("reset") #os.system("sudo reboot")
+def restart_state(lcd):
+ state  = 0
+ start_time = time()
+ end_time = 0
+ lcd.send_command('CLEAR')
+ while end_time < RESTART_HOLD:
+  end_time = time() - start_time
+  lcd.holding_restart(end_time)
+  state = check_restart()
+  if not state:
+    return
+  lcd.send_command('CLEAR')
+  lcd.restart_message()
+  print("reset")
+  #  os.system("sudo reboot")
 
 def thread_restart(t1,run_event):
   while run_event.is_set():
@@ -253,17 +230,13 @@ def main(t2,run_event):
   lcd = LCD(lcd_port,9600)
   bravo_xbee = Transceiver(9600,xbee_port,b"\x00\x13\xA2\x00\x41\x04\x96\x6E")
   led_matrix = LedMatrix()
-  color_images = led_matrix.get_color_images()
-  color_info = led_matrix.get_colors()
-  color_array = [color_images['green'], color_images['red'], color_images['yellow']]
-  colors = [color_info['g'], color_info['r'], color_info['y']]
-  led_matrix.change_color(color_array[0])
+  led_matrix.change_color(led_matrix.get_greenImage())
   while run_event.is_set():
     message = bravo_xbee.receive_message()
     if message == "b":
       for i in range(3):
         bravo_xbee.send_message("a\n")
-      invoke_system(led_matrix,color_array,colors,lcd)
+      invoke_system(led_matrix, lcd)
       bravo_xbee.clear_serial()
         
   if not run_event.is_set():
