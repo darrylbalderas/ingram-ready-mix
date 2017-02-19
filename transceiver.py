@@ -60,15 +60,11 @@ class Transceiver:
     return (self.ser.in_waiting, self.ser.out_waiting)
 
 
-def usleep(seconds):
-    number = seconds/float(1000)
-    sleep(number)
+  def do_crc(self,message):
+    pass
 
-
-
-
-
-
+  def binary_converter(self,message):
+    pass
 
 
 

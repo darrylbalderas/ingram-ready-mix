@@ -1,20 +1,19 @@
 import sys
 import os
-import RPi.GPIO as gpio
 from time import sleep
 import glob
 import serial
-from transceiver import Transceiver
-from lcd import LCD
-from ledmatrix import LedMatrix
+# from transceiver import Transceiver
+# from lcd import LCD
+# from ledmatrix import LedMatrix
 from time import time
 import datetime
 from calendar import monthrange
 from sample_test import *
-import numpy 
 
-def main():
-  ## incorporate sleep month or day functionality  
+def outfall_detection():
+  os.environ['status'] = None
+  # incorporate sleep month or day functionality  
   initalize_buzzers(buzzers)
   xbee_port = xbee_usb_port()
   lcd_port = lcd_serial_port()
@@ -24,17 +23,23 @@ def main():
   led_matrix = LedMatrix()
   led_matrix.change_color(led_matrix.get_greenImage())
   while True:
-    status = checkmonth_sample()
-    if status == 1:
-      ## check the remainder of days for the next month 
-      ## create a while loop that will iterate over this days 
-      ## inside the while loop record time, rainfall, pool level
-      pass
-    elif status == 0:
-      ## check the remainder of hours for the next day
-      ## create a while loop that will iterate over this days 
-      ## inside the while loop record time, rainfall, pool level
-      pass
-    else:
-      ## full system check
-      pass
+    outfall = ""
+    os.environ['status'] = checkmonth_sample()
+    if os.environ['status'] == 1:
+      while calculate_sleep(True):
+        pass
+    elif os.environ['status'] == 0:
+      while calculate_sleep(False):
+        pass
+    elif os.environ['status'] == None:
+      outfall = bravo_xbee.receive_message()
+      if outfall == 'out':
+        invoke_system(led_matrix, lcd)
+
+      
+
+if __name__ == "__main__":
+  ##create rainfall_detection thread
+  ## pass the rainfall detection function 
+  ##create outfall detection thread
+  ## pass the outfall detection thread 

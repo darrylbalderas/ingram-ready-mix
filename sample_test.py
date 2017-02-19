@@ -10,6 +10,7 @@ from ledmatrix import LedMatrix
 from time import time
 import datetime
 from calendar import monthrange
+import math
 
 
 global RESTART_HOLD 
@@ -32,8 +33,6 @@ gpio.setup(complete,gpio.IN)
 gpio.setup(mute,gpio.IN)
 gpio.setup(miss,gpio.IN)
 gpio.setup(restart,gpio.IN)
-
-
 
 def check_complete():
   return not gpio.input(complete)
@@ -90,13 +89,13 @@ def xbee_usb_port():
           pass
   return result[0]
 
-def logger(time, amount_rain, pool_level, tag=None, outfall=None, status=None):
+def logger(start_time, end_time, amount_rain, pool_level, tag=None, outfall=None, status=None):
   directory = '~/Desktop/log_data/'
+  time_date = datetime.datetime.now()
   if not os.path.exists(directory):
     os.system('mkdir ' + directory)
-  date_message = '%s/%s/%s' %(time.month, time.day, time.year)
-  time_message = '%s:%s:%s' %(time.hour,time.minute,time.second)
-  file_name = '%s-%s-%s' %(time.month, time.day, time.year)
+  date_message = '%s/%s/%s' %(time_date.month, time_date.day, time_date.year)
+  file_name = '%s-%s-%s' %(time_date.month, time_date.day, time_date.year)
   if tag == 'C':
     collect_datafile = directory + file_name+'_completed.csv'
   elif tag == 'M':
@@ -108,12 +107,14 @@ def logger(time, amount_rain, pool_level, tag=None, outfall=None, status=None):
     fopen = open(collect_datafile, 'a')
   else:
     fopen = open(collect_datafile, 'w')
-  fopen.write("{},{},{},{},{},{}".format(date_message, time_message, amount_rain 
+    fopen.write('Start_time, End_time, ')
+  fopen.write("{},{},{},{},{},{}".format(start_time, end_time, amount_rain 
                                          ,pool_level, outfall, status))
   fopen.write("\n")
   fopen.close()
 
 def invoke_system(led_matrix,lcd):
+  #create an enviroment variable for invoke system
   count_row = 1
   invoke_color = led_matrix.ingram_colors("yellow")
   led_matrix.change_color(led_matrix.get_yellowImage())
@@ -127,7 +128,7 @@ def invoke_system(led_matrix,lcd):
       lcd.send_command("CLEAR")
       lcd.complete_message()
       complete_state(led_matrix)
-      break
+      return 
     if check_mute():
       stop_buzzer()
     if check_restart():
@@ -139,32 +140,23 @@ def invoke_system(led_matrix,lcd):
           count_row += 1
 
   if count_row >= 8: 
-    lcd.send_command("CLEAR")
     lcd.missed_message()
     missed_state(led_matrix)
     lcd.send_command("CLEAR")
-
-    
-def complete_state(led_matrix):
-  #grab the amount of rain 
-  #grab the holding level  
+ 
+def complete_state(led_matrix,start_time):
   stop_buzzer()
   led_matrix.clear_matrix()
   led_matrix.change_color(led_matrix.get_greenImage())
   outfall = 'Yes'
   pool_level = level # sample value
   amount_rain = rain  #sample value
-  status = "completed"   #sample value
-  time = datetime.datetime.now() 
-  logger(time,amount_rain, pool_level, outfall, status)
-  ## next_month = calculate_nextmonth()
-  ## sleep(next_month)
+  status = "completed"   #sample value 
+  time_date = datetime.datetime.now()
+  end_time =  time_date.hour + ':' + time_date.minute + ':' + time_date.second 
+  logger(start_time, end_time, amount_rain, pool_level, outfall, status)
 
-def missed_state(led_matrix):
-  #  grab the amount of rain 
-  #  grab the holding level 
-  #  grab the outfall  
-  #  grab the time and date
+def missed_state(led_matrix,start_time):
   stop_buzzer()
   led_matrix.clear_matrix()
   led_matrix.change_color(led_matrix.get_redImage())
@@ -172,85 +164,91 @@ def missed_state(led_matrix):
   pool_level = level # sample value
   amount_rain = rain  #sample value
   status = "missed"   #sample value #sample value
-  time = datetime.datetime.now() 
-  logger(time,amount_rain, pool_level, outfall, status)
+  time_date = datetime.datetime.now() 
+  end_time =  time_date.hour + ':' + time_date.minute + ':' + time_date.second 
+  logger(start_time, end_time ,amount_rain, pool_level, outfall, status)
+
   while not check_miss():
     pass
   led_matrix.change_color(led_matrix.get_greenImage())
   
 def restart_state(lcd):
- state  = 0
- start_time = time()
- end_time = 0
- lcd.send_command('CLEAR')
- while end_time < RESTART_HOLD:
-  end_time = time() - start_time
-  lcd.holding_restart(end_time)
-  state = check_restart()
-  if not state:
-    return
   lcd.send_command('CLEAR')
+  state  = 0
+  end_time = 0
+  start_time = time()
+  while end_time < RESTART_HOLD:
+    end_time = time() - start_time
+    lcd.holding_restart(end_time)
+    state = check_restart()
+    if not state:
+      return
   lcd.restart_message()
   print("reset") #os.system("sudo reboot")
 
 def checkmonth_sample():
   date_time = datetime.datetime.now()
-  value  = None 
   complete_files = glob.glob('~/Desktop/log_data/' + date_time.month + '*' + date_time.year + 'C.csv')
   miss_files = glob.glob('~/Desktop/log_data/' + date_time.month + date_time.day + date_time.year + 'M.csv')
-
   if len(complete_files) > 0:
-    value = 1
-    return value
-  if len(miss_files) > 0:
-    value = 0
-    return value
+    return 1
+  elif len(miss_files) > 0:
+    return 0
+  else:
+    return None
 
-  return value
+def calculate_sleep(state):
+  flag = False
+  time_date = datetime.datetime.now()
 
-def calculate_nextday():
-  time =  datetime.datetime.now()
-  hour_sec = (24 - time.hour) * 60 * 60
-  minute_sec = (60-time.minute) * 60
-  second_sec = (60-time.second)
-  total_sleep = hour_sec + minute_sec + second_sec
-  return total_sleep
+  if state == False:
+    interval =  24 - time_date.hour
+    if interval > 0:
+      flag = True
+
+  elif state == True:
+    days_left = monthrange(time_date.year,time_date.month)
+    interval = days_left[1] - time_date.day
+    
+    if interval > 0:
+      flag = True
+
+  return flag
+
+  # time =  datetime.datetime.now()
+  # hour_sec = (24 - time.hour) * 60 * 60
+  # minute_sec = (60-time.minute) * 60
+  # second_sec = (60-time.second)
+  # total_sleep = hour_sec + minute_sec + second_sec
+  # return total_sleep
   
-def calculate_nextmonth():
-  time = datetime.datetime.now()
-  hour_sec = (24-time.hour) *60 *60
-  minute_sec = (60 - time.minute) * 60
-  second_sec = (60-time.second)
-  month_range = monthrange(time.year,time.month)
-  total_days = month_range[1]
-  day_sec = (total_days - time.day) *24*60*60
-  total_sleep = day_sec + second_sec + minute_sec + hour_sec
-  return total_sleep
+# def calculate_nextmonth():
+#   time = datetime.datetime.now()
+#   hour_sec = (24-time.hour) *60 *60
+#   minute_sec = (60 - time.minute) * 60
+#   second_sec = (60-time.second)
+#   month_range = monthrange(time.year,time.month)
+#   total_days = month_range[1]
+#   day_sec = (total_days - time.day) *24*60*60
+#   total_sleep = day_sec + second_sec + minute_sec + hour_sec
+#   return total_sleep
 
-def flow_sensor(status):
-  ##create sender and receiver thread
-  # try:
-  #   message = bravo_xbee.receive_message()
-  #   if message == "b":
-  #     for i in range(3):
-  #       bravo_xbee.send_message("a\n")
-  #     invoke_system(led_matrix, lcd)
-  #     bravo_xbee.clear_serial()
-  # except KeyboardInterrupt:
-  #   lcd.send_command("CLEAR")
-  #   led_matrix.clear_matrix()
-  #   stop_buzzer()
-  #   gpio.cleanup()
-  pass
-
-def rain_gauge():
-  ## create sender and receiver thread
-  pass
-
-def sender():
-  pass
-
-def receiver():
-  pass
-
-
+def detect_rain(xbee):
+  pool_level = ""
+  activation = ""
+  rain_fall = ""
+  while activation != "":
+    activation = xbee.receive_message()
+    
+  time_date = datetime.datetime.now()
+  start_time = time_date.hour + ':' + time_date.minute + ':' + time_date.second 
+  while pool_level !=  "":
+    pool_level = xbee.receive_message()
+    xbee.send_message('stop\n')
+  pool_level = float(pool_level)
+  while rain_fall != "":
+    rain_fall = xbee.receive_message()
+    xbee.send_message('stop\n')
+  rain_fall = float(rain_fall)
+  end_time = time_date.hour + ':' + time_date.minute + ':' + time_date.second 
+  logger(start_time,end_time,rain_fall,pool_level)

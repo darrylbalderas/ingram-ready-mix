@@ -65,6 +65,7 @@ class LCD:
     '''
     creates a default message to 
     '''
+    self.send_command('CLEAR')
     self.send_message(self.center_message('Welcome to'))
     self.send_command('ENTER')
     self.send_message(self.center_message("IngramReady Mix"))
@@ -80,27 +81,29 @@ class LCD:
     self.send_command('CLEAR')
 
   def complete_message(self):
+    self.send_command('CLEAR')
     self.send_message(self.center_message('completed'))
     self.send_command('ENTER')
     self.send_message(self.center_message('sample'))
-    sleep(2)
+    sleep(5)
     self.send_command('CLEAR')
     self.send_message(self.center_message("sleep for rest"))
     self.send_command('ENTER')
     self.send_message(self.center_message("of the month"))
-    sleep(2)
+    sleep(5)
     self.send_command('CLEAR')
 
   def missed_message(self):
+    self.send_command('CLEAR')
     self.send_message(self.center_message(' missed'))
     self.send_command('ENTER')
     self.send_message(self.center_message('sample'))
-    sleep(2)
+    sleep(5)
     self.send_command('CLEAR')
     self.send_message(self.center_message("sleep for rest"))
     self.send_command('ENTER')
     self.send_message(self.center_message("of the day"))
-    sleep(2)
+    sleep(5)
     self.send_command('CLEAR')
 
   def holding_restart(self,num_time):
@@ -111,6 +114,7 @@ class LCD:
     self.send_command('HOME')
 
   def restart_message(self):
+    self.send_command('CLEAR')
     self.send_message(self.center_message("Restarting"))
     self.send_command('ENTER')
     self.send_message(self.center_message('System'))
@@ -132,28 +136,27 @@ def usleep(seconds):
     number = seconds/float(1000)
     sleep(number)
 
-def lcd_serial_port():
-    port =  glob.glob('/dev/tty.usbmodem*')
-    return port
+# def lcd_serial_port():
+#     port =  glob.glob('/dev/tty.usbmodem*')
+#     return port
 
-def test_case():
-    '''
+# def test_case():
+#     '''
 
-    '''
-    port =  lcd_serial_port()
-    lcd  = LCD(port.pop(),9600)
-    previous = time()
-    while True:
-        try:
-            lcd.holding_restart(time()-previous)
-        except KeyboardInterrupt:
-            break
-            lcd.send_command('CLEAR')
+#     '''
+#     port =  lcd_serial_port()
+#     lcd  = LCD(port.pop(),9600)
+#     previous = time()
+#     while True:
+#         try:
+#             lcd.holding_restart(time()-previous)
+#         except KeyboardInterrupt:
+#             break
+#             lcd.send_command('CLEAR')
     # lcd.welcome_message()
     # lcd.waiting_message()
     # lcd.complete_message()
     # lcd.missed_message()
     # lcd.restart_message()
 
-test_case()
 
