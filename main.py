@@ -9,11 +9,10 @@ import serial
 from time import time
 import datetime
 from calendar import monthrange
-from sample_test import *
+from bravo_test import *
 
 def outfall_detection():
   os.environ['status'] = None
-  # incorporate sleep month or day functionality  
   initalize_buzzers(buzzers)
   xbee_port = xbee_usb_port()
   lcd_port = lcd_serial_port()
@@ -43,3 +42,4 @@ if __name__ == "__main__":
   ## pass the rainfall detection function 
   ##create outfall detection thread
   ## pass the outfall detection thread 
+  pass

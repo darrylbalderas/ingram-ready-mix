@@ -136,27 +136,5 @@ def usleep(seconds):
     number = seconds/float(1000)
     sleep(number)
 
-# def lcd_serial_port():
-#     port =  glob.glob('/dev/tty.usbmodem*')
-#     return port
-
-# def test_case():
-#     '''
-
-#     '''
-#     port =  lcd_serial_port()
-#     lcd  = LCD(port.pop(),9600)
-#     previous = time()
-#     while True:
-#         try:
-#             lcd.holding_restart(time()-previous)
-#         except KeyboardInterrupt:
-#             break
-#             lcd.send_command('CLEAR')
-    # lcd.welcome_message()
-    # lcd.waiting_message()
-    # lcd.complete_message()
-    # lcd.missed_message()
-    # lcd.restart_message()
 
 
