@@ -115,6 +115,8 @@ def logger(start_time, end_time, amount_rain, pool_level, tag=None, outfall=None
 
 def invoke_system(led_matrix,lcd):
   #create an enviroment variable for invoke system
+  os.environ['invoke'] = 1
+  os.environ['restart'] = 0
   start_buzzer()
   count_row = 1
   invoke_color = led_matrix.ingram_colors("yellow")
@@ -128,8 +130,11 @@ def invoke_system(led_matrix,lcd):
   while current_time <= max_time:
     if check_complete():
       lcd.complete_message()
-      complete_state(led_matrix,start_time)
-      return 
+      if os.environ['restart'] != 0:
+        complete_state(led_matrix,start_time)
+        os.environ['invoke'] = 0
+        return 
+      break
     if check_mute():
       stop_buzzer()
     if check_restart():
@@ -142,6 +147,9 @@ def invoke_system(led_matrix,lcd):
   if count_row >= 8: 
     lcd.missed_message()
     missed_state(led_matrix,start_time)
+  else:
+    led_matrix.change_color(led_matrix.get_greenImage())
+
  
 def complete_state(led_matrix,start_time):
   stop_buzzer()
@@ -182,6 +190,7 @@ def restart_state(lcd):
     if not state:
       return
   lcd.restart_message()
+  os.environ['restart'] = 1
   print("reset")  # for testing purposes
   # os.system("sudo reboot")
 

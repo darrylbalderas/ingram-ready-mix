@@ -13,6 +13,7 @@ from bravo_test import *
 
 def outfall_detection():
   os.environ['status'] = None
+  os.environ['restart'] = 0
   initalize_buzzers(buzzers)
   xbee_port = xbee_usb_port()
   lcd_port = lcd_serial_port()
@@ -23,17 +24,26 @@ def outfall_detection():
   led_matrix.change_color(led_matrix.get_greenImage())
   while True:
     outfall = ""
-    os.environ['status'] = checkmonth_sample()
-    if os.environ['status'] == 1:
+    os.environ['status'] = str(checkmonth_sample())
+    if os.environ['status'] == '1':
       while calculate_sleep(True):
+        if check_restart():
+          restart_state()
         pass
-    elif os.environ['status'] == 0:
+    elif os.environ['status'] == '0':
       while calculate_sleep(False):
+        if check_restart():
+          restart_state()
         pass
     elif os.environ['status'] == None:
       outfall = bravo_xbee.receive_message()
       if outfall == 'out':
-        invoke_system(led_matrix, lcd)
+        time_date = datetime.datetime.now()
+        restart_date = time_date.month+'/'+time_date.year
+        if os.environ['restart'] == '1' and restart_date == os.environ[invoke_date]:
+          invoke_system(led_matrix, lcd)
+        elif os.environ['invoke'] == '0' and os.environ['restart'] == '0':
+          invoke_system(led_matrix, lcd)
 
       
 
