@@ -68,6 +68,8 @@ Notes 2-16-17
 * create a welcoming message
 * change restart function to shut down running applications  
  
-Notes 2-18-17
-* 
-
+Notes 2-20-17
+* create modules for flow_sensor, rain_guage, level_sensor
+* research about mutex locks or semaphores in python
+	* needed for the access of the xbee module
+* create a function to initalize global variable keys used in bravo_test.py and main.py

@@ -113,10 +113,9 @@ def logger(start_time, end_time, amount_rain, pool_level, tag=None, outfall=None
   fopen.write("\n")
   fopen.close()
 
-def invoke_system(led_matrix,lcd):
+def invoke_system(led_matrix,lcd,bravo_xbee):
   #create an enviroment variable for invoke system
-  os.environ['invoke'] = 1
-  os.environ['restart'] = 0
+  os.environ['invoke'] = '1'
   start_buzzer()
   count_row = 1
   invoke_color = led_matrix.ingram_colors("yellow")
@@ -127,14 +126,13 @@ def invoke_system(led_matrix,lcd):
   timer = time()
   time_date = datetime.datetime.now()
   start_time = time_date.month() + ':' + time_date.day() + ':' + time_date.year()
+  os.environ['invoke_date'] = time.month+'/'+time.year
   while current_time <= max_time:
+    bravo_xbee.send_message('stop\n')
     if check_complete():
       lcd.complete_message()
-      if os.environ['restart'] != 0:
-        complete_state(led_matrix,start_time)
-        os.environ['invoke'] = 0
-        return 
-      break
+      complete_state(led_matrix,start_time)
+      return 
     if check_mute():
       stop_buzzer()
     if check_restart():
@@ -162,6 +160,8 @@ def complete_state(led_matrix,start_time):
   time_date = datetime.datetime.now()
   end_time =  time_date.hour + ':' + time_date.minute + ':' + time_date.second 
   logger(start_time, end_time, amount_rain, pool_level, outfall, status)
+  os.environ['invoke'] = '0'
+  os.environ['restart'] = '0'
 
 def missed_state(led_matrix,start_time):
   stop_buzzer()
@@ -174,11 +174,13 @@ def missed_state(led_matrix,start_time):
   time_date = datetime.datetime.now() 
   end_time =  time_date.hour + ':' + time_date.minute + ':' + time_date.second 
   logger(start_time, end_time ,amount_rain, pool_level, outfall, status)
+  os.environ['invoke'] = '0'
+  os.environ['restart'] = '0'
   while not check_miss():
     pass
   led_matrix.change_color(led_matrix.get_greenImage())
   
-def restart_state(lcd):
+def restart_state(lcd,led_matrix):
   lcd.send_command('CLEAR')
   state  = 0
   end_time = 0
@@ -190,7 +192,8 @@ def restart_state(lcd):
     if not state:
       return
   lcd.restart_message()
-  os.environ['restart'] = 1
+  led_matrix.clear_matrix()
+  os.environ['restart'] = '1'
   print("reset")  # for testing purposes
   # os.system("sudo reboot")
 
@@ -220,33 +223,38 @@ def calculate_sleep(state):
       flag = True
   return flag
   
-def detect_rain(xbee,lcd):
-  pool_level = ""
-  activation = ""
-  rain_fall = ""
-  while activation != "":
-    ## include waiting message 
-    ## include mutex lock to ensure full usage of lcd
-    activation = xbee.receive_message()
+def detect_rain(xbee):
+  while True:
+    pool_level = ""
+    # activation = ""
+    rain_fall = ""
+    # while activation == "yes":
+    #   ## include waiting message 
+    #   ## include mutex lock to ensure full usage of lcd
+    #   activation = xbee.receive_message()
 
-  xbee.clear_serial()
-  time_date = datetime.datetime.now()
-  start_time = time_date.hour + ':' + time_date.minute + ':' + time_date.second 
-  while pool_level !=  "":
-    ## include waiting message 
-    ## include mutex lock to ensure full usage of lcd
-    pool_level = xbee.receive_message()
-    xbee.send_message('stop\n')
+    # xbee.clear_serial()
+    # time_date = datetime.datetime.now()
+    # start_time = time_date.hour + ':' + time_date.minute + ':' + time_date.second 
 
-  xbee.clear_serial()
-  os.environ['pool_level'] = float(pool_level)
-  while rain_fall != "":
-    ## include waiting message 
-    ## include mutex lock to ensure full usage of lcd
-    rain_fall = xbee.receive_message()
-    xbee.send_message('stop\n')
+    while pool_level !=  "":
+      ## include waiting message 
+      ## include mutex lock to ensure full usage of lcd
+      pool_level = xbee.receive_message()
+      xbee.send_message('stop\n')
 
-  xbee.clear_serial()
-  os.environ['environ'] = float(rain_fall)
-  end_time = time_date.hour + ':' + time_date.minute + ':' + time_date.second 
-  logger(start_time,end_time,rain_fall,pool_level,None,"-","-")
+    time_date = datetime.datetime.now()
+    start_time = time_date.hour + ':' + time_date.minute + ':' + time_date.second 
+
+    xbee.clear_serial()
+    os.environ['pool_level'] = float(pool_level)
+    while rain_fall != "":
+      ## include waiting message 
+      ## include mutex lock to ensure full usage of lcd
+      rain_fall = xbee.receive_message()
+      xbee.send_message('stop\n')
+
+    xbee.clear_serial()
+    os.environ['environ'] = float(rain_fall)
+    end_time = time_date.hour + ':' + time_date.minute + ':' + time_date.second 
+    logger(start_time,end_time,rain_fall,pool_level,None,"-","-")
