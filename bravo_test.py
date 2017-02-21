@@ -94,6 +94,20 @@ def logger(start_time, end_time, amount_rain, pool_level, tag=None, outfall=None
   time_date = datetime.datetime.now()
   if not os.path.exists(directory):
     os.system('mkdir ' + directory)
+
+  """ === alison
+  # cd into that directory
+  os.chdir(directory)
+
+  current_month = time.strftime("%B %Y")
+  current_date = time.strftime("%d %B %Y")
+
+  # check if current month folder exist, if not create it
+  if not os.path.exists(current_month):
+    os.makedirs(current_month)
+
+  """
+
   # date_message = '%s/%s/%s' %(time_date.month, time_date.day, time_date.year)
   file_name = '%s-%s-%s' %(time_date.month, time_date.day, time_date.year)
   if tag == 'C':
