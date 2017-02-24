@@ -1,8 +1,6 @@
 import serial 
 from time import sleep
-import glob 
 from math import floor
-from time import time
 
 class LCD:
   def __init__(self,lcd_port,baudrate):
@@ -70,15 +68,14 @@ class LCD:
     self.send_command('ENTER')
     self.send_message(self.center_message("IngramReady Mix"))
     # lcd.send_message(self.center_message("Mix\r"))
-    sleep(3)
+    sleep(5)
     self.send_command('CLEAR')
 
-  def waiting_message(self):
+  def waiting_message(self,message):
     self.send_message(self.center_message("waiting on"))
     self.send_command('ENTER')
-    self.send_message(self.center_message("message..."))
-    sleep(2)
-    self.send_command('CLEAR')
+    self.send_message(self.center_message(message +"..."))
+    self.send_command('HOME')
 
   def complete_message(self):
     self.send_command('CLEAR')
@@ -131,6 +128,17 @@ class LCD:
     self.send_command('ENTER')
     self.send_message(self.center_message(time_m))
     self.send_command("HOME")
+
+  def sleep_month(self):
+    pass
+
+  def sleep_day(self):
+    pass
+
+
+
+
+
 
 def usleep(seconds):
     number = seconds/float(1000)

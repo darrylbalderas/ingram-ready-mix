@@ -8,7 +8,6 @@ API_key = 'dada4f99c37259165cdd868ec597570a'
 san_marcos_id = 4726491
 
 class Weather:
-
     def __init__(self, city_id):
     	self.owm = pyowm.OWM(API_key)
         self.observations = self.owm.weather_at_id(city_id)

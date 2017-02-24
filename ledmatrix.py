@@ -7,12 +7,12 @@ class LedMatrix:
     self.__sense_hat = SenseHat()
     
     self.__colors = {'r' : [255,0,0], 
-                   'y' : [255,135,0], 
-                   'b':  [ 0,0,255], 
-                   'g' : [ 0,255,0],
-                   'v' : [159,0,255],
-                   'w' : [255,255,255]
-                   }
+                     'y' : [255,135,0], 
+                     'b':  [ 0,0,255], 
+                     'g' : [ 0,255,0],
+                     'v' : [159,0,255],
+                     'w' : [255,255,255]
+                    }
 
     self.__row = 8
     self.__column = 8
@@ -37,9 +37,8 @@ class LedMatrix:
     self.__sense_hat.set_pixels(color_image)
     
   def change_color_row(self,color_image,new_color,row):
-    multiple = 8 
-    start = (row-1) * multiple 
-    end = (row*multiple)
+    start = (row-1) * self.__row 
+    end = (row*self.__row)
     for i in range(start,end):
       color_image[i] = new_color
     self.__sense_hat.set_pixels(color_image)
@@ -106,37 +105,3 @@ class LedMatrix:
 
   def get_yellow(self):
     return self.__colors['y']
-
-
-
-
-# def test_case():
-#   visual_lights = LedMatrix()
-#   color_row = visual_lights.get_colors()['r']
-#   color_image = visual_lights.get_color_images()['green']
-#   visual_lights.change_Color(color_image)
-#   sleep(3)
-#   color_image = visual_lights.get_color_images()['yellow']
-#   visual_lights.change_Color(color_image)
-
-#   row_duration  = 1.875*2
-#   count_row = 1
-#   max_time = 15*2
-#   previous_time = time()
-#   current_time = 0
-  
-#   while current_time <= max_time:
-      
-#     if visual_lights.check_reset():
-#       count_row = 1
-#       visual_lights.show_collect_message()
-#       break
-#     current_time = time() - previous_time
-#     if current_time >= row_duration*count_row:
-#           print current_time
-#           print row_duration*count_row
-#           color_image = visual_lights.change_color_row(color_image,color_row,count_row)
-#           count_row += 1
-      
-#   visual_lights.missed_sample()
-

@@ -59,7 +59,6 @@ class Transceiver:
   def waitingbytes(self):
     return (self.ser.in_waiting, self.ser.out_waiting)
 
-
   def do_crc(self,message):
     pass
 
