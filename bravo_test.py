@@ -208,7 +208,7 @@ def checkmonth_sample():
   elif len(miss_files) > 0:
     return 0
   else:
-    return None
+    return -1
 
 def calculate_sleep(status):
   sleep_flag = False
@@ -246,7 +246,7 @@ def detect_rain(bravo_xbee):
     logger(start_time,end_time,rain_fall,pool_level,None,"-","-")
 
 def outfall_detection(bravo_xbee,lcd,led_matrix):
-  os.environ['status'] = None
+  os.environ['status'] = '-1'
   os.environ['restart'] = '0'
   if 'invoke' not in os.environ:
     os.environ['invoke'] = '0'
@@ -263,7 +263,7 @@ def outfall_detection(bravo_xbee,lcd,led_matrix):
         if check_restart():
           restart_state()
         pass
-    elif os.environ['status'] == None:
+    elif os.environ['status'] == '-1':
       outfall = bravo_xbee.receive_message()
       if outfall == 'out':
         time_date = datetime.datetime.now()

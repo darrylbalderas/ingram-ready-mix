@@ -2,6 +2,8 @@ import sys
 import glob 
 import serial
 from transceiver import Transceiver
+from time import sleep
+from test import print_hello
 
 def xbee_usb_port():
   '''
@@ -24,20 +26,15 @@ def xbee_usb_port():
           pass
   return result
 
-def print_hello():
-  print('hello world')
-
 # ports = xbee_usb_port()
-# coor = ports.pop()
-# xbee1 = Transceiver(9600,coor)
-# num = 0
+# end = ports[0]
+
+# xbee1 = Transceiver(9600,end)
+
 # while True:
-#   rain_message = xbee1.receive_message()
+#   xbee1.send_message("rain\n")
+#   confirm_message = xbee1.receive_message()
 
-#   if rain_message == 'rain':
-#     for i in range(0,10):
-#       xbee1.send_message('what\n')
-
-      
-    
-
+#   if confirm_message == "what":
+#     for i  in range(0,10):
+#       xbee1.send_message(str(2.341)+'\n')
