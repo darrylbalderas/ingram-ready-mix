@@ -15,11 +15,11 @@ global RESTART_HOLD
 RESTART_HOLD = 3 #seconds 
 
 ## gpio pins used 
-buzzers = [4,17,22,5,6,13] ## wiring in beardboard
-complete = 21 
+buzzers = [4,17,22,27,5,6,13,19] ## wiring in beardboard
+complete = 12 
 mute = 20
 miss = 16
-restart = 12
+restart = 21
 
 gpio.setmode(gpio.BCM)
 gpio.setup(complete,gpio.IN)
