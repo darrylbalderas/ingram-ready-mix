@@ -7,8 +7,8 @@ from lcd import LCD
 from ledmatrix import LedMatrix
 from bravo_test import *
 
-
 if __name__ == "__main__":
+  initialize_files()
   initalize_buzzers(buzzers)
   xbee_port = xbee_usb_port()
   lcd_port = lcd_serial_port()

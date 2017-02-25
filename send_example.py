@@ -5,20 +5,7 @@ from transceiver import Transceiver
 from time import sleep
 import os
 
-STATUS = './status_val.txt'
-INVOKE = './invoke_val.txt'
-INVOKE_DATE = './invoke_date_val.txt'
-RAIN = './rain_val.txt'
-POOL_LEVEL = './pool_level_val.txt'
-RESTART = './restart_val.txt'
 
-arrays = [STATUS,INVOKE, INVOKE_DATE, RAIN, POOL_LEVEL, RESTART]
-
-def initialize_files(arrays):
-  for array in arrays:
-    fopen = open(array, 'w')
-    fopen.write('0')
-    fopen.close()
 
 def xbee_usb_port():
   '''
@@ -48,8 +35,6 @@ def outfall_detection(xbee):
       print(outfall_confirmation + 'nope')
       xbee.send_message('out\n')
 
-
-# port = xbee_usb_port()
-# charlie_xbee = Transceiver(9600,port)
-# outfall_detection(charlie_xbee)
-initialize_files(arrays)
+port = xbee_usb_port()
+charlie_xbee = Transceiver(9600,port)
+outfall_detection(charlie_xbee)
