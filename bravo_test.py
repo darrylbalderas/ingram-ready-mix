@@ -31,13 +31,13 @@ def initialize_files():
   }
 
   for key,value in files.items():
-    if not os.exists(value):
+    if not os.path.exists(value):
       fopen = open(value, 'w')
       fopen.write('None')
       fopen.close()
 
 def check_value_file(file_name):
-  if os.exists(file_name):
+  if os.path.exists(file_name):
     fopen = open(file_name,'r')
     tmp = fopen.read()
     value = int(tmp)
@@ -46,13 +46,12 @@ def check_value_file(file_name):
     return None
 
 def set_value_file(file_name, value):
-  if os.exists(file_name):
+  if os.path.exists(file_name):
     fopen = open(file_name,'w')
     fopen.write(value)
     fopen.close()
   else:
     return None
-
 
 ## gpio pins used 
 buzzers = [4,17,22,27,5,6,13,19] ## wiring in beardboard
@@ -128,10 +127,10 @@ def logger(start_time, end_time, amount_rain, pool_level, tag=None, outfall=None
   if not os.path.exists(directory):
     os.system('mkdir ' + directory)
   year_directory = directory + str(time_date.year) + '/'
-  if not os.path.exists(directory):
+  if not os.path.exists(year_directory):
     os.system('mkdir ' + year_directory)
   month_directory = year_directory + str(time_date.month) + '/'
-  if not os.path.exists(directory):
+  if not os.path.exists(month_directory):
     os.system('mkdir ' + month_directory)
   # date_message = '%s/%s/%s' %(time_date.month, time_date.day, time_date.year)
   file_name = '%s-%s-%s'%(time_date.month, time_date.day,time_date.year)
