@@ -87,20 +87,20 @@ def logger(start_time, end_time, amount_rain, pool_level, tag=None, outfall=None
   directory = '~/Desktop/log_data/'
   if not os.path.exists(directory):
     os.system('mkdir ' + directory)
-  directory = directory + time_date.year + '/'
+  year_directory = directory + str(time_date.year) + '/'
   if not os.path.exists(directory):
-    os.system('mkdir ' + directory)
-  directory = directory + time_date.month + '/'
+    os.system('mkdir ' + year_directory)
+  month_directory = year_directory + str(time_date.month) + '/'
   if not os.path.exists(directory):
-    os.system('mkdir ' + directory)
+    os.system('mkdir ' + month_directory)
   # date_message = '%s/%s/%s' %(time_date.month, time_date.day, time_date.year)
-  file_name = '%s-%s-%s' %(time_date.month, time_date.day, time_date.year)
+  file_name = '%s-%s-%s'%(time_date.month, time_date.day,time_date.year)
   if tag == 'C':
-    collect_datafile = directory + file_name+'_completed.csv'
+    collect_datafile = month_directory + file_name+'_completed.csv'
   elif tag == 'M':
-    collect_datafile = directory + file_name+'_missed.csv'
+    collect_datafile = month_directory + file_name+'_missed.csv'
   else:
-    collect_datafile = directory + file_name+'.csv'
+    collect_datafile = month_directory + file_name+'.csv'
 
   if os.path.exists(collect_datafile):
     fopen = open(collect_datafile, 'a')
@@ -122,8 +122,8 @@ def invoke_system(led_matrix,lcd,bravo_xbee):
   current_time = 0
   timer = time()
   time_date = datetime.datetime.now()
-  start_time = time_date.month() + ':' + time_date.day() + ':' + time_date.year()
-  os.environ['invoke_date'] = time.month+'/'+time.year
+  start_time = '%s:%s:%s'%(time_date.hour,time_date.minute,time_date.second)
+  os.environ['invoke_date'] = '%s/%s'%(time.month,time.year)
   while current_time <= led_matrix.get_max_time():
     bravo_xbee.send_message('stop\n')
     if check_complete():
@@ -157,7 +157,7 @@ def complete_state(led_matrix,start_time):
   amount_rain = os.environ['rain']  
   status = "completed"  
   time_date = datetime.datetime.now()
-  end_time =  time_date.hour + ':' + time_date.minute + ':' + time_date.second 
+  end_time =  '%s:%s:%s'%(time_date.hour,time_date.minute,time_date.second)
   logger(start_time, end_time, amount_rain, pool_level, 'C', outfall, status)
   os.environ['invoke'] = '0'
   os.environ['restart'] = '0'
@@ -171,7 +171,7 @@ def missed_state(led_matrix,start_time):
   amount_rain = os.environ['rain']
   status = "missed"  
   time_date = datetime.datetime.now() 
-  end_time =  time_date.hour + ':' + time_date.minute + ':' + time_date.second 
+  end_time =  '%s:%s:%s'%(time_date.hour,time_date.minute,time_date.second)
   logger(start_time, end_time ,amount_rain, pool_level, 'M', outfall, status)
   os.environ['invoke'] = '0'
   os.environ['restart'] = '0'
@@ -199,8 +199,8 @@ def restart_state(lcd,led_matrix):
 
 def checkmonth_sample():
   time_date = datetime.datetime.now()
-  complete_dir = '~/Desktop/log_data/'+ time_date.year +'/' + time_date.month + '/*_completed.csv'
-  missed_dir = '~/Desktop/log_data/'+ time_date.year +'/' + time_date.month + '/*_missed.csv'
+  complete_dir = '~/Desktop/log_data/%s/%s/*_completed.csv'%(time_date.year,time_date.month)
+  missed_dir = '~/Desktop/log_data/%s/%s/*_missed.csv'%(time_date.year, time_date.month)
   complete_files = glob.glob(complete_dir)
   miss_files = glob.glob(missed_dir)
   if len(complete_files) > 0:
@@ -214,12 +214,12 @@ def calculate_sleep(status):
   sleep_flag = False
   time_date = datetime.datetime.now()
   if status == 'missed':
-    time_left =  24 - int(time_date.hour)
+    time_left =  24 - time_date.hour
     if time_left > 0:
       sleep_flag = True
   elif status == 'complete':
     days_left = monthrange(time_date.year,time_date.month)
-    time_left = days_left[1] - int(time_date.day)
+    time_left = days_left[1] - time_date.day
     if time_left > 0:
       sleep_flag = True
   return sleep_flag
@@ -234,7 +234,7 @@ def detect_rain(bravo_xbee):
 
     bravo_xbee.clear_serial()
     time_date = datetime.datetime.now()
-    start_time = time_date.hour + ':' + time_date.minute + ':' + time_date.second 
+    start_time = '%s:%s:%s'%(time_date.hour,time_date.minute,time_date.second)
     os.environ['pool_level'] = float(pool_level)
     while rain_fall != "":
       rain_fall = bravo_xbee.receive_message()
@@ -242,7 +242,7 @@ def detect_rain(bravo_xbee):
 
     bravo_xbee.clear_serial()
     os.environ['environ'] = float(rain_fall)
-    end_time = time_date.hour + ':' + time_date.minute + ':' + time_date.second 
+    end_time = '%s:%s:%s'%(time_date.hour,time_date.minute,time_date.second)
     logger(start_time,end_time,rain_fall,pool_level,None,"-","-")
 
 def outfall_detection(bravo_xbee,lcd,led_matrix):
@@ -267,7 +267,7 @@ def outfall_detection(bravo_xbee,lcd,led_matrix):
       outfall = bravo_xbee.receive_message()
       if outfall == 'out':
         time_date = datetime.datetime.now()
-        restart_date = time_date.month+'/'+time_date.year
+        restart_date = '%s/%s'%(time_date.month,time_date.year)
         if os.environ['restart'] == '1' and restart_date == os.environ['invoke_date']:
           invoke_system(led_matrix,lcd,bravo_xbee)
         elif os.environ['invoke'] == '0' and os.environ['restart'] == '0':
