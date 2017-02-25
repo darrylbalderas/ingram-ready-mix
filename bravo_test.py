@@ -14,9 +14,9 @@ import math
 
 
 global RESTART_HOLD 
-RESTART_HOLD = 3
+RESTART_HOLD = 3 #seconds 
 global COLLECT_TIME
-COLLECT_TIME = 15 #minutes
+COLLECT_TIME = 2 #minutes
 
 os.eviron['pool_level'] = 0
 os.environ['rain'] = 0
@@ -90,8 +90,15 @@ def xbee_usb_port():
   return result[0]
 
 def logger(start_time, end_time, amount_rain, pool_level, tag=None, outfall=None, status=None):
-  directory = '~/Desktop/log_data/'
+  #create layers like year and month and day 
   time_date = datetime.datetime.now()
+  directory = '~/Desktop/log_data/'
+  if not os.path.exists(directory):
+    os.system('mkdir ' + directory)
+  directory = directory + time_date.year + '/'
+  if not os.path.exists(directory):
+    os.system('mkdir ' + directory)
+  directory = directory + time_date.month + '/'
   if not os.path.exists(directory):
     os.system('mkdir ' + directory)
   # date_message = '%s/%s/%s' %(time_date.month, time_date.day, time_date.year)
@@ -108,6 +115,7 @@ def logger(start_time, end_time, amount_rain, pool_level, tag=None, outfall=None
   else:
     fopen = open(collect_datafile, 'w')
     fopen.write('StartTime, EndTime, AmountRain, PoolLevel, Outfall, Status')
+
   fopen.write("{},{},{},{},{},{}".format(start_time, end_time, amount_rain 
                                          ,pool_level, outfall, status))
   fopen.write("\n")
@@ -142,10 +150,12 @@ def invoke_system(led_matrix,lcd,bravo_xbee):
     if current_time >= row_duration*count_row:
           led_matrix.change_color_row(invoke_color,led_matrix.get_red(),count_row)
           count_row += 1
+
   if count_row >= 8: 
     lcd.missed_message()
     missed_state(led_matrix,start_time)
   else:
+    stop_buzzer()
     led_matrix.change_color(led_matrix.get_greenImage())
 
  
@@ -154,12 +164,12 @@ def complete_state(led_matrix,start_time):
   led_matrix.clear_matrix()
   led_matrix.change_color(led_matrix.get_greenImage())
   outfall = 'Yes'
-  pool_level = os.environ['pool_level'] # sample value
-  amount_rain = os.environ['rain']  #sample value
-  status = "completed"   #sample value 
+  pool_level = os.environ['pool_level'] 
+  amount_rain = os.environ['rain']  
+  status = "completed"  
   time_date = datetime.datetime.now()
   end_time =  time_date.hour + ':' + time_date.minute + ':' + time_date.second 
-  logger(start_time, end_time, amount_rain, pool_level, outfall, status)
+  logger(start_time, end_time, amount_rain, pool_level, 'C', outfall, status)
   os.environ['invoke'] = '0'
   os.environ['restart'] = '0'
 
@@ -170,10 +180,10 @@ def missed_state(led_matrix,start_time):
   outfall = 'Yes'
   pool_level = os.environ['pool_level'] 
   amount_rain = os.environ['rain']
-  status = "missed"   #sample value #sample value
+  status = "missed"  
   time_date = datetime.datetime.now() 
   end_time =  time_date.hour + ':' + time_date.minute + ':' + time_date.second 
-  logger(start_time, end_time ,amount_rain, pool_level, outfall, status)
+  logger(start_time, end_time ,amount_rain, pool_level, 'M', outfall, status)
   os.environ['invoke'] = '0'
   os.environ['restart'] = '0'
   while not check_miss():
@@ -191,6 +201,7 @@ def restart_state(lcd,led_matrix):
     state = check_restart()
     if not state:
       return
+  stop_buzzer()
   lcd.restart_message()
   led_matrix.clear_matrix()
   os.environ['restart'] = '1'
@@ -199,8 +210,8 @@ def restart_state(lcd,led_matrix):
 
 def checkmonth_sample():
   time_date = datetime.datetime.now()
-  complete_files = glob.glob('~/Desktop/log_data/' + time_date.month + '*' + time_date.year + 'C.csv')
-  miss_files = glob.glob('~/Desktop/log_data/%s-%s-%sM.csv'%(time_date.month,
+  complete_files = glob.glob('~/Desktop/log_data/' + time_date.month + '*' + time_date.year + '_completed.csv')
+  miss_files = glob.glob('~/Desktop/log_data/%s-%s-%s_missed.csv'%(time_date.month,
                                                               time_date.day, time_date.year))
   if len(complete_files) > 0:
     return 1
