@@ -265,6 +265,7 @@ def outfall_detection(bravo_xbee,lcd,led_matrix):
         pass
     elif os.environ['STATUS'] == '-1':
       outfall = bravo_xbee.receive_message()
+      print(outfall + "nope")
       if outfall == 'out':
         time_date = datetime.datetime.now()
         restart_date = '%s/%s'%(time_date.month,time_date.year)
