@@ -9,10 +9,6 @@ from time import time
 # from rain_guage import RainGuage
 # from level_sensor import LevelSensor
 
-## gpio pins for the sensors 
-##The eTape is a solid state device that measures the fluid levels in water.
-#2250 ohms = empty and 400 ohms = full, +-10%
-
 def detect_rain(xbee,rain_guage, level_sensor):
   while True:
     pool_confirmation = ""

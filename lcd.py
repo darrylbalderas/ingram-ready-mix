@@ -129,17 +129,6 @@ class LCD:
     self.send_message(self.center_message(time_m))
     self.send_command("HOME")
 
-  def sleep_month(self):
-    pass
-
-  def sleep_day(self):
-    pass
-
-
-
-
-
-
 def usleep(seconds):
     number = seconds/float(1000)
     sleep(number)

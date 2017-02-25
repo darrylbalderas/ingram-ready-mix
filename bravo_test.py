@@ -1,7 +1,6 @@
 import sys
 import os
 import RPi.GPIO as gpio
-from time import sleep
 import glob
 import serial
 from transceiver import Transceiver
@@ -10,16 +9,10 @@ from ledmatrix import LedMatrix
 from time import time
 import datetime
 from calendar import monthrange
-import math
 
 
 global RESTART_HOLD 
 RESTART_HOLD = 3 #seconds 
-global COLLECT_TIME
-COLLECT_TIME = 2 #minutes
-
-os.eviron['pool_level'] = 0
-os.environ['rain'] = 0
 
 ## gpio pins used 
 buzzers = [4,17,22,5,6,13] ## wiring in beardboard
@@ -90,7 +83,6 @@ def xbee_usb_port():
   return result[0]
 
 def logger(start_time, end_time, amount_rain, pool_level, tag=None, outfall=None, status=None):
-  #create layers like year and month and day 
   time_date = datetime.datetime.now()
   directory = '~/Desktop/log_data/'
   if not os.path.exists(directory):
@@ -122,20 +114,17 @@ def logger(start_time, end_time, amount_rain, pool_level, tag=None, outfall=None
   fopen.close()
 
 def invoke_system(led_matrix,lcd,bravo_xbee):
-  #create an enviroment variable for invoke system
   os.environ['invoke'] = '1'
   start_buzzer()
   count_row = 1
   invoke_color = led_matrix.ingram_colors("yellow")
   led_matrix.change_color(led_matrix.get_yellowImage())
-  row_duration  = 1.875*COLLECT_TIME
-  max_time = 15*COLLECT_TIME  #change 15 to 60
   current_time = 0
   timer = time()
   time_date = datetime.datetime.now()
   start_time = time_date.month() + ':' + time_date.day() + ':' + time_date.year()
   os.environ['invoke_date'] = time.month+'/'+time.year
-  while current_time <= max_time:
+  while current_time <= led_matrix.get_max_time():
     bravo_xbee.send_message('stop\n')
     if check_complete():
       lcd.complete_message()
@@ -146,8 +135,8 @@ def invoke_system(led_matrix,lcd,bravo_xbee):
     if check_restart():
       restart_state(lcd)
     current_time = time() - timer
-    lcd.display_timer(max_time-current_time)
-    if current_time >= row_duration*count_row:
+    lcd.display_timer(led_matrix.get_max_time()-current_time)
+    if current_time >= led_matrix.get_row_duration()*count_row:
           led_matrix.change_color_row(invoke_color,led_matrix.get_red(),count_row)
           count_row += 1
 
@@ -210,9 +199,10 @@ def restart_state(lcd,led_matrix):
 
 def checkmonth_sample():
   time_date = datetime.datetime.now()
-  complete_files = glob.glob('~/Desktop/log_data/' + time_date.month + '*' + time_date.year + '_completed.csv')
-  miss_files = glob.glob('~/Desktop/log_data/%s-%s-%s_missed.csv'%(time_date.month,
-                                                              time_date.day, time_date.year))
+  complete_dir = '~/Desktop/log_data/'+ time_date.year +'/' + time_date.month + '/*_completed.csv'
+  missed_dir = '~/Desktop/log_data/'+ time_date.year +'/' + time_date.month + '/*_missed.csv'
+  complete_files = glob.glob(complete_dir)
+  miss_files = glob.glob(missed_dir)
   if len(complete_files) > 0:
     return 1
   elif len(miss_files) > 0:
@@ -220,52 +210,65 @@ def checkmonth_sample():
   else:
     return None
 
-def calculate_sleep(state):
-  flag = False
+def calculate_sleep(status):
+  sleep_flag = False
   time_date = datetime.datetime.now()
-  if state == False:
-    interval =  24 - time_date.hour
-    if interval > 0:
-      flag = True
-  elif state == True:
+  if status == 'missed':
+    time_left =  24 - int(time_date.hour)
+    if time_left > 0:
+      sleep_flag = True
+  elif status == 'complete':
     days_left = monthrange(time_date.year,time_date.month)
-    interval = days_left[1] - time_date.day
-    if interval > 0:
-      flag = True
-  return flag
+    time_left = days_left[1] - int(time_date.day)
+    if time_left > 0:
+      sleep_flag = True
+  return sleep_flag
   
-def detect_rain(xbee):
+def detect_rain(bravo_xbee):
   while True:
     pool_level = ""
-    # activation = ""
     rain_fall = ""
-    # while activation == "yes":
-    #   ## include waiting message 
-    #   ## include mutex lock to ensure full usage of lcd
-    #   activation = xbee.receive_message()
-
-    # xbee.clear_serial()
-    # time_date = datetime.datetime.now()
-    # start_time = time_date.hour + ':' + time_date.minute + ':' + time_date.second 
-
     while pool_level !=  "":
-      ## include waiting message 
-      ## include mutex lock to ensure full usage of lcd
-      pool_level = xbee.receive_message()
-      xbee.send_message('stop\n')
+      pool_level = bravo_xbee.receive_message()
+      bravo_xbee.send_message('stop\n')
 
+    bravo_xbee.clear_serial()
     time_date = datetime.datetime.now()
     start_time = time_date.hour + ':' + time_date.minute + ':' + time_date.second 
-
-    xbee.clear_serial()
     os.environ['pool_level'] = float(pool_level)
     while rain_fall != "":
-      ## include waiting message 
-      ## include mutex lock to ensure full usage of lcd
-      rain_fall = xbee.receive_message()
-      xbee.send_message('stop\n')
+      rain_fall = bravo_xbee.receive_message()
+      bravo_xbee.send_message('stop\n')
 
-    xbee.clear_serial()
+    bravo_xbee.clear_serial()
     os.environ['environ'] = float(rain_fall)
     end_time = time_date.hour + ':' + time_date.minute + ':' + time_date.second 
     logger(start_time,end_time,rain_fall,pool_level,None,"-","-")
+
+def outfall_detection(bravo_xbee,lcd,led_matrix):
+  os.environ['status'] = None
+  os.environ['restart'] = '0'
+  if 'invoke' not in os.environ:
+    os.environ['invoke'] = '0'
+  while True:
+    outfall = ""
+    os.environ['status'] = str(checkmonth_sample())
+    if os.environ['status'] == '1':
+      while calculate_sleep('complete'):
+        if check_restart():
+          restart_state()
+        pass
+    elif os.environ['status'] == '0':
+      while calculate_sleep('missed'):
+        if check_restart():
+          restart_state()
+        pass
+    elif os.environ['status'] == None:
+      outfall = bravo_xbee.receive_message()
+      if outfall == 'out':
+        time_date = datetime.datetime.now()
+        restart_date = time_date.month+'/'+time_date.year
+        if os.environ['restart'] == '1' and restart_date == os.environ['invoke_date']:
+          invoke_system(led_matrix,lcd,bravo_xbee)
+        elif os.environ['invoke'] == '0' and os.environ['restart'] == '0':
+          invoke_system(led_matrix, lcd, bravo_xbee)
