@@ -114,7 +114,7 @@ def logger(start_time, end_time, amount_rain, pool_level, tag=None, outfall=None
   fopen.close()
 
 def invoke_system(led_matrix,lcd,bravo_xbee):
-  os.environ['invoke'] = '1'
+  os.environ['INVOKE'] = '1'
   start_buzzer()
   count_row = 1
   invoke_color = led_matrix.ingram_colors("yellow")
@@ -123,7 +123,7 @@ def invoke_system(led_matrix,lcd,bravo_xbee):
   timer = time()
   time_date = datetime.datetime.now()
   start_time = '%s:%s:%s'%(time_date.hour,time_date.minute,time_date.second)
-  os.environ['invoke_date'] = '%s/%s'%(time.month,time.year)
+  os.environ['INVOKE_DATE'] = '%s/%s'%(time.month,time.year)
   while current_time <= led_matrix.get_max_time():
     bravo_xbee.send_message('stop\n')
     if check_complete():
@@ -153,28 +153,28 @@ def complete_state(led_matrix,start_time):
   led_matrix.clear_matrix()
   led_matrix.change_color(led_matrix.get_greenImage())
   outfall = 'Yes'
-  pool_level = os.environ['pool_level'] 
-  amount_rain = os.environ['rain']  
+  pool_level = os.environ['POOL_LEVEL'] 
+  amount_rain = os.environ['RAIN']  
   status = "completed"  
   time_date = datetime.datetime.now()
   end_time =  '%s:%s:%s'%(time_date.hour,time_date.minute,time_date.second)
   logger(start_time, end_time, amount_rain, pool_level, 'C', outfall, status)
-  os.environ['invoke'] = '0'
-  os.environ['restart'] = '0'
+  os.environ['INVOKE'] = '0'
+  os.environ['RESTART'] = '0'
 
 def missed_state(led_matrix,start_time):
   stop_buzzer()
   led_matrix.clear_matrix()
   led_matrix.change_color(led_matrix.get_redImage())
   outfall = 'Yes'
-  pool_level = os.environ['pool_level'] 
-  amount_rain = os.environ['rain']
+  pool_level = os.environ['POOL_LEVEL'] 
+  amount_rain = os.environ['RAIN']
   status = "missed"  
   time_date = datetime.datetime.now() 
   end_time =  '%s:%s:%s'%(time_date.hour,time_date.minute,time_date.second)
   logger(start_time, end_time ,amount_rain, pool_level, 'M', outfall, status)
-  os.environ['invoke'] = '0'
-  os.environ['restart'] = '0'
+  os.environ['INVOKE'] = '0'
+  os.environ['RESTART'] = '0'
   while not check_miss():
     pass
   led_matrix.change_color(led_matrix.get_greenImage())
@@ -193,7 +193,7 @@ def restart_state(lcd,led_matrix):
   stop_buzzer()
   lcd.restart_message()
   led_matrix.clear_matrix()
-  os.environ['restart'] = '1'
+  os.environ['RESTART'] = '1'
   print("reset")  # for testing purposes
   # os.system("sudo reboot")
 
@@ -235,40 +235,40 @@ def detect_rain(bravo_xbee):
     bravo_xbee.clear_serial()
     time_date = datetime.datetime.now()
     start_time = '%s:%s:%s'%(time_date.hour,time_date.minute,time_date.second)
-    os.environ['pool_level'] = float(pool_level)
+    os.environ['POOL_LEVEL'] = float(pool_level)
     while rain_fall != "":
       rain_fall = bravo_xbee.receive_message()
       bravo_xbee.send_message('stop\n')
 
     bravo_xbee.clear_serial()
-    os.environ['environ'] = float(rain_fall)
+    os.environ['RAIN'] = float(rain_fall)
     end_time = '%s:%s:%s'%(time_date.hour,time_date.minute,time_date.second)
-    logger(start_time,end_time,rain_fall,pool_level,None,"-","-")
+    logger(start_time,end_time,float(rain_fall),float(pool_level),None,"-","-")
 
 def outfall_detection(bravo_xbee,lcd,led_matrix):
-  os.environ['status'] = '-1'
-  os.environ['restart'] = '0'
-  if 'invoke' not in os.environ:
-    os.environ['invoke'] = '0'
+  os.environ['STATUS'] = '-1'
+  os.environ['RESTART'] = '0'
+  if 'INVOKE' not in os.environ:
+    os.environ['INVOKE'] = '0'
   while True:
     outfall = ""
-    os.environ['status'] = str(checkmonth_sample())
-    if os.environ['status'] == '1':
+    os.environ['STATUS'] = str(checkmonth_sample())
+    if os.environ['STATUS'] == '1':
       while calculate_sleep('complete'):
         if check_restart():
           restart_state()
         pass
-    elif os.environ['status'] == '0':
+    elif os.environ['STATUS'] == '0':
       while calculate_sleep('missed'):
         if check_restart():
           restart_state()
         pass
-    elif os.environ['status'] == '-1':
+    elif os.environ['STATUS'] == '-1':
       outfall = bravo_xbee.receive_message()
       if outfall == 'out':
         time_date = datetime.datetime.now()
         restart_date = '%s/%s'%(time_date.month,time_date.year)
-        if os.environ['restart'] == '1' and restart_date == os.environ['invoke_date']:
+        if os.environ['RESTART'] == '1' and restart_date == os.environ['INVOKE_DATE']:
           invoke_system(led_matrix,lcd,bravo_xbee)
-        elif os.environ['invoke'] == '0' and os.environ['restart'] == '0':
+        elif os.environ['INVOKE'] == '0' and os.environ['RESTART'] == '0':
           invoke_system(led_matrix, lcd, bravo_xbee)
