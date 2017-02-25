@@ -73,3 +73,8 @@ Notes 2-20-17
 * research about mutex locks or semaphores in python
 	* needed for the access of the xbee module
 * create a function to initalize global variable keys used in bravo_test.py and main.py
+
+Notes 2-25-17
+* fix switches 
+* create threads
+* create locks

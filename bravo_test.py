@@ -21,37 +21,20 @@ RAIN = './rain_val.txt'
 POOL_LEVEL = './pool_level_val.txt'
 RESTART = './restart_val.txt'
 
-def initialize_files():
-  files = {'status': './status_val.txt',
-           'invoke': './invoke_val.txt',
-           'invoke_date': './invoke_date_val.txt',
-           'rain': './rain_val.txt',
-           'pool_level': './pool_level_val.txt',
-           'restart' : './restart_val.txt'
-  }
+months = {'1': 'January',
+          '2': 'February',
+          '3': 'March',
+          '4': 'April',
+          '5': 'May',
+          '6': 'June',
+          '7': 'July',
+          '8': 'August',
+          '9': 'September',
+          '10': 'October',
+          '11': 'November',
+          '12': 'December'
+          }
 
-  for key,value in files.items():
-    if not os.path.exists(value):
-      fopen = open(value, 'w')
-      fopen.write('None')
-      fopen.close()
-
-def check_value_file(file_name):
-  if os.path.exists(file_name):
-    fopen = open(file_name,'r')
-    tmp = fopen.read()
-    value = int(tmp)
-    return value
-  else:
-    return None
-
-def set_value_file(file_name, value):
-  if os.path.exists(file_name):
-    fopen = open(file_name,'w')
-    fopen.write(value)
-    fopen.close()
-  else:
-    return None
 
 ## gpio pins used 
 buzzers = [4,17,22,27,5,6,13,19] ## wiring in beardboard
@@ -65,6 +48,40 @@ gpio.setup(complete,gpio.IN)
 gpio.setup(mute,gpio.IN)
 gpio.setup(miss,gpio.IN)
 gpio.setup(restart,gpio.IN)
+
+def initialize_files():
+  files = {'status': './status_val.txt',
+           'invoke': './invoke_val.txt',
+           'invoke_date': './invoke_date_val.txt',
+           'rain': './rain_val.txt',
+           'pool_level': './pool_level_val.txt',
+           'restart' : './restart_val.txt'
+  }
+
+  for key,value in files.items():
+    if os.path.exists(value):
+      fopen = open(value, 'w')
+      if key == 'invoke':
+        fopen.write('0')
+      else:
+        fopen.write('-1')
+      fopen.close()
+
+def check_value_file(file_name):
+  if os.path.exists(file_name):
+    fopen = open(file_name,'r')
+    tmp = fopen.read()
+    return tmp
+  else:
+    return None
+
+def set_value_file(file_name, value):
+  if os.path.exists(file_name):
+    fopen = open(file_name,'w')
+    fopen.write(value)
+    fopen.close()
+  else:
+    return None
 
 def check_complete():
   return not gpio.input(complete)
@@ -123,29 +140,29 @@ def xbee_usb_port():
 
 def logger(start_time, end_time, amount_rain, pool_level, tag=None, outfall=None, status=None):
   time_date = datetime.datetime.now()
-  directory = '~/Desktop/log_data/'
+  directory = '/home/pi/Desktop/log_data/'
   if not os.path.exists(directory):
     os.system('mkdir ' + directory)
   year_directory = directory + str(time_date.year) + '/'
   if not os.path.exists(year_directory):
     os.system('mkdir ' + year_directory)
-  month_directory = year_directory + str(time_date.month) + '/'
+  month_directory = year_directory + months[str(time_date.month)] + '/'
   if not os.path.exists(month_directory):
     os.system('mkdir ' + month_directory)
-  # date_message = '%s/%s/%s' %(time_date.month, time_date.day, time_date.year)
-  file_name = '%s-%s-%s'%(time_date.month, time_date.day,time_date.year)
+  file_name = '%s_%s_%s'%(time_date.month, time_date.day,time_date.year)
   if tag == 'C':
-    collect_datafile = month_directory + file_name+'_completed.csv'
+    collect_datafile = month_directory + file_name+'_completed.ods'
   elif tag == 'M':
-    collect_datafile = month_directory + file_name+'_missed.csv'
+    collect_datafile = month_directory + file_name+'_missed.ods'
   else:
-    collect_datafile = month_directory + file_name+'.csv'
+    collect_datafile = month_directory + file_name+'.ods'
 
   if os.path.exists(collect_datafile):
     fopen = open(collect_datafile, 'a')
   else:
     fopen = open(collect_datafile, 'w')
     fopen.write('StartTime, EndTime, AmountRain, PoolLevel, Outfall, Status')
+    fopen.write('\n')
 
   fopen.write("{},{},{},{},{},{}".format(start_time, end_time, amount_rain 
                                          ,pool_level, outfall, status))
@@ -162,7 +179,7 @@ def invoke_system(led_matrix,lcd,bravo_xbee):
   timer = time()
   time_date = datetime.datetime.now()
   start_time = '%s:%s:%s'%(time_date.hour,time_date.minute,time_date.second)
-  invoke_date = '%s/%s'%(time.month,time.year)
+  invoke_date = '%s/%s'%(time_date.month,time_date.year)
   set_value_file(INVOKE_DATE,invoke_date)
   while current_time <= led_matrix.get_max_time():
     bravo_xbee.send_message('stop\n')
@@ -239,8 +256,8 @@ def restart_state(lcd,led_matrix):
 
 def checkmonth_sample():
   time_date = datetime.datetime.now()
-  complete_dir = '~/Desktop/log_data/%s/%s/*_completed.csv'%(time_date.year,time_date.month)
-  missed_dir = '~/Desktop/log_data/%s/%s/*_missed.csv'%(time_date.year, time_date.month)
+  complete_dir = '/home/pi/Desktop/log_data/%s/%s/*completed.ods'%(time_date.year,months[str(time_date.month)])
+  missed_dir = '/home/pi/Desktop/log_data/%s/%s/*missed.ods'%(time_date.year, months[str(time_date.month)])
   complete_files = glob.glob(complete_dir)
   miss_files = glob.glob(missed_dir)
   if len(complete_files) > 0:
@@ -290,7 +307,9 @@ def outfall_detection(bravo_xbee,lcd,led_matrix):
   set_value_file(RESTART, '0')
   while True:
     outfall = ""
-    set_value_file(STATUS,str(checkmonth_sample()))
+    status = str(checkmonth_sample())
+    print(status)
+    set_value_file(STATUS,status)
     if check_value_file(STATUS) == '1':
       while calculate_sleep('complete'):
         if check_restart():
@@ -299,15 +318,14 @@ def outfall_detection(bravo_xbee,lcd,led_matrix):
     elif check_value_file(STATUS) == '0':
       while calculate_sleep('missed'):
         if check_restart():
-          restart_state()
+          restart_state(lcd,led_matrix)
         pass
     elif check_value_file(STATUS) == '-1':
       outfall = bravo_xbee.receive_message()
-      print(outfall + "nope")
-      if outfall == 'out':
+      if outfall == 'out\n':
         time_date = datetime.datetime.now()
         restart_date = '%s/%s'%(time_date.month,time_date.year)
         if check_value_file(RESTART) == '1' and restart_date == check_value_file(INVOKE_DATE):
           invoke_system(led_matrix,lcd,bravo_xbee)
-        elif check_value_file(INVOKE) == '0' and check_value_file(RESTART) == '0':
+        elif check_value_file(INVOKE) == '0':
           invoke_system(led_matrix, lcd, bravo_xbee)

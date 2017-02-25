@@ -60,10 +60,10 @@ class LedMatrix:
     self.__color_images = color_images
 
   def get_row_duration(self):
-    return self.__row_time
+    return self.__row_duration
 
   def set_row_duration(self,new_row_duration):
-    self.__row_time = new_row_duration
+    self.__row_duration = new_row_duration
 
   def get_max_time(self):
     return self.__max_time
@@ -74,7 +74,7 @@ class LedMatrix:
   def show_message(self,message):
     return self.__sense_hat.show_message(message,text_colour = [255,255,255])
 
-  def ingram_colors(color):
+  def ingram_colors(self,color):
     yellow = [255,135,0]
     green = [0,255,0]
     red = [255,0,0]
