@@ -281,18 +281,27 @@ def calculate_sleep(status):
       sleep_flag = True
   return sleep_flag
   
+#This detect_rain function should only be functional whenever the rain guage 
+#of team charlie is triggered
 def detect_rain(bravo_xbee):
-  while True:
     pool_level = ""
     rain_fall = ""
-    while pool_level !=  "":
-      pool_level = bravo_xbee.receive_message()
-      bravo_xbee.send_message('stop\n')
-
     bravo_xbee.clear_serial()
     time_date = datetime.datetime.now()
     start_time = '%s:%s:%s'%(time_date.hour,time_date.minute,time_date.second)
-    set_value_file(POOL_LEVEL, pool_level)
+    for x in xrange(40):
+      bravo_xbee.send_message('conf_trig\n')
+      if bravo_xbee.receive_message()
+          break
+          
+    bravo_xbee.clear_serial()
+
+    for x in xrange(40):
+      pool_level = bravo_xbee.receive_message()
+      if pool_level != ""
+         bravo_xbee.send_message('conf_p\n')
+         break
+    set_value_file(POOL_LEVEL, pool_level) #left off here, continue  at home
     while rain_fall != "":
       rain_fall = bravo_xbee.receive_message()
       bravo_xbee.send_message('stop\n')
