@@ -14,12 +14,12 @@ from calendar import monthrange
 global RESTART_HOLD 
 RESTART_HOLD = 3 #seconds 
 
-STATUS = './status_val.txt'
-INVOKE = './invoke_val.txt'
-INVOKE_DATE = './invoke_date_val.txt'
-RAIN = './rain_val.txt'
-POOL_LEVEL = './pool_level_val.txt'
-RESTART = './restart_val.txt'
+STATUS = './config_files/status_val.txt'
+INVOKE = './config_files/invoke_val.txt'
+INVOKE_DATE = './config_files/invoke_date_val.txt'
+RAIN = './config_files/rain_val.txt'
+POOL_LEVEL = './config_files/pool_level_val.txt'
+RESTART = './config_files/restart_val.txt'
 
 months = {'1': 'January',
           '2': 'February',
@@ -50,12 +50,12 @@ gpio.setup(miss,gpio.IN)
 gpio.setup(restart,gpio.IN)
 
 def initialize_files():
-  files = {'status': './status_val.txt',
-           'invoke': './invoke_val.txt',
-           'invoke_date': './invoke_date_val.txt',
+  files = {'status': './config_files/status_val.txt',
+           'invoke': './config_files/invoke_val.txt',
+           'invoke_date': './config_files/invoke_date_val.txt',
            'rain': './rain_val.txt',
-           'pool_level': './pool_level_val.txt',
-           'restart' : './restart_val.txt'
+           'pool_level': './config_files/pool_level_val.txt',
+           'restart' : './config_files/restart_val.txt'
   }
 
   for key,value in files.items():
