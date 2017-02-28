@@ -8,6 +8,7 @@ from lcd import LCD
 from ledmatrix import LedMatrix
 from time import time
 import datetime
+from datetime import timedelta
 from calendar import monthrange
 
 
@@ -284,34 +285,44 @@ def calculate_sleep(status):
 #This detect_rain function should only be functional whenever the rain guage 
 #of team charlie is triggered
 def detect_rain(bravo_xbee):
-    pool_level = ""
-    rain_fall = ""
-    bravo_xbee.clear_serial()
-    time_date = datetime.datetime.now()
-    start_time = '%s:%s:%s'%(time_date.hour,time_date.minute,time_date.second)
+  trigger = ""
+  pool_level = ""
+  rain_fall = ""
+  bravo_xbee.clear_serial()
+  # start_time = '%s:%s:%s'%(time_date.hour,time_date.minute,time_date.second)
+  while pool_level != "" and trigger != "":
+    if trigger == 'yesT':
+      for x in range(30):
+        bravo_xbee.send_message('conf_trig\n')
+    else:
+      for x in range(30):
+        trigger = bravo_xbee.receive_message()
 
-    while True:
-         for x in xrange(40):
-          bravo_xbee.send_message('conf_trig\n')  #send message to charlie that we have saved the start time of rainfall, we have received the trigger
-         pool_level = bravo_xbee.receive_message()   #Team Charlie will send pool level
-         set_value_file(POOL_LEVEL, pool_level) 
-         if pool_level != ""        
-          bravo_xbee.send_message('conf_pl\n')
-          break
-                
+    if pool_level != "":
+      for x in range(30):
+        bravo_xbee.send_message('conf_pl')
+      set_value_file(POOL_LEVEL, pool_level) 
+    else:
+      for x in range(30):
+        pool_level = bravo_xbee.receive_message() 
 
-    bravo_xbee.clear_serial()
-     
-    while True:
-          for x in xrange(40)
-              rain_fall = bravo_xbee.receive_message()
-          if rain_fall != ""
-             bravo_xbee.send_message('conf_rf\n')
-             break
+  bravo_xbee.clear_serial()
+  while True:
 
-    set_value_file(RAIN, rain_fall)
-    end_time = '%s:%s:%s'%(time_date.hour,time_date.minute,time_date.second)  #implement the end time minus the Constant variable Max_time e.g. 5 mins of no trigger means rainfall stopped
-    logger(start_time,end_time,float(rain_fall),float(pool_level),None,"-","-")
+    if rain_fall != "":
+      for x in range(30):
+        bravo_xbee.send_message('conf_rf\n')
+      break
+    else:
+      for x in range(30):
+        rain_fall = bravo_xbee.receive_message()
+
+  set_value_file(RAIN, rain_fall)
+  time_date = datetime.datetime.now() 
+  time_delay = datetime.datetime.now() - timedelta(minute = 5)  
+  end_time = '%s:%s:%s'%(time_date.hour,time_date.minute,time_date.second)
+  start_time = '%s:%s:%s'%(time_delay.hour,time_delay.minute,time_delay.second)
+  logger(start_time, end_time, rain_fall, pool_level, None,"-","-")
 
 
 def outfall_detection(bravo_xbee,lcd,led_matrix):
