@@ -58,6 +58,8 @@ def initialize_files():
            'pool_level': './config_files/pool_level_val.txt',
            'restart' : './config_files/restart_val.txt'
   }
+  if not os.path.exists('./config_files'):
+    os.system('mkdir config_files')
 
   for key,value in files.items():
     if os.path.exists(value):
@@ -85,16 +87,16 @@ def set_value_file(file_name, value):
     return None
 
 def check_complete():
-  return not gpio.input(complete)
+  return gpio.input(complete)
 
 def check_miss():
-  return not gpio.input(miss)
+  return gpio.input(miss)
 
 def check_mute():
-  return not gpio.input(mute)
+  return gpio.input(mute)
 
 def check_restart():
-  return not gpio.input(restart)
+  return gpio.input(restart)
 
 def initalize_buzzers(buzzers):
   for buzzer in buzzers:
