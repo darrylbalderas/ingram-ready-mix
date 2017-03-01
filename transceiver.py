@@ -65,8 +65,3 @@ class Transceiver:
   def binary_converter(self,message):
     pass
 
-
-
-
-
-

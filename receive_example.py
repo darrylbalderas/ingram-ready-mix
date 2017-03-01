@@ -27,8 +27,18 @@ def xbee_usb_port():
 
 port = xbee_usb_port()
 xbee = Transceiver(9600,port)
-
-
+trigger = ""
 while True:
-  x = xbee.receive_message()
-  print(x)
+
+  for x in xrange(30):
+    trigger = xbee.receive_message()
+
+
+  if trigger == "tri":
+    print('receive trigger')
+    for x in xrange(30):
+      xbee.send_message('ctri\n')
+    print('sending confirmation')
+    break
+
+

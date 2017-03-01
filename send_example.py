@@ -2,7 +2,7 @@ import sys
 import glob 
 import serial
 from transceiver import Transceiver
-
+from time import sleep
 
 
 def xbee_usb_port():
@@ -29,6 +29,18 @@ def xbee_usb_port():
 
 port = xbee_usb_port()
 xbee = Transceiver(9600,port)
-
+tri_conf = ""
 while True:
-  xbee.send_message('hey')
+
+  for x in xrange(30):
+    xbee.send_message('tri\n'):
+
+  for x in xrange(30):
+    tri_conf = xbee.receive_message()
+
+  if tri_conf ==  "ctri":
+    print('breaking from first while loop')
+    break 
+
+
+
