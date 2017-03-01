@@ -1,9 +1,7 @@
-import sys
-import glob 
 import serial
 from transceiver import Transceiver
-
-
+import glob
+import sys
 
 def xbee_usb_port():
   '''
@@ -30,5 +28,7 @@ def xbee_usb_port():
 port = xbee_usb_port()
 xbee = Transceiver(9600,port)
 
+
 while True:
-  xbee.send_message('hey')
+  x = xbee.receive_message()
+  print(x)
