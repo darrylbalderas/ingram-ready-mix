@@ -33,11 +33,10 @@ def main():
   print('about to enter the while loop')
   while True:
     print('hello')
-    
-    for x in range(1000):
+    for x in range(5):
       xbee.send_message('tri\n')
 
-    for x in range(1000):
+    for x in range(5):
       tri_conf = xbee.receive_message()
 
     if tri_conf ==  "ctri":

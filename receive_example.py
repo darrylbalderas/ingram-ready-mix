@@ -29,12 +29,13 @@ def main():
   xbee = Transceiver(9600,port)
   trigger = ""
   while True:
-    for x in range(1000):
+    print('in loop')
+    for x in range(5):
       trigger = xbee.receive_message()
 
     if trigger == "tri":
       print('receive trigger')
-      for x in xrange(30):
+      for x in range(5):
         xbee.send_message('ctri\n')
       print('sending confirmation')
       break
