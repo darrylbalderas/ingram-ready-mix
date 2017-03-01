@@ -39,7 +39,7 @@ def main():
     for x in range(5):
       tri_conf = xbee.receive_message()
 
-    if tri_conf ==  "ctri":
+    if tri_conf ==  "ctri\n":
       print('breaking from first while loop')
       break 
 

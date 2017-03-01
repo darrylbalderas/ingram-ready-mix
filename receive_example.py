@@ -33,7 +33,7 @@ def main():
     for x in range(5):
       trigger = xbee.receive_message()
 
-    if trigger == "tri":
+    if trigger == "tri\n":
       print('receive trigger')
       for x in range(5):
         xbee.send_message('ctri\n')
