@@ -24,21 +24,21 @@ def xbee_usb_port():
           pass
   return result[0]
 
+def main():
+  port = xbee_usb_port()
+  xbee = Transceiver(9600,port)
+  trigger = ""
+  while True:
+    for x in range(1000):
+      trigger = xbee.receive_message()
 
-port = xbee_usb_port()
-xbee = Transceiver(9600,port)
-trigger = ""
-while True:
+    if trigger == "tri":
+      print('receive trigger')
+      for x in xrange(30):
+        xbee.send_message('ctri\n')
+      print('sending confirmation')
+      break
 
-  for x in xrange(30):
-    trigger = xbee.receive_message()
-
-
-  if trigger == "tri":
-    print('receive trigger')
-    for x in xrange(30):
-      xbee.send_message('ctri\n')
-    print('sending confirmation')
-    break
-
+if __name__ == "__main__":
+  main()
 

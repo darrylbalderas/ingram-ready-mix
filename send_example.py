@@ -26,21 +26,24 @@ def xbee_usb_port():
           pass
   return result[0]
 
+def main():
+  port = xbee_usb_port()
+  xbee = Transceiver(9600,port)
+  tri_conf = ""
+  print('about to enter the while loop')
+  while True:
+    print('hello')
+    
+    for x in range(1000):
+      xbee.send_message('tri\n')
 
-port = xbee_usb_port()
-xbee = Transceiver(9600,port)
-tri_conf = ""
-while True:
+    for x in range(1000):
+      tri_conf = xbee.receive_message()
 
-  for x in xrange(30):
-    xbee.send_message('tri\n'):
+    if tri_conf ==  "ctri":
+      print('breaking from first while loop')
+      break 
 
-  for x in xrange(30):
-    tri_conf = xbee.receive_message()
-
-  if tri_conf ==  "ctri":
-    print('breaking from first while loop')
-    break 
-
-
+if __name__ == "__main__":
+  main()
 
