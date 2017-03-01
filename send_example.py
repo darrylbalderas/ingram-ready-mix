@@ -30,8 +30,10 @@ def main():
   port = xbee_usb_port()
   xbee = Transceiver(9600,port)
   tri_conf = ""
+  pl_conf = ""
+  terminate = ""
   print('about to enter the while loop')
-  while True:
+  while not tri_conf == 'ctri\n':
     print('hello')
     for x in range(5):
       xbee.send_message('tri\n')
@@ -39,9 +41,29 @@ def main():
     for x in range(5):
       tri_conf = xbee.receive_message()
 
-    if tri_conf ==  "ctri\n":
-      print('breaking from first while loop')
-      break 
+  while not pl_conf == 'cpl\n':
+
+    for x in range(5):
+      xbee.send_message('1.43')
+
+    for x in range(5):
+      pl_conf = xbee.receive_message()
+
+  while not terminate == "term\n":
+    for x in range(5):
+      xbee.send_message('fterm\n')
+
+    for x in range(5):
+      terminate = xbee.receive_message()
+
+  while not trash == "fin\n":
+    for x in range(5):
+      xbee.send_message('fin\n')
+  break
+
+    
+
+  print('Done')
 
 if __name__ == "__main__":
   main()

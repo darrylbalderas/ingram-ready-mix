@@ -28,17 +28,44 @@ def main():
   port = xbee_usb_port()
   xbee = Transceiver(9600,port)
   trigger = ""
-  while True:
+  pool_level = ""
+  while not trigger == 'tri\n':
     print('in loop')
     for x in range(5):
       trigger = xbee.receive_message()
 
     if trigger == "tri\n":
-      print('receive trigger')
       for x in range(5):
         xbee.send_message('ctri\n')
-      print('sending confirmation')
-      break
+
+  while pool_level != "" 
+    for x in range(5):
+      pool_level = xbee.receive_message()
+
+
+  while not fterminate == "fterm\n"
+      for x in range(5):
+        xbee.send_message('cpl\n')
+
+      for x in range(5):
+        fterminate = xbee.receive_message()
+
+  while not trash == "fin\n":
+    for x in range(5):
+      xbee.send_message('term\n')
+
+    for x in range(5):
+      trash = xbee.receive_message()
+  break
+
+  while not 
+
+
+  break
+
+
+
+    
 
 if __name__ == "__main__":
   main()
