@@ -4,10 +4,47 @@ from time import sleep
 import glob
 import serial
 from time import time
+import RPi.GPIO as GPIO
+from transceiver import Transceiver
 # from transceiver import Transceiver
 # from flow_sensor import FlowSensor
 # from rain_guage import RainGuage
 # from level_sensor import LevelSensor
+
+#initialize the GPIO pins for the sensors
+rain_guage = 8
+level_sensor = 16
+flow_sensor = 10
+GPIO.setmode(GPIO.BOARD)
+GPIO.setup(flow_sensor,GPIO.IN)
+GPIO.setup(level_sensor,GPIO.IN)
+GPIO.setup(rain_guage,GPIO.IN)
+charlie_xbee = Transceiver()
+
+
+def check_guage():
+  return GPIO.input(rain_guage)
+
+def check_flow():
+  return GPIO.input(flow_sensor)
+
+def check_level_sensor():
+  return GPIO.input(level_sensor)
+
+def detect_outfall():
+  
+
+def check_tick(current_state):
+  previous = 0
+  if current_state > previous:
+    previous = current_state
+    while current_state == previous:
+      current_state = check_guage()
+    previous = 0
+    return True
+  else:
+    return False
+  
 
 def detect_rain(xbee,rain_guage, level_sensor):
   while True:
@@ -73,6 +110,8 @@ def detect_rain(xbee,rain_guage, level_sensor):
         rain_confirmation = xbee.receive_message()
         xbee.send_message(str(rainfall))
       xbee.clear_serial()
+
+      
 
 def outfall_detection(flow_sensor,xbee):
   while True:
