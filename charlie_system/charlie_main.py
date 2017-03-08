@@ -14,9 +14,9 @@ from transceiver import Transceiver
 #initialize the GPIO pins for the sensors
 rain_guage = 8
 level_sensor = 16
-flow_sensor = 10
+flow_meter = 40
 GPIO.setmode(GPIO.BOARD)
-GPIO.setup(flow_sensor,GPIO.IN)
+GPIO.setup(flow_meter,GPIO.IN)
 GPIO.setup(level_sensor,GPIO.IN)
 GPIO.setup(rain_guage,GPIO.IN)
 charlie_xbee = Transceiver()
@@ -26,12 +26,22 @@ def check_guage():
   return GPIO.input(rain_guage)
 
 def check_flow():
-  return GPIO.input(flow_sensor)
+  return GPIO.input(flow_meter)
 
 def check_level_sensor():
   return GPIO.input(level_sensor)
 
 def detect_outfall():
+  current_state = 0
+  previous = 0
+  while True:
+    current_state = check_flow()
+    if current_state > previous:
+      previous = current_state
+    while current_state == previous:
+      current_state = check_flow()
+    previous = 0
+    xbee.send_message('outfall\n')
   
 
 def check_tick(current_state):
