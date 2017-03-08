@@ -31,20 +31,20 @@ def check_flow():
 def check_level_sensor():
   return GPIO.input(level_sensor)
 
-def detect_outfall():
-  current_state = 0
+def detect_outfall(current,xbee):
+  current = 0
   previous = 0
   while True:
-    current_state = check_flow()
-    if current_state > previous:
-      previous = current_state
-    while current_state == previous:
-      current_state = check_flow()
+    current = check_flow()
+    if current > previous:
+      previous = current
+    while current == previous:
+      current = check_flow()
     previous = 0
     xbee.send_message('outfall\n')
   
 
-def check_tick(current_state):
+def check_tick(current_state,xbee):
   previous = 0
   if current_state > previous:
     previous = current_state
@@ -67,6 +67,8 @@ def detect_rain(xbee,rain_guage, level_sensor):
     floor_rating = -0.10
     ceiling_rating = 0.10
     
+
+      
     #eTape Continuous Fluid Level PN-12110215TC-12
     #Sensor Output: 2250ohms empty, 400 ohms full +- 10%
     if rain_guage.guage_status():
@@ -133,6 +135,12 @@ def outfall_detection(flow_sensor,xbee):
         
 
 if __name__ == "__main__":
+  detect_rain(xbee,rain_guage,level_sensor)
+      if check_tick == True:
+        xbee.send_message('trig\n')   #send team bravo a trigger to get a time stamp on the start of the rain
+        pool_level()
+        
+  
   # rain_guage = RainGuage()
   # flow_sensor = FlowSensor()
   # level_sensor = LevelSensor()
