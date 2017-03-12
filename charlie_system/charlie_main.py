@@ -20,7 +20,6 @@ GPIO.setup(flow_meter,GPIO.IN)
 GPIO.setup(level_sensor,GPIO.IN)
 GPIO.setup(rain_guage,GPIO.IN)
 charlie_xbee = Transceiver()
-max_time = 0
 
 
 def check_guage():
