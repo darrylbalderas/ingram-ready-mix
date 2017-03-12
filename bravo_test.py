@@ -50,6 +50,7 @@ gpio.setup(mute,gpio.IN)
 gpio.setup(miss,gpio.IN)
 gpio.setup(restart,gpio.IN)
 
+
 def initialize_files():
   files = {'status': './config_files/status_val.txt',
            'invoke': './config_files/invoke_val.txt',

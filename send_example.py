@@ -59,6 +59,7 @@ def main():
   while not trash == "fin\n":
     for x in range(5):
       xbee.send_message('fin\n')
+      
   break
 
     
