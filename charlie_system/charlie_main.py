@@ -20,6 +20,7 @@ GPIO.setup(flow_meter,GPIO.IN)
 GPIO.setup(level_sensor,GPIO.IN)
 GPIO.setup(rain_guage,GPIO.IN)
 charlie_xbee = Transceiver()
+max_time = 0
 
 
 def check_guage():
@@ -31,6 +32,7 @@ def check_flow():
 def check_level_sensor():
   return GPIO.input(level_sensor)
 
+#This function will run in a separate thread, time in which outfall occurs is crucial      
 def detect_outfall(current,xbee):
   current = 0
   previous = 0
@@ -44,7 +46,7 @@ def detect_outfall(current,xbee):
     xbee.send_message('outfall\n')
   
 
-def check_tick(current_state,xbee):
+def check_tick(current_state):
   previous = 0
   if current_state > previous:
     previous = current_state
@@ -55,11 +57,19 @@ def check_tick(current_state,xbee):
   else:
     return False
   
-
-def detect_rain(xbee,rain_guage, level_sensor):
-  while True:
-    pool_confirmation = ""
+#This will run in a separate thread, check_tick will alert team bravo to timestamp the start_time
+#detect_rain will send the amount of rainfall and alert team bravo to timestamp the end_time
+def detect_end_rain(rain_guage,xbee):
     rain_confirmation = ""
+      while rain_guage.status():
+        rainfall += rain_guage.get_rain()
+
+      while rain_confirmation != 'stop':
+        rain_confirmation = xbee.receive_message()
+        xbee.send_message(str(rainfall))
+      xbee.clear_serial()
+      
+def pool_level(level_sensor,xbee):
     tmp_level = 0 
     rainfall = 0
     floor_level = 0
@@ -67,8 +77,6 @@ def detect_rain(xbee,rain_guage, level_sensor):
     floor_rating = -0.10
     ceiling_rating = 0.10
     
-
-      
     #eTape Continuous Fluid Level PN-12110215TC-12
     #Sensor Output: 2250ohms empty, 400 ohms full +- 10%
     if rain_guage.guage_status():
@@ -78,7 +86,6 @@ def detect_rain(xbee,rain_guage, level_sensor):
       
     #Create the rules here to see the amount of inches needed for outfall
     #pool_level equals the amount left for outfall to occur
-
     if floor_level >= 2190 & ceiling_level <= 2200:     #Between 0 to 1 inches filled on tape
       pool_level = 12
     elif floor_level >= 2020 & ceiling_level <= 2189:   #Between 1 to 2 inches filled on tape
@@ -108,38 +115,46 @@ def detect_rain(xbee,rain_guage, level_sensor):
     else:
       pass
       
-      while pool_confirmation != "stop":
-        if  rain_guage.get_status():
-          rainfall += rain_guage.get_rain()
-        pool_confirmation = xbee.receive_message()
-        xbee.send_message(str(pool_level)+'\n')
-
+    while pool_confirmation != "stop":
+      pool_confirmation = xbee.receive_message()
+      xbee.send_message(str(pool_level)+'\n')
       xbee.clear_serial()
-      while rain_guage.status():
-        rainfall += rain_guage.get_rain()
+  
 
-      while rain_confirmation != 'stop':
-        rain_confirmation = xbee.receive_message()
-        xbee.send_message(str(rainfall))
-      xbee.clear_serial()
 
-      
 
-def outfall_detection(flow_sensor,xbee):
-  while True:
-    outfall_confirmation = ""
-    if flow_sensor.get_status():
-      while outfall_confirmation != 'stop':
-        outfall_confirmation = xbee.receive_message()
-        xbee.send_message('out\n')
+#def outfall_detection(flow_sensor,xbee):
+#  while True:
+#    outfall_confirmation = ""
+#    if flow_sensor.get_status():
+#      while outfall_confirmation != 'stop':
+#        outfall_confirmation = xbee.receive_message()
+#        xbee.send_message('out\n')
         
 
 if __name__ == "__main__":
-  detect_rain(xbee,rain_guage,level_sensor)
-      if check_tick == True:
+  #A thread will run this while statement
+  while True:
+    mins = 0
+    if check_tick(current_state) == True:
         xbee.send_message('trig\n')   #send team bravo a trigger to get a time stamp on the start of the rain
-        pool_level()
+        if xbee.recieve_message() = 'conf_trig\n':
+            pool_level(level_sensor,xbee)
+        while check_tick(current_state) == false & mins != 5:
+          if mins == 4:
+            detect_end_rain(rain_guage,xbee)
+          else:
+            time.sleep(60)
+            mins += 1
         
+        
+        
+#A second thread will run this while statement
+  while True:
+    if check_outfall() == True:
+      detect_outfall(current,xbee)
+        
+      
   
   # rain_guage = RainGuage()
   # flow_sensor = FlowSensor()
