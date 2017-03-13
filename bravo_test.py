@@ -3,11 +3,12 @@ import os
 import RPi.GPIO as gpio
 import glob
 import serial
-from transceiver import Transceiver
-from lcd import LCD
-from ledmatrix import LedMatrix
+# from transceiver import Transceiver
+# from lcd import LCD
+# from ledmatrix import LedMatrix
 from time import time
 import datetime
+from time import sleep 
 from datetime import timedelta
 from calendar import monthrange
 
@@ -112,35 +113,27 @@ def stop_buzzer():
     gpio.output(buzzer,False)
 
 def lcd_serial_port():
-  '''
-  Search in your file directory to find usb port 
-  that your lcd screen is connected. 
-  Supports Mac and Linux operating system 
-  Returns a port
-  '''
   port =  glob.glob('/dev/ttyACM*')
   return port[0]
 
 def xbee_usb_port():
-  '''
-  Search in your file directory to find usb port 
-  that your Xbee is connected to. Supports MacOs and 
-  linux operating system. Returns a port
-  '''
-  result = []
   if sys.platform.startswith('darwin'):
     ports = glob.glob('/dev/tty.usbserial*')
   elif sys.platform.startswith('linux'):
     ports = glob.glob('/dev/ttyU*')
-    
-  for port in ports:
-      try:
-          ser = serial.Serial(port)
-          ser.close()
-          result.append(port)
-      except( OSError, serial.SerialException):
-          pass
-  return result[0]
+  
+  if len(ports) != 0:
+    result = []
+    for port in ports:
+        try:
+            ser = serial.Serial(port)
+            ser.close()
+            result.append(port)
+        except( OSError, serial.SerialException):
+            pass
+    return result[0]
+  else:
+    return None
 
 def logger(start_time, end_time, amount_rain, pool_level, tag=None, outfall=None, status=None):
   time_date = datetime.datetime.now()
@@ -285,48 +278,47 @@ def calculate_sleep(status):
       sleep_flag = True
   return sleep_flag
   
-#This detect_rain function should only be functional whenever the rain guage 
-#of team charlie is triggered
-def detect_rain(bravo_xbee):
-  trigger = ""
-  pool_level = ""
-  rain_fall = ""
-  bravo_xbee.clear_serial()
-  # start_time = '%s:%s:%s'%(time_date.hour,time_date.minute,time_date.second)
-  while pool_level != "" and trigger != "":
-    if trigger == 'yesT':
-      for x in range(30):
-        bravo_xbee.send_message('conf_trig\n')
-    else:
-      for x in range(30):
-        trigger = bravo_xbee.receive_message()
 
-    if pool_level != "":
-      for x in range(30):
-        bravo_xbee.send_message('conf_pl')
-      set_value_file(POOL_LEVEL, pool_level) 
-    else:
-      for x in range(30):
-        pool_level = bravo_xbee.receive_message() 
+def send_confirmation(xbee):
+  message = ""
+  while not message == 'tri':
+      message = xbee.receive_message()
+      print(message)
+  xbee.send_message("yes\n")
+  sleep(0.5)
 
-  bravo_xbee.clear_serial()
+def receive_data(bravo_xbee):
+  rain_flag = False
+  pool_flag = False
+  rain_val = 0
+  pool_val = 0
+  message = ""
+  while not (rain_flag and pool_flag):
+    message = bravo_xbee.receive_message()
+    if len(message) != 0:
+      if message[0] == 'r' and not rain_flag:
+        rain_val = float(bravo_xbee.remove_character(message,'r'))
+        set_value_file(RAIN,rain_val)
+        rain_flag = True
+      elif message[0] == 'p' and not pool_flag:
+        pool_val = float(bravo_xbee.remove_character(message,'p'))
+        set_value_file(POOL_LEVEL,pool_val)
+        pool_flag = True
+    bravo_xbee.send_message("no\n")
+    sleep(0.5)
+  bravo_xbee.send_message("yes\n")
+  sleep(0.5)
+  return (rain_val, pool_val)
+
+def rain_detection(bravo_xbee):
   while True:
-
-    if rain_fall != "":
-      for x in range(30):
-        bravo_xbee.send_message('conf_rf\n')
-      break
-    else:
-      for x in range(30):
-        rain_fall = bravo_xbee.receive_message()
-
-  set_value_file(RAIN, rain_fall)
-  time_date = datetime.datetime.now() 
-  time_delay = datetime.datetime.now() - timedelta(minute = 5)  
-  end_time = '%s:%s:%s'%(time_date.hour,time_date.minute,time_date.second)
-  start_time = '%s:%s:%s'%(time_delay.hour,time_delay.minute,time_delay.second)
-  logger(start_time, end_time, rain_fall, pool_level, None,"-","-")
-
+    send_confirmation(bravo_xbee)
+    rain_fall, pool_level = receive_data(bravo_xbee)
+    time_date = datetime.datetime.now() 
+    time_delay = datetime.datetime.now() - timedelta(minute = 5)  
+    end_time = '%s:%s:%s'%(time_date.hour,time_date.minute,time_date.second)
+    start_time = '%s:%s:%s'%(time_delay.hour,time_delay.minute,time_delay.second)
+    logger(start_time, end_time, rain_fall, pool_level, None,"-","-")
 
 def outfall_detection(bravo_xbee,lcd,led_matrix):
   set_value_file(STATUS,'-1')
@@ -334,12 +326,11 @@ def outfall_detection(bravo_xbee,lcd,led_matrix):
   while True:
     outfall = ""
     status = str(checkmonth_sample())
-    print(status)
     set_value_file(STATUS,status)
     if check_value_file(STATUS) == '1':
       while calculate_sleep('complete'):
         if check_restart():
-          restart_state()
+          restart_state(lcd,led_matrix)
         pass
     elif check_value_file(STATUS) == '0':
       while calculate_sleep('missed'):
@@ -348,7 +339,7 @@ def outfall_detection(bravo_xbee,lcd,led_matrix):
         pass
     elif check_value_file(STATUS) == '-1':
       outfall = bravo_xbee.receive_message()
-      if outfall == 'out\n':
+      if outfall == 'out':
         time_date = datetime.datetime.now()
         restart_date = '%s/%s'%(time_date.month,time_date.year)
         if check_value_file(RESTART) == '1' and restart_date == check_value_file(INVOKE_DATE):

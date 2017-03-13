@@ -27,46 +27,12 @@ def xbee_usb_port():
           pass
   return result[0]
 
-def receive_data(xbee):
-  rain_flag = False
-  pool_flag = False
-  rain_val = 0
-  pool_val = 0
-  message = ""
-  while not (rain_flag and pool_flag):
-    message = xbee.receive_message()
-    if len(message) != 0:
-      if message[0] == 'r' and not rain_flag:
-        print('Enter rainfall conditional')
-        rain_val = float(xbee.remove_character(message,'r'))
-        print(rain_val)
-        #write to the rain_val.txt
-        rain_flag = True
-      elif message[0] == 'p' and not pool_flag:
-        print("Enter pool conditional")
-        pool_val = float(xbee.remove_character(message,'p'))
-        print(pool_val)
-        #write to the pool_val.txt
-        pool_flag = True
-    xbee.send_message("no\n")
-    sleep(0.5)
-  xbee.send_message("yes\n")
-  sleep(0.5)
-
-def send_confirmation(xbee):
-  message = ""
-  while not message == 'tri':
-      message = xbee.receive_message()
-      print(message)
-  xbee.send_message("yes\n")
-  sleep(0.5)
 
 def main():
   port = xbee_usb_port()
   xbee = Transceiver(9600,port)
   try:
-    send_confirmation(xbee)
-    receive_data(xbee)
+    pass
   except KeyboardInterrupt:
     print("\nexit")
 

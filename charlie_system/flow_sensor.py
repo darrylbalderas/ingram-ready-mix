@@ -1,13 +1,23 @@
 import glob 
 import sys
-from time import sleep 
+from time import sleep
+import RPi.GPIO as GPIO
 
-class Flower:
-	def __init__(self):
-		pass
+class FlowSensor:
+	def __init__(self, pin):
+		self.pin = pin
 
-	def check_status(self):
-		pass
+	def check_flow(self):
+		return GPIO.input(self.pin)
 
-	def get_tick(self):
-		pass
+	def check_outfall(self):
+		previous = 0
+		current_state = self.check_guage()
+		if current_state > previous:
+			previous = current_state
+		    while current_state == previous:
+		      current_state = self.check_guage()
+		    previous = 0
+		    return True
+		else:
+			return False

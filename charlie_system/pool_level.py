@@ -2,8 +2,9 @@ import glob
 import sys
 from time import sleep 
 
-class Level:
-	def __init__(self):
+class LevelSensor:
+	def __init__(self,pin):
+		self.pin = pin 
 		pass
 
 	def check_status(self):
