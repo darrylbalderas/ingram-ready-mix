@@ -52,7 +52,7 @@ class Transceiver:
     self.ser.flushInput()
     self.ser.flushOutput()
 
-  def remove_character(self,message):
-    return message.strip(message[0])
+  def remove_character(self,message,character):
+    return message.strip(character)
 
 

@@ -41,9 +41,9 @@ def create_trigger(xbee):
       status = True
 
 def send_data(xbee):
-  rain_val = 'r2.1' 
+  rain_val = 'r2.1\n' 
   #wait 7 minutes and grab the total number of rain
-  pool_val = 'p1.0'
+  pool_val = 'p1.0\n'
   message = ""
   while not message == "yes":
     xbee.send_message(rain_val)
