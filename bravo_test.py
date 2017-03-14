@@ -313,11 +313,13 @@ def receive_data(bravo_xbee):
 def rain_detection(bravo_xbee):
   while True:
     send_confirmation(bravo_xbee)
+    start_timeDate = datetime.datetime.now()
+    send_confirmation(bravo_xbee)
     rain_fall, pool_level = receive_data(bravo_xbee)
-    time_date = datetime.datetime.now() 
-    time_delay = datetime.datetime.now() - timedelta(minute = 5)  
-    end_time = '%s:%s:%s'%(time_date.hour,time_date.minute,time_date.second)
-    start_time = '%s:%s:%s'%(time_delay.hour,time_delay.minute,time_delay.second)
+    end_timeDate = datetime.datetime.now() 
+    # time_delay = datetime.datetime.now() - timedelta(minute = 5)  
+    end_time = '%s:%s:%s'%(end_timeDate.hour,end_timeDate.minute,end_timeDate.second)
+    start_time = '%s:%s:%s'%(start_timeDate.hour,start_timeDate.minute,start_timeDate.second)
     logger(start_time, end_time, rain_fall, pool_level, None,"-","-")
 
 def outfall_detection(bravo_xbee,lcd,led_matrix):

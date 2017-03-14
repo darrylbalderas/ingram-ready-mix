@@ -49,8 +49,10 @@ def detect_outfall(xbee,flow_sensor,level_sensor):
 def detect_rainfall(rain_guage,xbee,level_sensor):
 	while True:
 		if rain_guage.get_tick():
+			#block
+			create_trigger(xbee)
+			#endblock
 			send_data(xbee,rain_guage,level_sensor)
-			sleep(5*60)
 
 def create_trigger(xbee):
 	status = False
@@ -62,13 +64,15 @@ def create_trigger(xbee):
 
 def send_data(xbee,rain_gauge,level_sensor):
 	pool_val = level_sensor.get_pool_level()
-	rain_val = rain_guage.get_total_rainfall()
+	rain_val = rain_gauge.get_total_rainfall()
 	pool_val = level_sensor.get_pool_level()
-	create_trigger(xbee)
+	#block
 	message = ""
+	create_trigger(xbee)
 	while not message == "yes":
 		xbee.send_message(rain_val)
 		sleep(0.5)
 		xbee.send_message(pool_val)
 		sleep(0.5)
 		message  = xbee.receive_message()
+	#endblock
