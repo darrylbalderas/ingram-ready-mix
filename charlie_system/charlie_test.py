@@ -12,10 +12,10 @@ from flow_sensor import FlowSensor
 from rain_guage import RainGuage
 from level_sensor import LevelSensor
 
-rain_guage_pin = 8
-level_sensor_pin = 16
-flow_meter_pin = 40
-GPIO.setmode(GPIO.BOARD)
+rain_guage_pin = 18
+level_sensor_pin = 23
+flow_meter_pin = 24
+GPIO.setmode(GPIO.BCM)
 GPIO.setup(flow_meter_pin,GPIO.IN)
 GPIO.setup(level_sensor_pin,GPIO.IN)
 GPIO.setup(rain_guage_pin,GPIO.IN)

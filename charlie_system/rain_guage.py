@@ -15,7 +15,7 @@ class RainGuage:
 	def get_tick(self):
 		previous_state = 0
 		previous_time = 0
-		collection_duration = 3
+		collection_duration = 2
 		while (time()-previous_time) <= collection_duration:
 			current_state = self.check_guage()
 			if current_state > previous_state:
@@ -24,7 +24,6 @@ class RainGuage:
 					current_state = self.check_guage()
 				previous_state = 0
 				return True
-
 		return False
 
 	def get_total_rainfall(self):
