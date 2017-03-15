@@ -130,13 +130,13 @@ class LCD:
     self.send_command("HOME")
 
   def display_days(self,num_days):
-    self.send_message(self.center_message('Num of Days left'))
+    self.send_message(self.center_message('Days left'))
     self.send_command('ENTER')
     self.send_message(self.center_message(str(num_days)))
     self.send_command("HOME")
 
   def display_hour(self,num_hours):
-    self.send_message(self.center_message('Num of Hrs left'))
+    self.send_message(self.center_message('Hrs left'))
     self.send_command('ENTER')
     self.send_message(self.center_message(str(num_hours)))
     self.send_command("HOME")
