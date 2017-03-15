@@ -112,7 +112,10 @@ def stop_buzzer():
 
 def lcd_serial_port():
   port =  glob.glob('/dev/ttyACM*')
-  return port[0]
+  if len(port) != 0:
+    return port[0]
+  else:
+    return None
 
 def xbee_usb_port():
   if sys.platform.startswith('darwin'):
