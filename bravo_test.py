@@ -120,7 +120,7 @@ def xbee_usb_port():
   if sys.platform.startswith('darwin'):
     ports = glob.glob('/dev/tty.usbserial*')
   elif sys.platform.startswith('linux'):
-    ports = glob.glob('/dev/ttyU*')
+    ports = glob.glob('/dev/ttyUSB1*')
   
   if len(ports) != 0:
     result = []
@@ -283,7 +283,6 @@ def send_confirmation(xbee):
   message = ""
   while not message == 'tri':
       message = xbee.receive_message()
-      print(message)
   xbee.send_message("yes\n")
   sleep(0.5)
 
@@ -297,11 +296,11 @@ def receive_data(bravo_xbee):
     message = bravo_xbee.receive_message()
     if len(message) != 0:
       if message[0] == 'r' and not rain_flag:
-        rain_val = float(bravo_xbee.remove_character(message,'r'))
+        rain_val = bravo_xbee.remove_character(message,'r')
         set_value_file(RAIN,rain_val)
         rain_flag = True
       elif message[0] == 'p' and not pool_flag:
-        pool_val = float(bravo_xbee.remove_character(message,'p'))
+        pool_val = bravo_xbee.remove_character(message,'p')
         set_value_file(POOL_LEVEL,pool_val)
         pool_flag = True
     bravo_xbee.send_message("no\n")
@@ -313,9 +312,12 @@ def receive_data(bravo_xbee):
 def rain_detection(bravo_xbee):
   while True:
     send_confirmation(bravo_xbee)
+    print('got first confirmation')
     start_timeDate = datetime.datetime.now()
     send_confirmation(bravo_xbee)
+    print('got second confirmation')
     rain_fall, pool_level = receive_data(bravo_xbee)
+    print('received data')
     end_timeDate = datetime.datetime.now() 
     # time_delay = datetime.datetime.now() - timedelta(minute = 5)  
     end_time = '%s:%s:%s'%(end_timeDate.hour,end_timeDate.minute,end_timeDate.second)
