@@ -11,7 +11,7 @@ from threading import Lock
 
 if __name__ == "__main__":
   try:
-    lock = Lock()
+##    lock = Lock()
     initialize_files()
     xbee_port = xbee_usb_port()
     lcd_port = lcd_serial_port()
@@ -21,13 +21,15 @@ if __name__ == "__main__":
       led_matrix = LedMatrix()
       lcd = LCD(lcd_port,9600)
       led_matrix.change_color(led_matrix.get_greenImage())
+      print("message")
       lcd.welcome_message()
-      thread1 = Thread(target=outfall_detection, args=(bravo_xbee,lcd,led_matrix,lock,))
-      thread2 = Thread(target=rain_detection, args=(bravo_xbee,lock,))
-      thread1.start()
-      thread2.start()
-      thread1.join()
-      thread2.join()
+      outfall_detection(bravo_xbee,lcd,led_matrix)
+##      thread1 = Thread(target=outfall_detection, args=(bravo_xbee,lcd,led_matrix,lock,))
+##      thread2 = Thread(target=rain_detection, args=(bravo_xbee,lock,))
+##      thread1.start()
+##      thread2.start()
+##      thread1.join()
+##      thread2.join()
     else:
       print("Check the Xbee and LCD connection")
   except KeyboardInterrupt:

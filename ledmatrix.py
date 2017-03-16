@@ -24,8 +24,8 @@ class LedMatrix:
                           'blue' : self.make_image('b'),
                           'white' : self.make_image('w')  
                         }
-    self.__row_duration = 1.875*60
-    self.__max_time = 60*15
+    self.__row_duration = 1.875*2
+    self.__max_time = 2*15
     
   def make_image(self,color):
       image = [] 

@@ -98,6 +98,15 @@ def check_mute():
 def check_restart():
   return gpio.input(restart)
 
+def check_buttons():
+  while True:
+    print(check_complete())
+    print(check_miss())
+    print(check_mute())
+    print(check_restart())
+    print('\n\n')
+    sleep(0.5)
+
 def initalize_buzzers(buzzers):
   for buzzer in buzzers:
     gpio.setup(buzzer,gpio.OUT)
@@ -121,7 +130,7 @@ def xbee_usb_port():
   if sys.platform.startswith('darwin'):
     ports = glob.glob('/dev/tty.usbserial*')
   elif sys.platform.startswith('linux'):
-    ports = glob.glob('/dev/ttyU*')
+    ports = glob.glob('/dev/ttyUSB1*')
   if len(ports) != 0:
     result = []
     for port in ports:
@@ -169,7 +178,7 @@ def logger(start_time, end_time, amount_rain, pool_level, tag=None, outfall=None
 def invoke_system(led_matrix,lcd,bravo_xbee):
   time_date = datetime.datetime.now()
   start_time = '%s:%s:%s'%(time_date.hour,time_date.minute,time_date.second)
-  start_buzzer()
+  #start_buzzer()
   invoke_date = '%s/%s'%(time_date.month,time_date.year)
   set_value_file(INVOKE_DATE,invoke_date)
   set_value_file(INVOKE, '1')
@@ -187,7 +196,7 @@ def invoke_system(led_matrix,lcd,bravo_xbee):
     if check_mute():
       stop_buzzer()
     if check_restart():
-      restart_state(lcd)
+      restart_state(lcd,led_matrix)
     current_time = time() - timer
     lcd.display_timer(led_matrix.get_max_time()-current_time)
     if current_time >= led_matrix.get_row_duration()*count_row:
@@ -264,20 +273,21 @@ def checkmonth_sample():
   else:
     return '-1'
 
-def calculate_sleep(status):
-  sleep_flag = False
+def check_sleep(status):
+  if status == 'missed' and calculate_hours() > 0:
+    return True
+  elif status == 'complete' and calculate_days() > 0:
+    return True
+  return False
+
+def calculate_days():
   time_date = datetime.datetime.now()
-  if status == 'missed':
-    time_left =  24 - time_date.hour
-    if time_left > 0:
-      sleep_flag = True
-  elif status == 'complete':
-    days_left = monthrange(time_date.year,time_date.month)
-    time_left = days_left[1] - time_date.day
-    if time_left > 0:
-      sleep_flag = True
-  return sleep_flag
-  
+  month, days_left = monthrange(time_date.year,time_date.month)
+  return (days_left - time_date.day)
+
+def calculate_hours():
+  time_date = datetime.datetime.now()
+  return (24 - time_date.hour)
 
 def send_confirmation(xbee):
   message = ""
@@ -337,19 +347,25 @@ def outfall_detection(bravo_xbee,lcd,led_matrix):
   set_value_file(RESTART, '0')
   while True:
     status = checkmonth_sample()
+    print(status)
     set_value_file(STATUS,status)
     if status  == '1':
-      while calculate_sleep('complete'):
+      while check_sleep('complete'):
+        num_days = calculate_days()
         if check_restart():
           restart_state(lcd,led_matrix)
-        pass
+        lcd.display_days(num_days)
     elif status == '0':
-      while calculate_sleep('missed'):
+      while check_sleep('missed'):
+        num_hours = calculate_hours()
         if check_restart():
           restart_state(lcd,led_matrix)
-        pass
+        lcd.display_hour(num_hours)
+        
     elif status == '-1':
+      print("waiting for outfall")
       send_outfall_conf(bravo_xbee)
+      print("Sent confirmation")
       time_date = datetime.datetime.now()
       restart_date = '%s/%s'%(time_date.month,time_date.year)
       if check_value_file(RESTART) == '1' and restart_date == check_value_file(INVOKE_DATE):
