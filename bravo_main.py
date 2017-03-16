@@ -21,7 +21,6 @@ if __name__ == "__main__":
       led_matrix = LedMatrix()
       lcd = LCD(lcd_port,9600)
       led_matrix.change_color(led_matrix.get_greenImage())
-      print("message")
       lcd.welcome_message()
       outfall_detection(bravo_xbee,lcd,led_matrix)
 ##      thread1 = Thread(target=outfall_detection, args=(bravo_xbee,lcd,led_matrix,lock,))

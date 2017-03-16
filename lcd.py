@@ -67,14 +67,13 @@ class LCD:
     self.send_message(self.center_message('Welcome to'))
     self.send_command('ENTER')
     self.send_message(self.center_message("IngramReady Mix"))
-    # lcd.send_message(self.center_message("Mix\r"))
-    sleep(5)
+    sleep(3)
     self.send_command('CLEAR')
 
-  def waiting_message(self,message):
+  def waiting_outfall(self):
     self.send_message(self.center_message("waiting on"))
     self.send_command('ENTER')
-    self.send_message(self.center_message(message +"..."))
+    self.send_message(self.center_message('outfall trigger'))
     self.send_command('HOME')
 
   def complete_message(self):
@@ -118,6 +117,14 @@ class LCD:
     sleep(2)
     self.send_command('CLEAR')
 
+  def pressed_missed(self):
+    self.send_command("CLEAR")
+    self.send_message(self.center_message("Press Missed"))
+    self.send_command("ENTER")
+    self.send_message(self.center_message("Button"))
+    self.send_command("HOME")
+
+
   def display_timer(self,num_time):
     hour = str(int(floor(num_time/3600))).zfill(2)
     minute = str(int(14- floor(num_time/60))).zfill(2)
@@ -130,15 +137,15 @@ class LCD:
     self.send_command("HOME")
 
   def display_days(self,num_days):
-    self.send_message(self.center_message('Days left'))
+    self.send_message(self.center_message('Num of Days'))
     self.send_command('ENTER')
-    self.send_message(self.center_message(str(num_days)))
+    self.send_message(self.center_message('left' + str(num_days)))
     self.send_command("HOME")
 
   def display_hour(self,num_hours):
-    self.send_message(self.center_message('Hrs left'))
+    self.send_message(self.center_message('Num of Hrs'))
     self.send_command('ENTER')
-    self.send_message(self.center_message(str(num_hours)))
+    self.send_message(self.center_message('left' + str(num_hours)))
     self.send_command("HOME")
 
 def usleep(seconds):

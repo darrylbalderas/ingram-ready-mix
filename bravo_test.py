@@ -178,7 +178,7 @@ def logger(start_time, end_time, amount_rain, pool_level, tag=None, outfall=None
 def invoke_system(led_matrix,lcd,bravo_xbee):
   time_date = datetime.datetime.now()
   start_time = '%s:%s:%s'%(time_date.hour,time_date.minute,time_date.second)
-  #start_buzzer()
+  start_buzzer()
   invoke_date = '%s/%s'%(time_date.month,time_date.year)
   set_value_file(INVOKE_DATE,invoke_date)
   set_value_file(INVOKE, '1')
@@ -188,7 +188,6 @@ def invoke_system(led_matrix,lcd,bravo_xbee):
   current_time = 0
   timer = time()
   while current_time <= led_matrix.get_max_time():
-    bravo_xbee.send_message('stop\n')
     if check_complete():
       lcd.complete_message()
       complete_state(led_matrix,start_time)
@@ -202,10 +201,9 @@ def invoke_system(led_matrix,lcd,bravo_xbee):
     if current_time >= led_matrix.get_row_duration()*count_row:
           led_matrix.change_color_row(invoke_color,led_matrix.get_red(),count_row)
           count_row += 1
-
   if count_row >= 8: 
     lcd.missed_message()
-    missed_state(led_matrix,start_time)
+    missed_state(lcd,led_matrix,start_time)
   else:
     stop_buzzer()
     led_matrix.change_color(led_matrix.get_greenImage())
@@ -225,7 +223,7 @@ def complete_state(led_matrix,start_time):
   set_value_file(INVOKE,'0')
   set_value_file(RESTART,'0')
 
-def missed_state(led_matrix,start_time):
+def missed_state(lcd,led_matrix,start_time):
   stop_buzzer()
   led_matrix.clear_matrix()
   led_matrix.change_color(led_matrix.get_redImage())
@@ -239,7 +237,8 @@ def missed_state(led_matrix,start_time):
   set_value_file(INVOKE,'0')
   set_value_file(RESTART,'0')
   while not check_miss():
-    pass
+    lcd.pressed_missed()
+  lcd.send_command("CLEAR")
   led_matrix.change_color(led_matrix.get_greenImage())
   
 def restart_state(lcd,led_matrix):
@@ -335,10 +334,11 @@ def rain_detection(bravo_xbee):
     logger(start_time, end_time, rain_fall, pool_level, None ,"  -  ","  -  ")
 
 
-def send_outfall_conf(xbee):
+def send_outfall_conf(lcd,xbee):
   message = ""
   while not message == 'out':
-      message = xbee.receive_message()
+    lcd.waiting_outfall()
+    message = xbee.receive_message()
   xbee.send_message("yes\n")
   sleep(0.5)
 
@@ -364,7 +364,7 @@ def outfall_detection(bravo_xbee,lcd,led_matrix):
         
     elif status == '-1':
       print("waiting for outfall")
-      send_outfall_conf(bravo_xbee)
+      send_outfall_conf(lcd,bravo_xbee)
       print("Sent confirmation")
       time_date = datetime.datetime.now()
       restart_date = '%s/%s'%(time_date.month,time_date.year)
