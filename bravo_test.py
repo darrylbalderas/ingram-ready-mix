@@ -292,7 +292,7 @@ def send_confirmation(xbee):
   message = ""
   while not message == 'tri':
       message = xbee.receive_message()
-  xbee.send_message("yes\n")
+  xbee.send_message("tyes\n")
   sleep(0.5)
 
 def receive_data(bravo_xbee):
@@ -312,9 +312,9 @@ def receive_data(bravo_xbee):
         pool_val = bravo_xbee.remove_character(message,'p')
         set_value_file(POOL_LEVEL,pool_val)
         pool_flag = True
-    bravo_xbee.send_message("no\n")
+    bravo_xbee.send_message("rno\n")
     sleep(0.5)
-  bravo_xbee.send_message("yes\n")
+  bravo_xbee.send_message("ryes\n")
   sleep(0.5)
   return (rain_val, pool_val)
 
@@ -339,7 +339,7 @@ def send_outfall_conf(lcd,xbee):
   while not message == 'out':
     lcd.waiting_outfall()
     message = xbee.receive_message()
-  xbee.send_message("yes\n")
+  xbee.send_message("oyes\n")
   sleep(0.5)
 
 def outfall_detection(bravo_xbee,lcd,led_matrix):
@@ -347,7 +347,6 @@ def outfall_detection(bravo_xbee,lcd,led_matrix):
   set_value_file(RESTART, '0')
   while True:
     status = checkmonth_sample()
-    print(status)
     set_value_file(STATUS,status)
     if status  == '1':
       while check_sleep('complete'):
@@ -361,11 +360,8 @@ def outfall_detection(bravo_xbee,lcd,led_matrix):
         if check_restart():
           restart_state(lcd,led_matrix)
         lcd.display_hour(num_hours)
-        
     elif status == '-1':
-      print("waiting for outfall")
       send_outfall_conf(lcd,bravo_xbee)
-      print("Sent confirmation")
       time_date = datetime.datetime.now()
       restart_date = '%s/%s'%(time_date.month,time_date.year)
       if check_value_file(RESTART) == '1' and restart_date == check_value_file(INVOKE_DATE):

@@ -81,12 +81,12 @@ class LCD:
     self.send_message(self.center_message('completed'))
     self.send_command('ENTER')
     self.send_message(self.center_message('sample'))
-    sleep(5)
+    sleep(3)
     self.send_command('CLEAR')
     self.send_message(self.center_message("sleep for rest"))
     self.send_command('ENTER')
     self.send_message(self.center_message("of the month"))
-    sleep(5)
+    sleep(3)
     self.send_command('CLEAR')
 
   def missed_message(self):
@@ -94,12 +94,12 @@ class LCD:
     self.send_message(self.center_message(' missed'))
     self.send_command('ENTER')
     self.send_message(self.center_message('sample'))
-    sleep(5)
+    sleep(3)
     self.send_command('CLEAR')
     self.send_message(self.center_message("sleep for rest"))
     self.send_command('ENTER')
     self.send_message(self.center_message("of the day"))
-    sleep(5)
+    sleep(3)
     self.send_command('CLEAR')
 
   def holding_restart(self,num_time):
