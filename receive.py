@@ -1,6 +1,8 @@
 import sys
 import os
 from transceiver import Transceiver
+import glob
+import serial
 
 def xbee_usb_port():
   if sys.platform.startswith('darwin'):
@@ -25,6 +27,7 @@ def send_outfall_conf(xbee):
   while not message == 'out':
     message = xbee.receive_message()
   xbee.send_message("oyes\n")
+  print("got the message")
   sleep(0.5)
 
 

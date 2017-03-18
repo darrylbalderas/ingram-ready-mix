@@ -1,6 +1,9 @@
 import sys
 import os
 from transceiver import Transceiver
+import serial 
+import glob 
+from time import sleep 
 
 def xbee_usb_port():
   if sys.platform.startswith('darwin'):
@@ -34,4 +37,5 @@ xbee = Transceiver(9600,port)
 while True:
   message = raw_input('Enter the trigger:')
   if message == 'y':
+    print("sending the message")
     detect_outfall(xbee)
