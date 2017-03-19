@@ -8,10 +8,12 @@ from ledmatrix import LedMatrix
 from bravo_test import *
 from threading import Thread
 from threading import Lock
+from threading import Event
 
 if __name__ == "__main__":
   try:
-##    lock = Lock()
+    lock = Lock()
+    event = Event()
     initialize_files()
     xbee_port = xbee_usb_port()
     lcd_port = lcd_serial_port()
@@ -23,15 +25,17 @@ if __name__ == "__main__":
       led_matrix.change_color(led_matrix.get_greenImage())
       lcd.welcome_message()
       outfall_detection(bravo_xbee,lcd,led_matrix)
-##      thread1 = Thread(target=outfall_detection, args=(bravo_xbee,lcd,led_matrix,lock,))
-##      thread2 = Thread(target=rain_detection, args=(bravo_xbee,lock,))
-##      thread1.start()
-##      thread2.start()
-##      thread1.join()
-##      thread2.join()
+      thread1 = Thread(target=outfall_detection, args=(bravo_xbee,lcd,led_matrix,lock,event,))
+      thread2 = Thread(target=rain_detection, args=(bravo_xbee,lock,event,))
+      thread1.start()
+      thread2.start()
     else:
       print("Check the Xbee and LCD connection")
   except KeyboardInterrupt:
+    event.set()
+    print("Ending the Program")
+    thread1.join()
+    thread2.join()
     stop_buzzer()
     led_matrix.clear_matrix()
     bravo_xbee.clear_serial()

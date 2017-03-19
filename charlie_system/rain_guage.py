@@ -25,7 +25,6 @@ class RainGuage:
                             return True
                 return False
                             
-
 	def get_total_rainfall(self):
 		rainfall = 0.011
 		ticking = False

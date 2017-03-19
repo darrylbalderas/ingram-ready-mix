@@ -43,15 +43,11 @@ class LevelSensor:
         #eTape Continuous Fluid Level PN 12110215TC-8
         num_list = []
         pool_level = 0
-
         for x in xrange(30):
                 value = self.adc.read_adc_difference(0, gain=self.GAIN)
                 num_list.append(value)
                 time.sleep(0.5)
-
-                
         pool_level = np.median(num_list)
-
         self.pool_level = self.resistance_to_inches(pool_level)
           
         #Create the rules here to see the amount of inches needed for outfall

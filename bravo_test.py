@@ -66,6 +66,14 @@ def initialize_files():
       fopen = open(value, 'w')
       if key == 'invoke':
         fopen.write('0')
+      elif key == 'rain':
+        fopen.write('0.011')
+      elif key == "pool_level":
+        fopen.write('8')
+      elif key == 'restart':
+        fopen.write('0')
+      elif key == 'invoke_date':
+        fopen.write('None')
       else:
         fopen.write('-1')
       fopen.close()
@@ -130,7 +138,7 @@ def xbee_usb_port():
   if sys.platform.startswith('darwin'):
     ports = glob.glob('/dev/tty.usbserial*')
   elif sys.platform.startswith('linux'):
-    ports = glob.glob('/dev/ttyUSB1*')
+    ports = glob.glob('/dev/ttyU*')
   if len(ports) != 0:
     result = []
     for port in ports:
@@ -138,7 +146,7 @@ def xbee_usb_port():
             ser = serial.Serial(port)
             ser.close()
             result.append(port)
-        except( OSError, serial.SerialException):
+        except( OSError, serial.SerialException ):
             pass
     return result[0]
   else:
@@ -167,7 +175,8 @@ def logger(start_time, end_time, amount_rain, pool_level, tag=None, outfall=None
     fopen = open(collect_datafile, 'a')
   else:
     fopen = open(collect_datafile, 'w')
-    fopen.write('Start time, End time, AmountRained(inches), Inches till Overflow, Outfall, Collection Status')
+    fopen.write('Start time, End time, AmountRained(inches), Inches till Overflow, \
+                 Outfall status, Collection Status')
     fopen.write('\n')
 
   fopen.write("{},{},{},{},{},{}".format(start_time, end_time, amount_rain 
@@ -175,7 +184,7 @@ def logger(start_time, end_time, amount_rain, pool_level, tag=None, outfall=None
   fopen.write("\n")
   fopen.close()
 
-def invoke_system(led_matrix,lcd,bravo_xbee):
+def invoke_system(led_matrix,lcd):
   time_date = datetime.datetime.now()
   start_time = '%s:%s:%s'%(time_date.hour,time_date.minute,time_date.second)
   start_buzzer()
@@ -207,7 +216,6 @@ def invoke_system(led_matrix,lcd,bravo_xbee):
   else:
     stop_buzzer()
     led_matrix.change_color(led_matrix.get_greenImage())
-
  
 def complete_state(led_matrix,start_time):
   stop_buzzer()
@@ -318,23 +326,23 @@ def receive_data(bravo_xbee):
   sleep(0.5)
   return (rain_val, pool_val)
 
-def rain_detection(bravo_xbee):
-  while True:
+def rain_detection(bravo_xbee,lock,event):
+  while not event.isSet():
+    lock.acquire()
     send_confirmation(bravo_xbee)
-    print('got first confirmation')
+    lock.release()
     start_timeDate = datetime.datetime.now()
+    lock.acquire()
     send_confirmation(bravo_xbee)
-    print('got second confirmation')
     rain_fall, pool_level = receive_data(bravo_xbee)
-    print('received data')
+    lock.release()
     end_timeDate = datetime.datetime.now() 
     # time_delay = datetime.datetime.now() - timedelta(minute = 5)  
     end_time = '%s:%s:%s'%(end_timeDate.hour,end_timeDate.minute,end_timeDate.second)
     start_time = '%s:%s:%s'%(start_timeDate.hour,start_timeDate.minute,start_timeDate.second)
     logger(start_time, end_time, rain_fall, pool_level, None ,"  -  ","  -  ")
 
-
-def send_outfall_conf(lcd,xbee):
+def send_outfall_conf(lcd, xbee):
   message = ""
   while not message == 'out':
     lcd.waiting_outfall()
@@ -342,10 +350,9 @@ def send_outfall_conf(lcd,xbee):
   xbee.send_message("oyes\n")
   sleep(0.5)
 
-def outfall_detection(bravo_xbee,lcd,led_matrix):
+def outfall_detection(bravo_xbee,lcd,led_matrix,lock,event):
   set_value_file(STATUS,'-1')
-  set_value_file(RESTART, '0')
-  while True:
+  while not event.isSet():
     status = checkmonth_sample()
     set_value_file(STATUS,status)
     if status  == '1':
@@ -361,10 +368,12 @@ def outfall_detection(bravo_xbee,lcd,led_matrix):
           restart_state(lcd,led_matrix)
         lcd.display_hour(num_hours)
     elif status == '-1':
+      lock.acquire()
       send_outfall_conf(lcd,bravo_xbee)
+      lock.release()
       time_date = datetime.datetime.now()
       restart_date = '%s/%s'%(time_date.month,time_date.year)
       if check_value_file(RESTART) == '1' and restart_date == check_value_file(INVOKE_DATE):
-        invoke_system(led_matrix,lcd,bravo_xbee)
+        invoke_system(led_matrix,lcd)
       elif check_value_file(INVOKE) == '0':
-        invoke_system(led_matrix, lcd, bravo_xbee)
+        invoke_system(led_matrix, lcd)

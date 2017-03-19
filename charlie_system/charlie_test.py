@@ -73,20 +73,26 @@ def xbee_usb_port():
 	else:
 		return None
 
-def detect_outfall(xbee, flow_sensor,level_sensor):
-	while True:
-		while flow_sensor.check_outfall() and level_sensor.check_value():
+def detect_outfall(xbee, flow_sensor,level_sensor,lock,event):
+	while not event.isSet():
+		while flow_sensor.check_outfall() and level_sensor.check_overflow():
+			lock.aquire()
 	  		xbee.send_message('out\n')
 	  		sleep(0.5)
 	  		if xbee.receive_message() == 'oyes':
+	  			lock.release()
 	  			break
-	  		sleep(calculate_hours)
+	  		lock.release()
+	  	sleep(calculate_hours)
 	  	
-def detect_rainfall(rain_guage,xbee,level_sensor):
-	while True:
+def detect_rainfall(rain_guage,xbee,level_sensor, lock,event):
+	while not event.isSet():
 		if rain_guage.get_tick():
+			lock.acquire()
 			create_trigger(xbee)
-			send_data(xbee,rain_guage,level_sensor)
+			lock.release()
+			send_data(xbee,rain_guage,level_sensor,lock)
+		sleep(0.25)
 
 def create_trigger(xbee):
 	message = ""
@@ -94,13 +100,14 @@ def create_trigger(xbee):
 		xbee.send_message('tri\n')
 		message = xbee.receive_message()
 
-def send_data(xbee,rain_gauge,level_sensor):
+def send_data(xbee,rain_gauge,level_sensor,lock):
 	pool_val = level_sensor.get_pool_level()
 	rain_val = rain_gauge.get_total_rainfall()
 	pool_val = level_sensor.get_pool_level()
 	pool_val = 'p' + str(pool_val) + '\n'
 	rain_val = 'r' + str(rain_val) + '\n'
 	message = ""
+	lock.acquire()
 	create_trigger(xbee)
 	while not message == "ryes":
 		xbee.send_message(rain_val)
@@ -108,3 +115,4 @@ def send_data(xbee,rain_gauge,level_sensor):
 		xbee.send_message(pool_val)
 		sleep(0.5)
 		message  = xbee.receive_message()
+	lock.release()
