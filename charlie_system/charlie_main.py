@@ -4,11 +4,11 @@ from time import sleep
 import glob
 import serial
 from time import time
-# from charlie_test import *
-# from transceiver import Transceiver
-# from flow_sensor import FlowSensor
-# from rain_guage import RainGuage
-# from level_sensor import LevelSensor
+from charlie_test import *
+from transceiver import Transceiver
+from flow_sensor import FlowSensor
+from rain_guage import RainGuage
+from level_sensor import LevelSensor
 from threading import Thread
 from threading import Lock
 from threading import Event
