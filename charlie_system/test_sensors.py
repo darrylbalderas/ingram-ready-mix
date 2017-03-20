@@ -9,9 +9,9 @@ def main():
     level_sensor = LevelSensor(level_sensor_pin)
     while True:
     	try:
-    		print(""rain_guage.get_tick())
-    		print(flow_sensor.check_outfall())
-    		print(level_sensor.get_pool_level())
+    		print("The value of the Rain Guage is: %d" %(rain_guage.get_tick()))
+    		print("The value of the flow sensor is: %d" %(flow_sensor.check_outfall()))
+    		print("The value of the level_sensor is: %d" %(level_sensor.get_pool_level()))
     	except KeyboardInterrupt:
     		print("\nExiting the program")
 

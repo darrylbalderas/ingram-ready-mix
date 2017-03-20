@@ -56,9 +56,9 @@ class LevelSensor:
 
     def check_overflow(self):
         if self.pool_level == 0:
-            return True
+            return 1
         else:
-            return False
+            return 0
 
 def main():
         level = LevelSensor()

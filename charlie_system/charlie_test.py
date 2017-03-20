@@ -8,7 +8,7 @@ import RPi.GPIO as GPIO
 import datetime
 from datetime import monthrange
 
-OUTFALL = './config_files/outfall_val.txt'
+# OUTFALL = './config_files/outfall_val.txt'
 
 rain_guage_pin = 18
 level_sensor_pin = 23
@@ -18,39 +18,39 @@ GPIO.setup(flow_sensor_pin,GPIO.IN)
 GPIO.setup(level_sensor_pin,GPIO.IN)
 GPIO.setup(rain_guage_pin,GPIO.IN)
 
-def initialize_files():
-  files = {'outfall': OUTFALL
-          }
-  if not os.path.exists('./config_files'):
-    os.system('mkdir config_files')
+# def initialize_files():
+#   files = {'outfall': OUTFALL
+#           }
+#   if not os.path.exists('./config_files'):
+#     os.system('mkdir config_files')
 
-  for key,value in files.items():
-    if os.path.exists(value):
-      fopen = open(value, 'w')
-      fopen.write('0')
-      fopen.close()
+#   for key,value in files.items():
+#     if os.path.exists(value):
+#       fopen = open(value, 'w')
+#       fopen.write('0')
+#       fopen.close()
 
-def check_value_file(file_name):
-  if os.path.exists(file_name):
-    fopen = open(file_name,'r')
-    tmp = fopen.read()
-    return tmp
-  else:
-    return None
+# def check_value_file(file_name):
+#   if os.path.exists(file_name):
+#     fopen = open(file_name,'r')
+#     tmp = fopen.read()
+#     return tmp
+#   else:
+#     return None
 
-def set_value_file(file_name, value):
-  if os.path.exists(file_name):
-    fopen = open(file_name,'w')
-    fopen.write(value)
-    fopen.close()
-  else:
-    return None
+# def set_value_file(file_name, value):
+#   if os.path.exists(file_name):
+#     fopen = open(file_name,'w')
+#     fopen.write(value)
+#     fopen.close()
+#   else:
+#     return None
 
-def calculate_days():
-  time_date = datetime.datetime.now()
-  month, days_left = monthrange(time_date.year,time_date.month)
-  time_left = (days_left - time_date.day) * 24 * 60 * 60
-  return time_left
+# def calculate_days():
+#   time_date = datetime.datetime.now()
+#   month, days_left = monthrange(time_date.year,time_date.month)
+#   time_left = (days_left - time_date.day) * 24 * 60 * 60
+#   return time_left
 
 def calculate_hours():
   time_date = datetime.datetime.now()
@@ -59,7 +59,7 @@ def calculate_hours():
 
 def xbee_usb_port():
 	if sys.platform.startswith('linux'):
-	    ports = glob.glob('/dev/ttyUSB0')
+	    ports = glob.glob('/dev/ttyU*')
 	if len(ports) != 0:
 		result = []
 		for port in ports:

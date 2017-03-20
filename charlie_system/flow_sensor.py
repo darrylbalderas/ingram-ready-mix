@@ -18,6 +18,6 @@ class FlowSensor:
                         previous_state = current_state
                         while current_state == previous_state:
                                 current_state = self.check_flow()
-                        return True
+                        return 1
                 else:
-                        return False
+                        return 0
