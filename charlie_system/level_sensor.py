@@ -59,14 +59,3 @@ class LevelSensor:
             return 1
         else:
             return 0
-
-def main():
-        level = LevelSensor()
-        print(level.get_pool_level())
-
-main()
-
-
-
-
-

@@ -6,16 +6,14 @@ import serial
 from time import time
 import RPi.GPIO as GPIO
 import datetime
-from datetime import monthrange
+from calendar import monthrange
 
 # OUTFALL = './config_files/outfall_val.txt'
 
-rain_guage_pin = 18
-level_sensor_pin = 23
-flow_sensor_pin = 26
-GPIO.setmode(GPIO.BCM)
+rain_guage_pin = 8
+flow_sensor_pin = 10
+GPIO.setmode(GPIO.BOARD)
 GPIO.setup(flow_sensor_pin,GPIO.IN)
-GPIO.setup(level_sensor_pin,GPIO.IN)
 GPIO.setup(rain_guage_pin,GPIO.IN)
 
 # def initialize_files():

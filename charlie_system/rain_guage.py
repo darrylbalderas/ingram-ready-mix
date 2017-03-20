@@ -23,9 +23,10 @@ class RainGuage:
                             while current_state == previous_state:
                                 current_state = self.check_guage()
                             return 1
-        return 0
+                return 0
                             
 	def get_total_rainfall(self):
+                counter = 0
 		rainfall = 0.011
 		ticking = 0
 		previous_time = time()
@@ -34,6 +35,8 @@ class RainGuage:
 			if not ticking:
 				break
 			else:
+                                counter += 1
 				rainfall += 0.011
+		print("%d Ticks happen with this time interval "%(counter))
 		return rainfall
 

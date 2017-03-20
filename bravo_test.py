@@ -106,15 +106,6 @@ def check_mute():
 def check_restart():
   return gpio.input(restart)
 
-def check_buttons():
-  while True:
-    print(check_complete())
-    print(check_miss())
-    print(check_mute())
-    print(check_restart())
-    print('\n\n')
-    sleep(0.5)
-
 def initalize_buzzers(buzzers):
   for buzzer in buzzers:
     gpio.setup(buzzer,gpio.OUT)
