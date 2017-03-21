@@ -10,11 +10,14 @@ def main():
         while True:
                 try:
                         print("printing the sensor values")
-                        print("The value of the Rain Guage is: %f" %(rain_guage.get_total_rainfall()))
+                        print("The value of the Rain Guage is: %f\n" %(rain_guage.get_total_rainfall()))
                         print("The value of the flow sensor is: %d" %(flow_sensor.check_flow()))
                         print("The value of the level_sensor is: %d\n" %(level_sensor.get_pool_level()))
                 except KeyboardInterrupt:
                         print("\nExiting the program")
+
+
+
 
 
 if __name__ == "__main__":

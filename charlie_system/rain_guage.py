@@ -27,7 +27,8 @@ class RainGuage:
                             
 	def get_total_rainfall(self):
                 counter = 0
-		rainfall = 0.011
+                rainfall = 2.769
+##		rainfall = 0.011
 		ticking = 0
 		previous_time = time()
 		while (time()-previous_time) <= self.max_time:
@@ -36,7 +37,8 @@ class RainGuage:
 				break
 			else:
                                 counter += 1
-				rainfall += 0.011
+                                rainfall += 2.769
+##				rainfall += 0.011
 		print("%d Ticks happen with this time interval "%(counter))
 		return rainfall
 
