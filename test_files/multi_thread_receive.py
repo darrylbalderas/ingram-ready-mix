@@ -127,20 +127,21 @@ def main():
         lock = Lock()
         event = Event()
         xbee_port = xbee_usb_port()
-        if len(xbee_port) != None:
+        if xbee_port != None:
             bravo_xbee = Transceiver(9600,xbee_port)
             print("starting the threads")
             thread1 = Thread(target=detect_outfall, args=(bravo_xbee,lock,event,))
-            thread2 = Thread(target=detect_rain, args=(bravo_xbee,lock,event,))
             thread1.start()
+            thread2 = Thread(target=detect_rain, args=(bravo_xbee,lock,event,))
             thread2.start()
+            message = raw_input("Enter a key to exit: ")
+            sleep(3)
+            event.set()
+            print("Ending the Program")
+            thread1.join()
+            thread2.join()
         else:
             print("Check the Xbee connection")
-        message = raw_input("Enter a key to exit")
-        event.set()
-        print("Ending the Program")
-        thread1.join()
-        thread2.join()
     except KeyboardInterrupt:
             event.set()
             print("Ending the Program")
