@@ -39,6 +39,25 @@ from transceiver import Transceiver
 ##    print("This is the value for restart button: %d" %(check_restart()))
 ##    print('\n\n')
 
+def xbee_usb_port():
+  if sys.platform.startswith('linux'):
+    ports = glob.glob('/dev/ttyU*')
+  elif sys.platform.startswith('darwin'):
+    ports = glob.glob('/dev/tty.usbserial*')
+
+  if len(ports) != 0:
+      result = []
+      for port in ports:
+          try:
+              ser = serial.Serial(port)
+              ser.close()
+              result.append(port)
+          except( OSError, serial.SerialException):
+              pass
+      return result[0]
+  else:
+      return None
+
 def send_confirmation(xbee,lock):
   message = ""
   while not message == 'tri':
@@ -96,7 +115,7 @@ def send_outfall_conf(xbee,lock):
   sleep(0.5)
   lock.release()
 
-def detect_outfall(bravo_xbee,lcd,led_matrix,lock,event):
+def detect_outfall(bravo_xbee,lock,event):
   while not event.isSet():
     send_outfall_conf(bravo_xbee,lock)
     print("got the outfall confirmation")
@@ -106,11 +125,11 @@ def main():
         lock = Lock()
         event = Event()
         xbee_port = xbee_usb_port()
-        if xbee_port != None:
+        if len(xbee_port) != None:
             bravo_xbee = Transceiver(9600,xbee_port)
             print("starting the threads")
-            thread1 = Thread(target=outfall_detection, args=(bravo_xbee,lock,event,))
-            thread2 = Thread(target=rain_detection, args=(bravo_xbee,lock,event,))
+            thread1 = Thread(target=detect_outfall, args=(bravo_xbee,lock,event,))
+            thread2 = Thread(target=detect_rain, args=(bravo_xbee,lock,event,))
             thread1.start()
             thread2.start()
         else:
@@ -120,3 +139,6 @@ def main():
             print("Ending the Program")
             thread1.join()
             thread2.join()
+
+if __name__ == "__main__":
+  main()

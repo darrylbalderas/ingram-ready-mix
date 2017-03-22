@@ -11,7 +11,6 @@ class RainGuage:
 
 	def check_guage(self):
 		return GPIO.input(self.pin)
-
 	def get_tick(self):
 		previous_state = 0
 		previous_time = time()
@@ -24,6 +23,7 @@ class RainGuage:
                                 current_state = self.check_guage()
                             return 1
                 return 0
+
                             
 	def get_total_rainfall(self):
                 counter = 0

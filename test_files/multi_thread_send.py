@@ -74,7 +74,7 @@ def detect_outfall(xbee,lock,event):
     while not event.isSet():
         while check_flowsensor() and check_levelsensor():
             print("outfall is occuring")
-            lock.aquire()
+            lock.acquire()
             xbee.send_message('out\n')
             sleep(0.5)
             if xbee.receive_message() == 'oyes':
