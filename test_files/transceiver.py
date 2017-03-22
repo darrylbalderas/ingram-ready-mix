@@ -43,9 +43,10 @@ class Transceiver:
       self.ser.write(message)
  
   def receive_message(self):
-    message = ""
+    message = "\n"
     if self.ser.isOpen():
-      message = self.ser.readline()
+      try:
+        message = self.ser.readline()
     return message.strip('\n')
 
   def clear_serial(self):

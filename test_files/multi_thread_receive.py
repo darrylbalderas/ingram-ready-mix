@@ -9,6 +9,7 @@ from threading import Lock
 from threading import Event
 ##import RPi.GPIO as gpio
 from transceiver import Transceiver
+import datetime
 
 ##complete = 12 
 ##mute = 20
@@ -104,12 +105,13 @@ def detect_rain(bravo_xbee,lock,event):
     end_timeDate = datetime.datetime.now() 
     end_time = '%s:%s:%s'%(end_timeDate.hour,end_timeDate.minute,end_timeDate.second)
     start_time = '%s:%s:%s'%(start_timeDate.hour,start_timeDate.minute,start_timeDate.second)
-    print('start_time: %s and endtime: %s\n' %(start_time))
+    print('start_time: %s and endtime: %s\n' %(start_time,end_time))
 
 def send_outfall_conf(xbee,lock):
   message = ""
   while not message == 'out':
     message = xbee.receive_message()
+
   lock.acquire()
   xbee.send_message("oyes\n")
   sleep(0.5)
@@ -134,6 +136,11 @@ def main():
             thread2.start()
         else:
             print("Check the Xbee connection")
+        message = raw_input("Enter a key to exit")
+        event.set()
+        print("Ending the Program")
+        thread1.join()
+        thread2.join()
     except KeyboardInterrupt:
             event.set()
             print("Ending the Program")
