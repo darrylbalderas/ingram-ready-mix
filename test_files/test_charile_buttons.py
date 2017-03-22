@@ -25,7 +25,7 @@ def check_buttons():
     print("This is the value for flow sensor button: %d" %(check_flowsensor()))
     print("This is the value for level sensor button: %d" %(check_levelsensor()))
     print('\n\n')
-    sleep(o.5)
+    sleep(0.5)
 
 if __name__ == "__main__":
 	check_buttons()

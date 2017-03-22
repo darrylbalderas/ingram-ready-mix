@@ -48,7 +48,7 @@ class Transceiver:
       try:
         message = self.ser.readline()
       except:
-        pass
+        print("Error")
     return message.strip('\n')
 
   def clear_serial(self):

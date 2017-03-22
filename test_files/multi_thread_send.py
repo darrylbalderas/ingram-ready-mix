@@ -74,22 +74,17 @@ def detect_outfall(xbee,lock,event):
     while not event.isSet():
         while check_flowsensor() and check_levelsensor():
             print("outfall is occuring")
-            lock.acquire()
             xbee.send_message('out\n')
-            sleep(0.5)
+            sleep(0.25)
             if xbee.receive_message() == 'oyes':
                 print("received outfall confirmation")
-                lock.release()
                 break
-            lock.release()
         
 def detect_rainfall(xbee,lock,event):
     while not event.isSet():
         if get_tick():
             print("rainguage invoked")
-            lock.acquire()
             create_trigger(xbee)
-            lock.release()
             send_data(xbee,lock)
             print("sent the pool and rain data")
         sleep(0.25)
@@ -101,8 +96,8 @@ def create_trigger(xbee):
         message = xbee.receive_message()
 
 def send_data(xbee,lock):
-    rain_val = rain_gauge.get_total_rainfall()
-    pool_val = 8
+    rain_val = get_total_rainfall()
+    pool_val = 8.0
     pool_val = 'p' + str(pool_val) + '\n'
     rain_val = 'r' + str(rain_val) + '\n'
     message = ""
@@ -110,9 +105,9 @@ def send_data(xbee,lock):
     create_trigger(xbee)
     while not message == "ryes":
         xbee.send_message(rain_val)
-        sleep(0.5)
+        sleep(0.25)
         xbee.send_message(pool_val)
-        sleep(0.5)
+        sleep(0.25)
         message  = xbee.receive_message()
     lock.release()
 
@@ -123,6 +118,7 @@ def main():
     if port != None:
         try:
             charlie_xbee = Transceiver(9600,port)
+            print("starting threads")
             thread1 = Thread(target = detect_outfall, args = (charlie_xbee,lock,event, ))
             thread2 = Thread(target = detect_rainfall, args = (charlie_xbee,lock,event,))
             thread1.start()
@@ -134,11 +130,6 @@ def main():
             thread2.join()
     else:
         print('Missing xbee device')
-    message = raw_input("Enter a key to exit")
-    event.set()
-    print("Ending the Program")
-    thread1.join()
-    thread2.join()
 
 if __name__ == "__main__":
     main()
