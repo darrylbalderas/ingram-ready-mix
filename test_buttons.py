@@ -30,7 +30,7 @@ def check_buttons():
     print("This is the value for mute button: %d" %(check_mute()))
     print("This is the value for restart button: %d" %(check_restart()))
     print('\n\n')
-    sleep(0.5)
+    sleep(1.0)
 
 if __name__ == "__main__":
 	check_buttons()

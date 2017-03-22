@@ -1,5 +1,6 @@
 import RPi.GPIO as gpio
 from time import sleep
+
 gpio.setmode(gpio.BCM)
 buzzers = [4,17,22,27,5,6,13,19] ## wiring in beardboard
 
