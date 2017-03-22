@@ -134,6 +134,11 @@ def main():
             thread2.join()
     else:
         print('Missing xbee device')
+    message = raw_input("Enter a key to exit")
+    event.set()
+    print("Ending the Program")
+    thread1.join()
+    thread2.join()
 
 if __name__ == "__main__":
     main()
