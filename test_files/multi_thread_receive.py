@@ -66,7 +66,7 @@ def send_confirmation(xbee,lock):
 ##        check_buttons()
     message = xbee.receive_message()
   xbee.send_message("tyes\n")
-  sleep(0.25)
+  sleep(1.0)
 
 def receive_data(bravo_xbee):
   rain_flag = False
@@ -84,9 +84,9 @@ def receive_data(bravo_xbee):
         pool_val = bravo_xbee.remove_character(message,'p')
         pool_flag = True
     bravo_xbee.send_message("rno\n")
-    sleep(0.25)
+    sleep(1.0)
   bravo_xbee.send_message("ryes\n")
-  sleep(0.25)
+  sleep(1.0)
   return (rain_val, pool_val)
 
 def detect_rain(bravo_xbee,lock,event):
@@ -110,7 +110,6 @@ def send_outfall_conf(xbee,lock):
   message = ""
   while not message == 'out':
     message = xbee.receive_message()
-    print(message)
   xbee.send_message("oyes\n")
   sleep(0.25)
 

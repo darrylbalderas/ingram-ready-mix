@@ -48,14 +48,7 @@ class Transceiver:
       try:
         message = self.ser.readline() 
       except:
-<<<<<<< HEAD
         pass
-
-||||||| merged common ancestors
-        pass
-=======
-        print("Error")
->>>>>>> 8bfa35b1bde59eaaeab560aa252ae9be0ee8e39a
     return message.strip('\n')
 
   def clear_serial(self):
