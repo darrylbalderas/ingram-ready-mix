@@ -75,7 +75,7 @@ def detect_outfall(xbee,lock,event):
         while check_flowsensor() and check_levelsensor():
             print("outfall is occuring")
             xbee.send_message('out\n')
-            sleep(0.25)
+            sleep(1.0)
             if xbee.receive_message() == 'oyes':
                 print("received outfall confirmation")
                 break
@@ -105,9 +105,9 @@ def send_data(xbee,lock):
     create_trigger(xbee)
     while not message == "ryes":
         xbee.send_message(rain_val)
-        sleep(0.25)
+        sleep(1.0)
         xbee.send_message(pool_val)
-        sleep(0.25)
+        sleep(1.0)
         message  = xbee.receive_message()
     lock.release()
 

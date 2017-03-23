@@ -3,6 +3,7 @@ import os
 from transceiver import Transceiver
 import glob
 import serial
+from time import sleep
 
 def xbee_usb_port():
   if sys.platform.startswith('darwin'):
