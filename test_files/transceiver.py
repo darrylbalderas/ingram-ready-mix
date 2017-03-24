@@ -17,8 +17,7 @@ class Transceiver:
                             self.baud_rate, timeout=1.0, 
                             parity=serial.PARITY_NONE,
                             stopbits=serial.STOPBITS_ONE,
-                            bytesize=serial.EIGHTBITS,
-                            writeTimeout=1.0)
+                            bytesize=serial.EIGHTBITS)
 
   def close_serial(self):
     '''
