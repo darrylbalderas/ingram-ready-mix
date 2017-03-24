@@ -132,14 +132,10 @@ def main():
         except KeyboardInterrupt:
             event.set()
             print("Ending the program")
-            thread1.join()
+            # thread1.join()
             thread2.join()
     else:
         print('Missing xbee device')
-    event.set()
-    print("Ending the program")
-    thread1.join()
-    thread2.join()
 
 if __name__ == "__main__":
     main()
