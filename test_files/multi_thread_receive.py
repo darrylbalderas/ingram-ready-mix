@@ -62,11 +62,9 @@ def xbee_usb_port():
 def send_confirmation(xbee,lock):
   message = ""
   while not message == 'tri':
-##    if check_mute() and check_complete() and check_restart() and check_miss():
-##        check_buttons()
     message = xbee.receive_message()
   xbee.send_message("tyes\n")
-  sleep(1.0)
+  sleep(0.5)
 
 def receive_data(bravo_xbee):
   rain_flag = False
@@ -74,19 +72,21 @@ def receive_data(bravo_xbee):
   rain_val = 0
   pool_val = 0
   message = ""
+  length = 0
   while not (rain_flag and pool_flag):
     message = bravo_xbee.receive_message()
     if len(message) > 1:
-      if message[0] == 'r' and not rain_flag:
+      length = len(message) - 1
+      if message[0] == 'r' and message[length] == 'n' and not rain_flag:
         rain_val = bravo_xbee.remove_character(message,'r')
         rain_flag = True
-      elif message[0] == 'p' and not pool_flag:
+      elif message[0] == 'p'and message[length] == 'n' and not pool_flag:
         pool_val = bravo_xbee.remove_character(message,'p')
         pool_flag = True
     bravo_xbee.send_message("rno\n")
-    sleep(1.0)
+    sleep(0.5)
   bravo_xbee.send_message("ryes\n")
-  sleep(1.0)
+  sleep(0.5)
   return (rain_val, pool_val)
 
 def detect_rain(bravo_xbee,lock,event):
@@ -98,25 +98,26 @@ def detect_rain(bravo_xbee,lock,event):
     print("got second rain confirmation")
     lock.acquire()
     rain_fall, pool_level = receive_data(bravo_xbee)
-    print("got pool and rain data")
     lock.release()
+    print("got pool and rain data")
     end_timeDate = datetime.datetime.now() 
     end_time = '%s:%s:%s'%(end_timeDate.hour,end_timeDate.minute,end_timeDate.second)
     start_time = '%s:%s:%s'%(start_timeDate.hour,start_timeDate.minute,start_timeDate.second)
-    print("Rain: %s and Pool_level: %s "%(rain_fall, pool_level))
-    print('start_time: %s and endtime: %s\n' %(start_time,end_time))
+    print("Rain: %s and Pool_level: %s " %(rain_fall, pool_level))
+    print('start_time: %s and endtime: %s\n' %(start_time, end_time))
 
 def send_outfall_conf(xbee,lock):
   message = ""
   while not message == 'out':
     message = xbee.receive_message()
+  print("got the outfall trigger")
   xbee.send_message("oyes\n")
-  sleep(0.25)
+  sleep(0.5)
+  print("sending outfall confirmation")
 
 def detect_outfall(bravo_xbee,lock,event):
   while not event.isSet():
     send_outfall_conf(bravo_xbee,lock)
-    print("got the outfall confirmation")
 
 def main():
     try:
@@ -126,16 +127,17 @@ def main():
         if xbee_port != None:
             bravo_xbee = Transceiver(9600,xbee_port)
             print("starting the threads")
-            thread1 = Thread(target=detect_outfall, args=(bravo_xbee,lock,event,))
-            thread1.start()
+            # thread1 = Thread(target=detect_outfall, args=(bravo_xbee,lock,event,))
+            # thread1.start()
             thread2 = Thread(target=detect_rain, args=(bravo_xbee,lock,event,))
             thread2.start()
+            detect_outfall(bravo_xbee,lock,event)
         else:
             print("Check the Xbee connection")
     except KeyboardInterrupt:
             event.set()
             print("Ending the Program")
-            thread1.join()
+            # thread1.join()
             thread2.join()
 
 if __name__ == "__main__":

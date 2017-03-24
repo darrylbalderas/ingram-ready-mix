@@ -30,8 +30,6 @@ def detect_outfall(xbee):
     if xbee.receive_message() == 'oyes':
       break
 
-
-
 port = xbee_usb_port()
 xbee = Transceiver(9600,port)
 while True:
