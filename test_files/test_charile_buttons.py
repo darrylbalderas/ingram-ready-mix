@@ -1,9 +1,9 @@
 import RPi.GPIO as gpio
 from time import sleep
 
-flow = 23
-level = 24
-rain = 18
+flow = 20
+level = 16
+rain = 12
 max_time = 30 * 60
 gpio.setmode(gpio.BCM)
 gpio.setup(flow,gpio.IN)
