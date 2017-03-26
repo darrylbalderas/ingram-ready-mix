@@ -2,6 +2,7 @@ import serial
 import glob
 import sys
 from time import sleep
+import Queue
 
 '''
 This Transmitter class was created for the sole purpose 
@@ -49,16 +50,21 @@ class Transceiver:
     message = ""
     if self.ser.isOpen():
       if not self.send_queue.empty():
+        print("trying sending message")
         job =  self.send_queue.get()
         message = job.description + "\n"
         self.ser.write(message)
         self.flush_output()
+      else:
+        print("send queue empty")
  
   def receive_message(self):
     message = ""
     if self.ser.isOpen():
       try:
         message = self.ser.readline()
+        if message == "":
+          print("empty message")
         self.flush_input() 
         message = message.strip('\n')
         if message != "" and len(message) >= 3:
@@ -72,10 +78,12 @@ class Transceiver:
         pass
 
   def flush_input(self):
+    sleep(0.5)
     self.ser.flushInput()
     sleep(0.5)
 
   def flush_output(self):
+    sleep(0.5)
     self.ser.flushOutput()
     sleep(0.5)
 

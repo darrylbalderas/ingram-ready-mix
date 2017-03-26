@@ -133,8 +133,8 @@ def main():
             print("starting the threads")
             t = Thread(target=detect_rain, args=(receive_queue,send_queue,))
             t1 = Thread(target=transmission, args =(bravo_xbee,))
-            t.start()
             t1.start()
+            t.start()
             detect_outfall(receive_queue,send_queue)
         else:
             print("Check the Xbee connection")
