@@ -54,7 +54,6 @@ class Transceiver:
         job =  self.send_queue.get()
         message = job.description + "\n"
         self.send_queue.task_done()
-        print(message)
         self.ser.write(message)
         sleep(0.5)
  
@@ -63,10 +62,6 @@ class Transceiver:
     if self.ser.isOpen():
       try:
         message = self.ser.readline()
-        if message == "":
-          print("empty message")
-        else:
-          print(message)
         message = message.strip('\n')
         if message != "" and len(message) >= 3:
           if message == "out" or message == "oyes":

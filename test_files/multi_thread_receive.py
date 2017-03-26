@@ -51,6 +51,8 @@ def send_confirmation(receive_queue,send_queue):
       sleep(random.random())
       job = receive_queue.get()
       message = job.description
+      print("inside send_confirmation")
+      print(message)
       receive_queue.task_done()
       if message == "tri":
         print("received trigger")
@@ -70,6 +72,8 @@ def receive_data(receive_queue,send_queue):
     if not receive_queue.empty():
       job = receive_queue.get()
       message = job.description
+      print("inside receive data")
+      print(message)
       receive_queue.task_done()
       if message != "out" or message != "tri":
         if message[0] == 'r' and not rain_flag:
@@ -91,6 +95,8 @@ def send_outfall_conf(receive_queue,send_queue):
       sleep(random.random())
       job = receive_queue.get()
       message = job.description
+      print("inside send_outfall confirmation")
+      print(message)
       receive_queue.task_done()
       if message == "out":
         for x in range(4):
@@ -105,6 +111,7 @@ def detect_rain(receive_queue,send_queue):
     print("waiting on rainfall")
     send_confirmation(receive_queue,send_queue)
     start_timeDate = datetime.datetime.now()
+    print("waiting on the data")
     rain_fall, pool_level = receive_data(receive_queue,send_queue)
     end_timeDate = datetime.datetime.now() 
     end_time = '%s:%s:%s'%(end_timeDate.hour,end_timeDate.minute,end_timeDate.second)
@@ -114,7 +121,7 @@ def detect_rain(receive_queue,send_queue):
 
 def detect_outfall(receive_queue,send_queue):
   while True:
-    print('waiting for outfall')
+    print("waiting for outfall")
     send_outfall_conf(receive_queue,send_queue)
     sleep(200)
 
