@@ -66,31 +66,33 @@ def send_confirmation(xbee,lock):
     lock.acquire()
     message = xbee.receive_message()
     lock.release()
-    sleep(0.5)
+    sleep(0.25)
+  lock.acquire()
   xbee.send_message("tyes\n")
-  sleep(0.5)
+  sleep(0.25)
+  lock.release()
+  sleep(0.25)
 
-def receive_data(bravo_xbee):
+def receive_data(bravo_xbee,lock):
   rain_flag = False
   pool_flag = False
   rain_val = 0
   pool_val = 0
   message = ""
-  length = 0
   while not (rain_flag and pool_flag):
     message = bravo_xbee.receive_message()
+    print(message)
     if len(message) > 1:
-      length = len(message) - 1
-      if message[0] == 'r' and message[length] == 'n' and not rain_flag:
+      if message[0] == 'r' and not rain_flag:
         rain_val = bravo_xbee.remove_character(message,'r')
         rain_flag = True
-      elif message[0] == 'p'and message[length] == 'n' and not pool_flag:
+      elif message[0] == 'p'and not pool_flag:
         pool_val = bravo_xbee.remove_character(message,'p')
         pool_flag = True
     bravo_xbee.send_message("rno\n")
-    sleep(0.5)
+    sleep(0.25)
   bravo_xbee.send_message("ryes\n")
-  sleep(0.5)
+  sleep(0.25)
   return (rain_val, pool_val)
 
 def detect_rain(bravo_xbee,lock):
@@ -116,10 +118,13 @@ def send_outfall_conf(xbee,lock):
     lock.acquire()
     message = xbee.receive_message()
     lock.release()
-    sleep(0.5)
+    sleep(0.25)
   print("got the outfall trigger")
+  lock.acquire()
   xbee.send_message("oyes\n")
-  sleep(0.5)
+  sleep(0.25)
+  lock.release()
+  sleep(0.25)
   print("sending outfall confirmation")
 
 def detect_outfall(bravo_xbee,lock):

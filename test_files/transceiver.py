@@ -46,7 +46,6 @@ class Transceiver:
     if self.ser.isOpen():
       try:
         message = self.ser.readline() 
-        print(message)
       except:
         pass
     return message.strip('\n')

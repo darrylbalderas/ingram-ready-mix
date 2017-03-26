@@ -70,12 +70,15 @@ def get_total_rainfall():
             rainfall += 2.769
     return rainfall
 
-def send_outfall(xbee):
+def send_outfall(xbee,lock):
     message = ""
     while not message == "oyes":
+        lock.acquire()
         xbee.send_message('out\n')
         sleep(0.25)
         message = xbee.receive_message()
+        lock.release()
+        sleep(0.25)
 
 
 def detect_outfall(xbee,lock):
@@ -93,12 +96,14 @@ def detect_rainfall(xbee,lock):
             send_data(xbee,lock)
             print("sent the pool and rain data")
 
-def create_trigger(xbee):
+def create_trigger(xbee, lock):
     message = ""
     while not message == "tyes":
+        lock.acquire()
         xbee.send_message('tri\n')
         sleep(0.25)
         message = xbee.receive_message()
+        lock.release()
 
 def send_data(xbee,lock):
     rain_val = get_total_rainfall()
