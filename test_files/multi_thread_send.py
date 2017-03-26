@@ -96,7 +96,7 @@ def detect_rainfall(xbee,lock):
             send_data(xbee,lock)
             print("sent the pool and rain data")
 
-def create_trigger(xbee, lock):
+def create_trigger(xbee,lock):
     message = ""
     while not message == "tyes":
         lock.acquire()
@@ -113,7 +113,7 @@ def send_data(xbee,lock):
     rain_val = 'r' + str(rain_val) + 'n\n'
     message = ""
     lock.acquire()
-    create_trigger(xbee)
+    create_trigger(xbee,lock)
     while not message == "ryes":
         xbee.send_message(rain_val)
         sleep(0.25)
