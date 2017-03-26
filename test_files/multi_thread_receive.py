@@ -96,14 +96,14 @@ def receive_data(bravo_xbee):
 def detect_rain(bravo_xbee,lock):
   while True:
     send_confirmation(bravo_xbee,lock)
-    # print("got first rain confirmation")
+    print("got first rain confirmation")
     start_timeDate = datetime.datetime.now()
     send_confirmation(bravo_xbee,lock)
-    # print("got second rain confirmation")
+    print("got second rain confirmation")
     lock.acquire()
     rain_fall, pool_level = receive_data(bravo_xbee)
     lock.release()
-    # print("got pool and rain data")
+    print("got pool and rain data")
     end_timeDate = datetime.datetime.now() 
     end_time = '%s:%s:%s'%(end_timeDate.hour,end_timeDate.minute,end_timeDate.second)
     start_time = '%s:%s:%s'%(start_timeDate.hour,start_timeDate.minute,start_timeDate.second)
@@ -120,12 +120,13 @@ def send_outfall_conf(xbee,lock):
   for x in range(10):
     xbee.send_message("oyes\n")
     sleep(0.25)
-  # print("sending outfall confirmation")
+  print("sending outfall confirmation")
   xbee.clear_serial()
   sleep(100)
 
 def detect_outfall(bravo_xbee,lock):
   while True:
+    print('waiting for outfall')
     send_outfall_conf(bravo_xbee,lock)
 
 def main():

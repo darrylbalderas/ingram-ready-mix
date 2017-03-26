@@ -79,8 +79,6 @@ def send_outfall(xbee,lock):
         sleep(0.5)
     xbee.clear_serial()
     sleep(1)
-    
-
 
 def detect_outfall(xbee,lock):
     while True:
@@ -110,8 +108,8 @@ def create_trigger(xbee,lock):
 def send_data(xbee,lock):
     rain_val = get_total_rainfall()
     pool_val = 8.0
-    pool_val = 'p' + str(pool_val) + 'n\n'
-    rain_val = 'r' + str(rain_val) + 'n\n'
+    pool_val = 'p' + str(pool_val) + '\n'
+    rain_val = 'r' + str(rain_val) + '\n'
     message = ""
     lock.acquire()
     create_trigger(xbee,lock)
