@@ -58,8 +58,6 @@ def send_confirmation(receive_queue,send_queue):
           send_queue.put(Job(2,"tyes"))
         flag = True
         break
-      elif message == "out":
-        sleep(1)
   print("sending rainfall confirmation")
 
 def receive_data(receive_queue,send_queue):
@@ -80,9 +78,7 @@ def receive_data(receive_queue,send_queue):
         elif message[0] == 'p'and not pool_flag:
           pool_val = remove_character(message,'p')
           pool_flag = True
-      else:
-        sleep(1)
-  for x in range(6):
+  for x in range(4):
     send_queue.put(Job(2,"ryes"))
   return (rain_val, pool_val)
 
@@ -92,16 +88,15 @@ def send_outfall_conf(receive_queue,send_queue):
   flag = False
   while not flag:
     while not receive_queue.empty():
+      sleep(random.random())
       job = receive_queue.get()
       message = job.description
       receive_queue.task_done()
       if message == "out":
-        for x in range(6):
+        for x in range(4):
           send_queue.put(Job(1, "oyes"))
         flag = True
         break
-      elif message == "tri":
-        sleep(1) 
   print("sending outfall confirmation")
 
 
@@ -121,6 +116,7 @@ def detect_outfall(receive_queue,send_queue):
   while True:
     print('waiting for outfall')
     send_outfall_conf(receive_queue,send_queue)
+    sleep(200)
 
 def transmission(xbee):
   while True:
