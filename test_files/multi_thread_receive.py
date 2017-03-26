@@ -12,6 +12,7 @@ from transceiver import Transceiver
 import datetime
 from multiprocessing import Process
 import Queue
+import random
 
 class Job(object):
     def __init__(self, priority, message):
@@ -67,6 +68,7 @@ def receive_data(receive_queue,send_queue):
   message = ""
   while not (rain_flag and pool_flag):
     if not receive_queue.empty():
+      sleep(random.random())
       job = receive_queue.get()
       message = job.description
       if message != "out" or message != "tri":
@@ -78,7 +80,6 @@ def receive_data(receive_queue,send_queue):
           pool_flag = True
   for x in range(4):
     send_queue.put(Job(2,"ryes"))
-  sleep(1)
   return (rain_val, pool_val)
 
 
@@ -87,6 +88,7 @@ def send_outfall_conf(receive_queue,send_queue):
   flag = False
   while not flag:
     while not receive_queue.empty():
+      sleep(random.random())
       job = receive_queue.get()
       message = job.description
       if message == "out":
@@ -95,9 +97,8 @@ def send_outfall_conf(receive_queue,send_queue):
         flag = True
         break
       elif message == "tri":
-        sleep(1)
+        sleep(1) 
   print("sending outfall confirmation")
-  sleep(100)
 
 
 def detect_rain(receive_queue,send_queue):

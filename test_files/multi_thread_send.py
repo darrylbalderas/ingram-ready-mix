@@ -9,6 +9,7 @@ import RPi.GPIO as gpio
 from transceiver import Transceiver
 from multiprocessing import Process
 import Queue
+import random
 
 flow = 20
 level = 16
@@ -81,11 +82,11 @@ def send_outfall(receive_queue,send_queue):
     message = ""
     while message != "oyes":
         if not receive_queue.empty():
+            sleep(random.random())
             job = receive_queue.get()
             message = job.description
         for x in range(2):
             send_queue.put(Job(1,"out"))
-    sleep(1)
 
 def detect_outfall(receive_queue,send_queue):
     while True:
@@ -93,16 +94,17 @@ def detect_outfall(receive_queue,send_queue):
             print("outfall is occuring")
             send_outfall(receive_queue,send_queue)
             print("got outfall confirmation")
+            sleep(200)
         
 def create_trigger(receive_queue, send_queue):
     message = ""
     while message != "tyes":
         if not receive_queue.empty():
+            sleep(random.random())
             job = receive_queue.get()
             message = job.description
         for x in range(2):
             send_queue.put(Job(2,"tri"))
-    sleep(1)
 
 def detect_rainfall(receive_queue,send_queue):
     while True:
@@ -120,12 +122,12 @@ def send_data(receive_queue, send_queue):
     message = ""
     while message != "ryes":
         if not receive_queue.empty():
+            sleep(random.random())
             job = receive_queue.get()
             message = job.description
         for x in range(2):
             send_queue.put(rain_val)
             send_queue.put(pool_val)
-    sleep(1)
 
 def transmission(xbee):
     while True:

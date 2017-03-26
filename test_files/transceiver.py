@@ -53,10 +53,9 @@ class Transceiver:
         print("trying sending message")
         job =  self.send_queue.get()
         message = job.description + "\n"
+        print(message)
         self.ser.write(message)
         self.flush_output()
-      else:
-        print("send queue empty")
  
   def receive_message(self):
     message = ""
@@ -65,6 +64,8 @@ class Transceiver:
         message = self.ser.readline()
         if message == "":
           print("empty message")
+        else:
+          print(message)
         self.flush_input() 
         message = message.strip('\n')
         if message != "" and len(message) >= 3:
