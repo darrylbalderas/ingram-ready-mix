@@ -11,35 +11,20 @@ from threading import Event
 from transceiver import Transceiver
 import datetime
 from multiprocessing import Process
+import Queue
 
-##complete = 12 
-##mute = 20
-##miss = 16
-##restart = 21
-##gpio.setmode(gpio.BCM)
-##gpio.setup(complete,gpio.IN)
-##gpio.setup(mute,gpio.IN)
-##gpio.setup(miss,gpio.IN)
-##gpio.setup(restart,gpio.IN)
-##
-##def check_complete():
-##    return gpio.input(complete)
-##
-##def check_miss():
-##    return gpio.input(miss)
-##
-##def check_mute():
-##    return gpio.input(mute)
-##
-##def check_restart():
-##    return gpio.input(restart)
-##
-##def check_buttons():
-##    print("This is the value for complete button: %d" %(check_complete()))
-##    print("This is the value for missed button: %d" %(check_miss()))
-##    print("This is the value for mute button: %d" %(check_mute()))
-##    print("This is the value for restart button: %d" %(check_restart()))
-##    print('\n\n')
+receive_queue = Queue.PriorityQueue()
+send_queue = Queue.PriorityQueue()
+
+class Job(object):
+    def __init__(self, priority, message):
+        self.priority = priority
+        self.description = message
+    def __cmp__(self, other):
+        return cmp(self.priority,other.priority)
+
+def remove_character(message,character):
+  return message.strip(character)
 
 def xbee_usb_port():
   if sys.platform.startswith('linux'):
@@ -60,90 +45,103 @@ def xbee_usb_port():
   else:
       return None
 
-def send_confirmation(xbee,lock):
+def send_confirmation(receive_queue,send_queue):
   message = ""
-  while not message == 'tri':
-    message = xbee.receive_message()
-    sleep(1)
-  for x in range(10):
-    xbee.send_message("tyes\n")
-    sleep(0.5)
-  xbee.clear_serial()
-  sleep(1)
+  flag = False
+  while not flag:
+    while not receive_queue.empty():
+      job = receive_queue.get()
+      message = job.description
+      if message == "tri":
+        print("received trigger")
+        for x in range(4):
+          send_queue.put(Job(2,"tyes"))
+        flag = True
+        break
+      elif message == "out":
+        sleep(1)
+  print("sending rainfall confirmation")
 
-def receive_data(bravo_xbee):
+def receive_data(receive_queue,send_queue):
   rain_flag = False
   pool_flag = False
   rain_val = 0
   pool_val = 0
   message = ""
   while not (rain_flag and pool_flag):
-    message = bravo_xbee.receive_message()
-    if len(message) > 1:
-      if message[0] == 'r' and not rain_flag:
-        rain_val = bravo_xbee.remove_character(message,'r')
-        rain_flag = True
-      elif message[0] == 'p'and not pool_flag:
-        pool_val = bravo_xbee.remove_character(message,'p')
-        pool_flag = True
-  for x in range(10):
-    bravo_xbee.send_message("ryes\n")
-    sleep(0.5)
-  bravo_xbee.clear_serial()
+    if not receive_queue.empty():
+      job = receive_queue.get()
+      message = job.description
+      if message != "out" or message != "tri":
+        if message[0] == 'r' and not rain_flag:
+          rain_val = remove_character(message,'r')
+          rain_flag = True
+        elif message[0] == 'p'and not pool_flag:
+          pool_val = remove_character(message,'p')
+          pool_flag = True
+  for x in range(4):
+    send_queue.put(Job(2,"ryes"))
   sleep(1)
   return (rain_val, pool_val)
 
-def detect_rain(bravo_xbee,lock):
+
+def send_outfall_conf(receive_queue,send_queue):
+  message = ""
+  flag = False
+  while not flag:
+    while not receive_queue.empty():
+      job = receive_queue.get()
+      message = job.description
+      if message == "out":
+        for x in range(4):
+          send_queue.put(Job(1, "oyes"))
+        flag = True
+        break
+      elif message == "tri":
+        sleep(1)
+  print("sending outfall confirmation")
+  sleep(100)
+
+
+def detect_rain(receive_queue,send_queue):
   while True:
-    send_confirmation(bravo_xbee,lock)
-    print("got first rain confirmation")
+    print("waiting on rainfall")
+    send_confirmation(receive_queue,send_queue)
     start_timeDate = datetime.datetime.now()
-    send_confirmation(bravo_xbee,lock)
-    print("got second rain confirmation")
-    lock.acquire()
-    rain_fall, pool_level = receive_data(bravo_xbee)
-    lock.release()
-    print("got pool and rain data")
+    rain_fall, pool_level = receive_data(receive_queue,send_queue)
     end_timeDate = datetime.datetime.now() 
     end_time = '%s:%s:%s'%(end_timeDate.hour,end_timeDate.minute,end_timeDate.second)
     start_time = '%s:%s:%s'%(start_timeDate.hour,start_timeDate.minute,start_timeDate.second)
     print("Rain: %s and Pool_level: %s " %(rain_fall, pool_level))
     print('start_time: %s and endtime: %s\n' %(start_time, end_time))
 
-def send_outfall_conf(xbee,lock):
-  message = ""
-  while not message == 'out':
-    message = xbee.receive_message()
-    # print("Outfall %s"%(message))
-    sleep(0.5)
-  # print("got the outfall trigger")
-  for x in range(10):
-    xbee.send_message("oyes\n")
-    sleep(0.25)
-  print("sending outfall confirmation")
-  xbee.clear_serial()
-  sleep(100)
-
-def detect_outfall(bravo_xbee,lock):
+def detect_outfall(receive_queue,send_queue):
   while True:
     print('waiting for outfall')
-    send_outfall_conf(bravo_xbee,lock)
+    send_outfall_conf(receive_queue,send_queue)
+
+def transmission(xbee):
+  while True:
+    xbee.receive_message()
+    xbee.send_message()
 
 def main():
     try:
-        lock = Lock()
         xbee_port = xbee_usb_port()
         if xbee_port != None:
-            bravo_xbee = Transceiver(9600,xbee_port)
+            bravo_xbee = Transceiver(9600,xbee_port,receive_queue,send_queue)
             print("starting the threads")
-            p2 = Process(target=detect_rain, args=(bravo_xbee,lock,))
-            p2.start()
-            detect_outfall(bravo_xbee,lock)
+            t = Thread(target=detect_rain, args=(receive_queue,send_queue,))
+            t1 = Thread(target=transmission, args =(bravo_xbee,))
+            t.start()
+            t1.start()
+            detect_outfall(receive_queue,send_queue)
         else:
             print("Check the Xbee connection")
     except KeyboardInterrupt:
             print("Ending the Program")
-            p2.join()
+            t.join()
+            t1.join()
 
 if __name__ == "__main__":
   main()

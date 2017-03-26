@@ -5,11 +5,10 @@ import glob
 import serial
 from time import time
 from threading import Thread
-from threading import Lock
-from threading import Event
 import RPi.GPIO as gpio
 from transceiver import Transceiver
 from multiprocessing import Process
+import Queue
 
 flow = 20
 level = 16
@@ -19,6 +18,16 @@ gpio.setmode(gpio.BCM)
 gpio.setup(flow,gpio.IN)
 gpio.setup(level,gpio.IN)
 gpio.setup(rain,gpio.IN)
+
+receive_queue = Queue.PriorityQueue()
+send_queue = Queue.PriorityQueue()
+
+class Job(object):
+    def __init__(self, priority, message):
+        self.priority = priority
+        self.description = message
+    def __cmp__(self, other):
+        return cmp(self.priority, other.priority)
 
 def xbee_usb_port():
     if sys.platform.startswith('linux'):
@@ -70,72 +79,75 @@ def get_total_rainfall():
             rainfall += 2.769
     return rainfall
 
-def send_outfall(xbee,lock):
+def send_outfall(receive_queue,send_queue):
     message = ""
-    while not message == "oyes":
-        xbee.send_message('out\n')
-        sleep(0.25)
-        message = xbee.receive_message()
-        sleep(0.25)
-    xbee.clear_serial()
+    while message != "oyes":
+        if not receive_queue.empty():
+            job = receive_queue.get()
+            message = job.description
+            for x in range(2):
+                send_queue.put(Job(1,"out"))
     sleep(1)
 
-def detect_outfall(xbee,lock):
+def detect_outfall(receive_queue,send_queue):
     while True:
         if check_flowsensor() and check_levelsensor():
             print("outfall is occuring")
-            send_outfall(xbee,lock)
+            send_outfall(receive_queue,send_queue)
             print("got outfall confirmation")
         
-def detect_rainfall(xbee,lock):
+def create_trigger(receive_queue, send_queue):
+    message = ""
+    while message != "tyes":
+        if not receive_queue.empty():
+            job = receive_queue.get()
+            message = job.description
+            for x in range(2):
+                send_queue.put(Job(2,"tri"))
+    sleep(1)
+
+def detect_rainfall(receive_queue,send_queue):
     while True:
         if get_tick():
             print("rainguage invoked")
-            create_trigger(xbee,lock)
-            send_data(xbee,lock)
+            create_trigger(receive_queue,send_queue)
+            send_data(receive_queue, send_queue)
             print("sent the pool and rain data")
 
-def create_trigger(xbee,lock):
-    message = ""
-    while not message == "tyes":
-        xbee.send_message('tri\n')
-        sleep(0.25)
-        message = xbee.receive_message()
-        sleep(0.25)
-    xbee.clear_serial()
-    sleep(1)
-
-def send_data(xbee,lock):
+def send_data(receive_queue, send_queue):
     rain_val = get_total_rainfall()
     pool_val = 8.0
-    pool_val = 'p' + str(pool_val) + '\n'
-    rain_val = 'r' + str(rain_val) + '\n'
+    pool_val = 'p' + str(pool_val)
+    rain_val = 'r' + str(rain_val)
     message = ""
-    lock.acquire()
-    create_trigger(xbee,lock)
-    while not message == "ryes":
-        xbee.send_message(rain_val)
-        sleep(0.25)
-        xbee.send_message(pool_val)
-        sleep(0.25)
-        message  = xbee.receive_message()
-    lock.release()
-    xbee.clear_serial()
+    while message != "ryes":
+        if not receive_queue.empty():
+            job = receive_queue.get()
+            message = job.description
+            for x in range(2):
+                send_queue.put(rain_val)
+                send_queue.put(pool_val)
     sleep(1)
 
+def transmission(xbee):
+    xbee.receive_message()
+    xbee.send_message()
+
 def main():
-    lock = Lock()
     port = xbee_usb_port()
     if port != None:
         try:
-            charlie_xbee = Transceiver(9600,port)
-            print("starting thread")
-            p2 = Process(target = detect_rainfall, args = (charlie_xbee,lock,))
-            p2.start()
-            detect_outfall(charlie_xbee,lock)
+            charlie_xbee = Transceiver(9600,port,receive_queue,send_queue)
+            print("starting threads")
+            t = Thread(target = detect_rainfall, args = (receive_queue,send_queue,))
+            t1 = Thread(target = transmission, args = (charlie_xbee,))
+            t.start()
+            t1.start()
+            detect_outfall(receive_queue,send_queue)
         except KeyboardInterrupt:
             print("Ending the program")
-            p2.join()
+            t.join()
+            t1.join()
     else:
         print('Missing xbee device')
 
