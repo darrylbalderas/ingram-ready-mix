@@ -14,7 +14,7 @@ class Transceiver:
     self.port_path = port_path
     self.baud_rate = baud_rate
     self.ser = serial.Serial(self.port_path, 
-                            self.baud_rate, timeout=3.0, 
+                            self.baud_rate, timeout=1.0, 
                             parity=serial.PARITY_NONE,
                             stopbits=serial.STOPBITS_ONE,
                             bytesize=serial.EIGHTBITS)
@@ -31,7 +31,7 @@ class Transceiver:
     '''    
     self.ser.close()
     self.ser = serial.Serial(self.port_path, 
-                            self.baud_rate, timeout=3.0, 
+                            self.baud_rate, timeout=1.0, 
                             parity=serial.PARITY_NONE,
                             stopbits=serial.STOPBITS_ONE,
                             bytesize=serial.EIGHTBITS,
@@ -42,10 +42,11 @@ class Transceiver:
       self.ser.write(message)
  
   def receive_message(self):
-    message = "\n"
+    message = ""
     if self.ser.isOpen():
       try:
         message = self.ser.readline() 
+        print(message)
       except:
         pass
     return message.strip('\n')

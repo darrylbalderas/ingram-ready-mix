@@ -10,6 +10,7 @@ from threading import Event
 ##import RPi.GPIO as gpio
 from transceiver import Transceiver
 import datetime
+from multiprocessing import Process
 
 ##complete = 12 
 ##mute = 20
@@ -64,7 +65,7 @@ def send_confirmation(xbee,lock):
   while not message == 'tri':
     message = xbee.receive_message()
   xbee.send_message("tyes\n")
-  sleep(0.25)
+  sleep(0.5)
 
 def receive_data(bravo_xbee):
   rain_flag = False
@@ -84,13 +85,13 @@ def receive_data(bravo_xbee):
         pool_val = bravo_xbee.remove_character(message,'p')
         pool_flag = True
     bravo_xbee.send_message("rno\n")
-    sleep(0.25)
+    sleep(0.5)
   bravo_xbee.send_message("ryes\n")
-  sleep(0.25)
+  sleep(0.5)
   return (rain_val, pool_val)
 
-def detect_rain(bravo_xbee,lock,event):
-  while not event.isSet():
+def detect_rain(bravo_xbee,lock):
+  while True:
     send_confirmation(bravo_xbee,lock)
     print("got first rain confirmation")
     start_timeDate = datetime.datetime.now()
@@ -112,33 +113,29 @@ def send_outfall_conf(xbee,lock):
     message = xbee.receive_message()
   print("got the outfall trigger")
   xbee.send_message("oyes\n")
-  sleep(0.25)
+  sleep(0.5)
   print("sending outfall confirmation")
 
-def detect_outfall(bravo_xbee,lock,event):
-  while not event.isSet():
+def detect_outfall(bravo_xbee,lock):
+  while True:
     send_outfall_conf(bravo_xbee,lock)
 
 def main():
     try:
         lock = Lock()
-        event = Event()
         xbee_port = xbee_usb_port()
         if xbee_port != None:
             bravo_xbee = Transceiver(9600,xbee_port)
             print("starting the threads")
-            # thread1 = Thread(target=detect_outfall, args=(bravo_xbee,lock,event,))
-            # thread1.start()
-            thread2 = Thread(target=detect_rain, args=(bravo_xbee,lock,event,))
-            thread2.start()
-            detect_outfall(bravo_xbee,lock,event)
+            p2 = Process(target=detect_rain, args=(bravo_xbee,lock,))
+            p2.start()
+            detect_outfall(bravo_xbee,lock)
         else:
             print("Check the Xbee connection")
     except KeyboardInterrupt:
-            event.set()
             print("Ending the Program")
             # thread1.join()
-            thread2.join()
+            p2.join()
 
 if __name__ == "__main__":
   main()

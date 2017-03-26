@@ -9,6 +9,7 @@ from threading import Lock
 from threading import Event
 import RPi.GPIO as gpio
 from transceiver import Transceiver
+from multiprocessing import Process
 
 flow = 20
 level = 16
@@ -58,7 +59,6 @@ def get_tick():
     return 0
 
 def get_total_rainfall():
-    counter = 0
     rainfall = 2.769
     ticking = 0
     previous_time = time()
@@ -74,19 +74,19 @@ def send_outfall(xbee):
     message = ""
     while not message == "oyes":
         xbee.send_message('out\n')
-        sleep(0.25)
+        sleep(0.5)
         message = xbee.receive_message()
 
 
-def detect_outfall(xbee,lock,event):
-    while not event.isSet():
+def detect_outfall(xbee,lock):
+    while True:
         if check_flowsensor() and check_levelsensor():
             print("outfall is occuring")
             send_outfall(xbee)
             print("got outfall confirmation")
         
-def detect_rainfall(xbee,lock,event):
-    while not event.isSet():
+def detect_rainfall(xbee,lock):
+    while True:
         if get_tick():
             print("rainguage invoked")
             create_trigger(xbee)
@@ -97,7 +97,7 @@ def create_trigger(xbee):
     message = ""
     while not message == "tyes":
         xbee.send_message('tri\n')
-        sleep(0.25)
+        sleep(0.5)
         message = xbee.receive_message()
 
 def send_data(xbee,lock):
@@ -110,30 +110,25 @@ def send_data(xbee,lock):
     create_trigger(xbee)
     while not message == "ryes":
         xbee.send_message(rain_val)
-        sleep(0.25)
+        sleep(0.5)
         xbee.send_message(pool_val)
-        sleep(0.25)
+        sleep(0.5)
         message  = xbee.receive_message()
     lock.release()
 
 def main():
     lock = Lock()
-    event = Event()
     port = xbee_usb_port()
     if port != None:
         try:
             charlie_xbee = Transceiver(9600,port)
             print("starting thread")
-            # thread1 = Thread(target = detect_outfall, args = (charlie_xbee,lock,event, ))
-            thread2 = Thread(target = detect_rainfall, args = (charlie_xbee,lock,event,))
-            # thread1.start()
-            thread2.start()
-            detect_outfall(charlie_xbee,lock,event)
+            p2 = Process(target = detect_rainfall, args = (charlie_xbee,lock,))
+            p2.start()
+            detect_outfall(charlie_xbee,lock)
         except KeyboardInterrupt:
-            event.set()
             print("Ending the program")
-            # thread1.join()
-            thread2.join()
+            p2.join()
     else:
         print('Missing xbee device')
 
