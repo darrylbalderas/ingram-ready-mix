@@ -130,8 +130,9 @@ def send_data(receive_queue, send_queue):
     sleep(1)
 
 def transmission(xbee):
-    xbee.receive_message()
-    xbee.send_message()
+    while True:
+        xbee.receive_message()
+        xbee.send_message()
 
 def main():
     port = xbee_usb_port()
