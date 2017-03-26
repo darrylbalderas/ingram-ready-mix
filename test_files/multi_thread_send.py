@@ -74,9 +74,9 @@ def send_outfall(xbee,lock):
     message = ""
     while not message == "oyes":
         xbee.send_message('out\n')
-        sleep(0.5)
+        sleep(0.25)
         message = xbee.receive_message()
-        sleep(0.5)
+        sleep(0.25)
     xbee.clear_serial()
     sleep(1)
 
@@ -99,9 +99,9 @@ def create_trigger(xbee,lock):
     message = ""
     while not message == "tyes":
         xbee.send_message('tri\n')
-        sleep(0.5)
+        sleep(0.25)
         message = xbee.receive_message()
-        sleep(0.5)
+        sleep(0.25)
     xbee.clear_serial()
     sleep(1)
 
@@ -121,6 +121,7 @@ def send_data(xbee,lock):
         message  = xbee.receive_message()
     lock.release()
     xbee.clear_serial()
+    sleep(1)
 
 def main():
     lock = Lock()
