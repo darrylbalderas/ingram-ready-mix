@@ -73,7 +73,7 @@ def send_confirmation(xbee,lock):
   lock.release()
   sleep(0.25)
 
-def receive_data(bravo_xbee,lock):
+def receive_data(bravo_xbee):
   rain_flag = False
   pool_flag = False
   rain_val = 0
@@ -145,7 +145,6 @@ def main():
             print("Check the Xbee connection")
     except KeyboardInterrupt:
             print("Ending the Program")
-            # thread1.join()
             p2.join()
 
 if __name__ == "__main__":

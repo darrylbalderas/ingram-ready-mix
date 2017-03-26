@@ -85,14 +85,14 @@ def detect_outfall(xbee,lock):
     while True:
         if check_flowsensor() and check_levelsensor():
             print("outfall is occuring")
-            send_outfall(xbee)
+            send_outfall(xbee,lock)
             print("got outfall confirmation")
         
 def detect_rainfall(xbee,lock):
     while True:
         if get_tick():
             print("rainguage invoked")
-            create_trigger(xbee)
+            create_trigger(xbee,lock)
             send_data(xbee,lock)
             print("sent the pool and rain data")
 
@@ -104,6 +104,7 @@ def create_trigger(xbee, lock):
         sleep(0.25)
         message = xbee.receive_message()
         lock.release()
+        sleep(0.25)
 
 def send_data(xbee,lock):
     rain_val = get_total_rainfall()
