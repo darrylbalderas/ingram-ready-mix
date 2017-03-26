@@ -82,6 +82,7 @@ def send_outfall(receive_queue,send_queue):
     message = ""
     while message != "oyes":
         if not receive_queue.empty():
+            sleep(random.random())
             job = receive_queue.get()
             message = job.description
             receive_queue.task_done()
