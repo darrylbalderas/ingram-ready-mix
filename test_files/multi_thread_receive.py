@@ -69,6 +69,7 @@ def send_confirmation(xbee,lock):
     xbee.send_message("tyes\n")
     sleep(0.5)
   xbee.clear_serial()
+  sleep(1)
 
 def receive_data(bravo_xbee):
   rain_flag = False
@@ -89,6 +90,7 @@ def receive_data(bravo_xbee):
     bravo_xbee.send_message("ryes\n")
     sleep(0.5)
   bravo_xbee.clear_serial()
+  sleep(1)
   return (rain_val, pool_val)
 
 def detect_rain(bravo_xbee,lock):
