@@ -14,7 +14,7 @@ class Transceiver:
     self.port_path = port_path
     self.baud_rate = baud_rate
     self.ser = serial.Serial(self.port_path, 
-                            self.baud_rate, timeout=1.0, 
+                            self.baud_rate, timeout=2.0, 
                             parity=serial.PARITY_NONE,
                             stopbits=serial.STOPBITS_ONE,
                             bytesize=serial.EIGHTBITS)
@@ -31,11 +31,10 @@ class Transceiver:
     '''    
     self.ser.close()
     self.ser = serial.Serial(self.port_path, 
-                            self.baud_rate, timeout=1.0, 
+                            self.baud_rate, timeout=2.0, 
                             parity=serial.PARITY_NONE,
                             stopbits=serial.STOPBITS_ONE,
-                            bytesize=serial.EIGHTBITS,
-                            writeTimeout=3.0)
+                            bytesize=serial.EIGHTBIT)
     
   def send_message(self,message):
     if self.ser.isOpen():

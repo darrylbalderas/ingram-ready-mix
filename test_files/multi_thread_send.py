@@ -79,6 +79,7 @@ def send_outfall(xbee,lock):
         message = xbee.receive_message()
         lock.release()
         sleep(0.25)
+    xbee.clear_serial()
 
 
 def detect_outfall(xbee,lock):
@@ -105,6 +106,7 @@ def create_trigger(xbee,lock):
         message = xbee.receive_message()
         lock.release()
         sleep(0.25)
+    xbee.clear_serial()
 
 def send_data(xbee,lock):
     rain_val = get_total_rainfall()
@@ -121,6 +123,7 @@ def send_data(xbee,lock):
         sleep(0.25)
         message  = xbee.receive_message()
     lock.release()
+    xbee.clear_serial()
 
 def main():
     lock = Lock()
