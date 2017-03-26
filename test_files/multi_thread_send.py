@@ -74,7 +74,7 @@ def send_outfall(xbee):
     message = ""
     while not message == "oyes":
         xbee.send_message('out\n')
-        sleep(0.5)
+        sleep(0.25)
         message = xbee.receive_message()
 
 
@@ -97,7 +97,7 @@ def create_trigger(xbee):
     message = ""
     while not message == "tyes":
         xbee.send_message('tri\n')
-        sleep(0.5)
+        sleep(0.25)
         message = xbee.receive_message()
 
 def send_data(xbee,lock):
@@ -110,9 +110,9 @@ def send_data(xbee,lock):
     create_trigger(xbee)
     while not message == "ryes":
         xbee.send_message(rain_val)
-        sleep(0.5)
+        sleep(0.25)
         xbee.send_message(pool_val)
-        sleep(0.5)
+        sleep(0.25)
         message  = xbee.receive_message()
     lock.release()
 

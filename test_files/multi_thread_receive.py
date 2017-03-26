@@ -63,7 +63,10 @@ def xbee_usb_port():
 def send_confirmation(xbee,lock):
   message = ""
   while not message == 'tri':
+    lock.acquire()
     message = xbee.receive_message()
+    lock.release()
+    sleep(0.5)
   xbee.send_message("tyes\n")
   sleep(0.5)
 
@@ -110,7 +113,10 @@ def detect_rain(bravo_xbee,lock):
 def send_outfall_conf(xbee,lock):
   message = ""
   while not message == 'out':
+    lock.acquire()
     message = xbee.receive_message()
+    lock.release()
+    sleep(0.5)
   print("got the outfall trigger")
   xbee.send_message("oyes\n")
   sleep(0.5)
