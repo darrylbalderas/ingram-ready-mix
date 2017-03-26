@@ -25,9 +25,13 @@ def xbee_usb_port():
 
 def send_outfall_conf(xbee):
   message = ""
+  count = 0
   while not message == 'out':
+    count += 1
     message = xbee.receive_message()
+    print(message)
   xbee.send_message("oyes\n")
+  print(count)
   print("got the message")
   sleep(0.5)
 

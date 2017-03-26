@@ -24,10 +24,16 @@ def xbee_usb_port():
     return None
 
 def detect_outfall(xbee):
+  count = 0
+  message = ""
   while True:
     xbee.send_message('out\n')
     sleep(0.5)
-    if xbee.receive_message() == 'oyes':
+    count += 1
+    message = xbee.receive_message()
+    print(message)
+    if message == 'oyes':
+      print(count)
       break
 
 port = xbee_usb_port()
