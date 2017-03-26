@@ -53,6 +53,7 @@ class Transceiver:
         print("trying sending message")
         job =  self.send_queue.get()
         message = job.description + "\n"
+        self.send_queue.task_done()
         print(message)
         self.ser.write(message)
         sleep(0.5)

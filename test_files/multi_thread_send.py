@@ -84,6 +84,7 @@ def send_outfall(receive_queue,send_queue):
         if not receive_queue.empty():
             job = receive_queue.get()
             message = job.description
+            receive_queue.task_done()
         for x in range(6):
             send_queue.put(Job(1,"out"))
 
@@ -102,6 +103,7 @@ def create_trigger(receive_queue, send_queue):
             sleep(random.random())
             job = receive_queue.get()
             message = job.description
+            receive_queue.task_done()
         for x in range(6):
             send_queue.put(Job(2,"tri"))
 
@@ -123,6 +125,7 @@ def send_data(receive_queue, send_queue):
         if not receive_queue.empty():
             job = receive_queue.get()
             message = job.description
+            receive_queue.task_done()
         for x in range(4):
             send_queue.put(rain_val)
             send_queue.put(pool_val)

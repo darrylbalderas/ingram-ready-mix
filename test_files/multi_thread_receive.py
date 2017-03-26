@@ -51,6 +51,7 @@ def send_confirmation(receive_queue,send_queue):
       sleep(random.random())
       job = receive_queue.get()
       message = job.description
+      receive_queue.task_done()
       if message == "tri":
         print("received trigger")
         for x in range(4):
@@ -71,6 +72,7 @@ def receive_data(receive_queue,send_queue):
     if not receive_queue.empty():
       job = receive_queue.get()
       message = job.description
+      receive_queue.task_done()
       if message != "out" or message != "tri":
         if message[0] == 'r' and not rain_flag:
           rain_val = remove_character(message,'r')
@@ -92,6 +94,7 @@ def send_outfall_conf(receive_queue,send_queue):
     while not receive_queue.empty():
       job = receive_queue.get()
       message = job.description
+      receive_queue.task_done()
       if message == "out":
         for x in range(6):
           send_queue.put(Job(1, "oyes"))
