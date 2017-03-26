@@ -55,7 +55,7 @@ class Transceiver:
         message = job.description + "\n"
         print(message)
         self.ser.write(message)
-        self.flush_output()
+        sleep(0.5)
  
   def receive_message(self):
     message = ""
@@ -66,7 +66,6 @@ class Transceiver:
           print("empty message")
         else:
           print(message)
-        self.flush_input() 
         message = message.strip('\n')
         if message != "" and len(message) >= 3:
           if message == "out" or message == "oyes":

@@ -82,10 +82,9 @@ def send_outfall(receive_queue,send_queue):
     message = ""
     while message != "oyes":
         if not receive_queue.empty():
-            sleep(random.random())
             job = receive_queue.get()
             message = job.description
-        for x in range(2):
+        for x in range(6):
             send_queue.put(Job(1,"out"))
 
 def detect_outfall(receive_queue,send_queue):
@@ -103,7 +102,7 @@ def create_trigger(receive_queue, send_queue):
             sleep(random.random())
             job = receive_queue.get()
             message = job.description
-        for x in range(2):
+        for x in range(6):
             send_queue.put(Job(2,"tri"))
 
 def detect_rainfall(receive_queue,send_queue):
@@ -122,12 +121,13 @@ def send_data(receive_queue, send_queue):
     message = ""
     while message != "ryes":
         if not receive_queue.empty():
-            sleep(random.random())
             job = receive_queue.get()
             message = job.description
-        for x in range(2):
+        for x in range(4):
             send_queue.put(rain_val)
             send_queue.put(pool_val)
+        if message == "out":
+            sleep(1)
 
 def transmission(xbee):
     while True:
