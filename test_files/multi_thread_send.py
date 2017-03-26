@@ -19,8 +19,6 @@ gpio.setup(flow,gpio.IN)
 gpio.setup(level,gpio.IN)
 gpio.setup(rain,gpio.IN)
 
-receive_queue = Queue.PriorityQueue()
-send_queue = Queue.PriorityQueue()
 
 class Job(object):
     def __init__(self, priority, message):
@@ -135,6 +133,8 @@ def transmission(xbee):
         xbee.send_message()
 
 def main():
+    receive_queue = Queue.PriorityQueue()
+    send_queue = Queue.PriorityQueue()
     port = xbee_usb_port()
     if port != None:
         try:

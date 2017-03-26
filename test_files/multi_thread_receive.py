@@ -13,9 +13,6 @@ import datetime
 from multiprocessing import Process
 import Queue
 
-receive_queue = Queue.PriorityQueue()
-send_queue = Queue.PriorityQueue()
-
 class Job(object):
     def __init__(self, priority, message):
         self.priority = priority
@@ -127,6 +124,8 @@ def transmission(xbee):
 
 def main():
     try:
+        receive_queue = Queue.PriorityQueue()
+        send_queue = Queue.PriorityQueue()
         xbee_port = xbee_usb_port()
         if xbee_port != None:
             bravo_xbee = Transceiver(9600,xbee_port,receive_queue,send_queue)
