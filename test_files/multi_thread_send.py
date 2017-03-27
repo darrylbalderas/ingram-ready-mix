@@ -81,13 +81,15 @@ def get_total_rainfall():
 def send_outfall(out_queue,send_queue):
     message = ""
     while message != "oyes":
-        if not out_queue.empty():
-            message = out_queue.get()
-            out_queue.task_done()
-            print("in send outfall")
-            print(message)
+        if len(out_queue) != 0:#not out_queue.empty():
+            message = out_queue.pop(0)
+            # message = out_queue.get()
+            # out_queue.task_done()
+            # print("in send outfall")
+            # print(message)
         else:
-            send_queue.put("out")
+            send_queue.append("out")
+            # send_queue.put("out")
             sleep(0.5)
 
 def detect_outfall(out_queue,send_queue):
@@ -111,11 +113,13 @@ def detect_rainfall(tri_queue,send_queue,):
 def create_trigger(tri_queue, send_queue):
     message = ""
     while message != "tyes":
-        if not tri_queue.empty():
-            message = tri_queue.get()
-            tri_queue.task_done()
+        if len(tri_queue) != 0: #not tri_queue.empty():
+            message = tri_queue.pop(0)
+            # message = tri_queue.get()
+            # tri_queue.task_done()
         else:
-            send_queue.put("tri")
+            send_queue.append("tri")
+            # send_queue.put("tri")
             sleep(0.5)
 
 def send_data(tri_queue,send_queue):
@@ -125,12 +129,15 @@ def send_data(tri_queue,send_queue):
     rain_val = 'r' + str(rain_val)
     message = ""
     while message != "ryes":
-        if not tri_queue.empty():
-            message = tri_queue.get()
-            tri_queue.task_done()
+        if len(tri_queue) != 0:#not tri_queue.empty():
+            message = tri_queue.pop(0)
+            # message = tri_queue.get()
+            # tri_queue.task_done()
         else:
-            send_queue.put(rain_val)
-            send_queue.put(pool_val)
+            # send_queue.put(rain_val)
+            # send_queue.put(pool_val)
+            send_queue.append(rain_val)
+            send_queue.append(pool_val)
             sleep(0.5)
 
 def transmission(xbee):
@@ -139,10 +146,14 @@ def transmission(xbee):
         xbee.send_message()
 
 def main():
-    send_queue= Queue.Queue()
-    out_queue = Queue.Queue()
-    tri_queue = Queue.Queue()
-    data_queue = Queue.Queue()
+    # send_queue= Queue.Queue()
+    # out_queue = Queue.Queue()
+    # tri_queue = Queue.Queue()
+    # data_queue = Queue.Queue()
+    send_queue= []
+    out_queue = []
+    tri_queue = []
+    data_queue = []
     port = xbee_usb_port()
     if port != None:
         try:

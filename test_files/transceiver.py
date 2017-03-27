@@ -50,10 +50,10 @@ class Transceiver:
   def send_message(self):
     message = ""
     if self.ser.isOpen():
-      if not self.send_queue.empty():
-        message =  self.send_queue.get()
+      if len(self.send_queue) != 0:#not self.send_queue.empty():
+        message =  self.send_queue.pop(0)#self.send_queue.get()
         message = message + "\n"
-        self.send_queue.task_done()
+        # self.send_queue.task_done()
         self.ser.write(message)
         self.flush_output()
  
@@ -66,11 +66,17 @@ class Transceiver:
         message = message.strip('\n')
         if message != "" and len(message) >= 3:
           if message == "out" or message == "oyes":
-            self.out_queue.put(message)
+            if not message in self.out_queue:
+              self.out_queue.append(message)
+            # self.out_queue.put(message)
           elif message == "tri" or message == "tyes" or message == "ryes":
-            self.trigger_queue.put(message)
+            if not message in self.trigger_queue:
+              self.trigger_queue.append(message)
+            # self.trigger_queue.put(message)
           else:
-            self.data_queue.put(message)
+            if not message in self.data_queue:
+              self.data_queue.append(message)
+            # self.data_queue.put(message)
       except:
         pass
 

@@ -47,15 +47,17 @@ def send_confirmation(tri_queue,send_queue):
   message = ""
   flag = False
   while not flag:
-    while not tri_queue.empty():
-      message = tri_queue.get()
+    while len(tri_queue) != 0:#not tri_queue.empty():
+      message = tri_queue.pop(0)
+      # message = tri_queue.get()
       print("inside send_confirmation")
       print(message)
-      tri_queue.task_done()
+      # tri_queue.task_done()
       if message == "tri":
         print("received trigger")
         for x in range(2):
-          send_queue.put("tyes")
+          send_queue.append("tyes")
+          # send_queue.put("tyes")
         flag = True
         break
   print("sending rainfall confirmation")
@@ -67,11 +69,13 @@ def receive_data(data_queue,send_queue):
   pool_val = 0
   message = ""
   while not (rain_flag and pool_flag):
-    if not data_queue.empty():
-      message = data_queue.get()
+    if len(data_queue) != 0:
+    # if not data_queue.empty():
+      # message = data_queue.get()
+      message = data_queue.pop(0)
       print("inside receive data")
       print(message)
-      data_queue.task_done()
+      # data_queue.task_done()
       if message != "out" or message != "tri":
         if message[0] == 'r' and not rain_flag:
           rain_val = remove_character(message,'r')
@@ -80,7 +84,8 @@ def receive_data(data_queue,send_queue):
           pool_val = remove_character(message,'p')
           pool_flag = True
   for x in range(2):
-    send_queue.put("ryes")
+    # send_queue.put("ryes")
+    send_queue.append("ryes")
   return (rain_val, pool_val)
 
 
@@ -88,14 +93,16 @@ def send_outfall_conf(out_queue,send_queue):
   message = ""
   flag = False
   while not flag:
-    while not out_queue.empty():
-      message = out_queue.get()
+    while len(out_queue) != 0:#not out_queue.empty():
+      # message = out_queue.get()
+      message = out_queue.pop(0)
       print("inside send_outfall confirmation")
       print(message)
-      out_queue.task_done()
+      # out_queue.task_done()
       if message == "out":
         for x in range(2):
-          send_queue.put("oyes")
+          # send_queue.put("oyes")
+          send_queue.append("oyes")
         flag = True
         break
   print("sending outfall confirmation")
@@ -129,10 +136,14 @@ def transmission(xbee):
 
 def main():
     try:
-        send_queue= Queue.Queue()
-        out_queue = Queue.Queue()
-        tri_queue = Queue.Queue()
-        data_queue = Queue.Queue()
+        # send_queue= Queue.Queue()
+        # out_queue = Queue.Queue()
+        # tri_queue = Queue.Queue()
+        # data_queue = Queue.Queue()
+        send_queue= []
+        out_queue = []
+        tri_queue = []
+        data_queue = []
         xbee_port = xbee_usb_port()
         if xbee_port != None:
             bravo_xbee = Transceiver(9600,xbee_port,out_queue,tri_queue,data_queue, send_queue)
