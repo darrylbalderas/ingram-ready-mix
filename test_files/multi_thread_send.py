@@ -78,56 +78,56 @@ def get_total_rainfall():
             rainfall += 2.769
     return rainfall
 
-def send_outfall(receive_queue,send_queue):
+def send_outfall(out_queue,send_queue):
     message = ""
     while message != "oyes":
-        if not receive_queue.empty():
-            sleep(random.random())
-            message = receive_queue.get()
+        if not out_queue.empty():
+            message = out_queue.get()
             print("in send outfall")
             print(message)
-            receive_queue.task_done()
+            out_queue.task_done()
         else:
             send_queue.put("out")
             sleep(1)
 
-def detect_outfall(receive_queue,send_queue):
+def detect_outfall(out_queue,send_queue):
     while True:
         if check_flowsensor() and check_levelsensor():
             print("outfall is occuring")
-            send_outfall(receive_queue,send_queue)
+            send_outfall(out_queue,send_queue)
             print("got outfall confirmation")
             sleep(200)
         
-def create_trigger(receive_queue, send_queue):
+
+def detect_rainfall(tri_queue,send_queue,):
+    while True:
+        if get_tick():
+            print("rainguage invoked")
+            create_trigger(tri_queue,send_queue)
+            send_data(tri_queue, send_queue)
+            print("sent the pool and rain data")
+
+
+def create_trigger(tri_queue, send_queue):
     message = ""
     while message != "tyes":
-        if not receive_queue.empty():
-            message = receive_queue.get()
-            receive_queue.task_done()
+        if not tri_queue.empty():
+            message = tri_queue.get()
+            tri_queue.task_done()
         else:
             send_queue.put("tri")
             sleep(1)
 
-def detect_rainfall(receive_queue,send_queue):
-    while True:
-        if get_tick():
-            print("rainguage invoked")
-            create_trigger(receive_queue,send_queue)
-            send_data(receive_queue, send_queue)
-            print("sent the pool and rain data")
-
-def send_data(receive_queue, send_queue):
+def send_data(tri_queue,send_queue):
     rain_val = get_total_rainfall()
     pool_val = 8.0
     pool_val = 'p' + str(pool_val)
     rain_val = 'r' + str(rain_val)
     message = ""
     while message != "ryes":
-        if not receive_queue.empty():
-            sleep(random.random())
-            message = receive_queue.get()
-            receive_queue.task_done()
+        if not tri_queue.empty():
+            message = tri_queue.get()
+            tri_queue.task_done()
         else:
             send_queue.put(rain_val)
             send_queue.put(pool_val)
@@ -139,18 +139,20 @@ def transmission(xbee):
         xbee.send_message()
 
 def main():
-    receive_queue = Queue.Queue()
-    send_queue = Queue.Queue()
+    send_queue= Queue.Queue()
+    out_queue = Queue.Queue()
+    tri_queue = Queue.Queue()
+    data_queue = Queue.Queue()
     port = xbee_usb_port()
     if port != None:
         try:
-            charlie_xbee = Transceiver(9600,port,receive_queue,send_queue)
+            charlie_xbee = Transceiver(9600,port,out_queue,tri_queue,data_queue,send_queue)
             print("starting threads")
-            t = Thread(target = detect_rainfall, args = (receive_queue,send_queue,))
+            t = Thread(target = detect_rainfall, args = (tri_queue,send_queue,))
             t.start()
             t1 = Thread(target = transmission, args = (charlie_xbee,))
             t1.start()
-            detect_outfall(receive_queue,send_queue)
+            detect_outfall(out_queue,send_queue)
         except KeyboardInterrupt:
             print("Ending the program")
             t.join()

@@ -17,7 +17,7 @@ since we have to wait for their signal to invoke our functionality
 #         return cmp(self.priority, other.priority)
 
 class Transceiver:
-  def __init__(self, baud_rate,port_path, receive_queue, send_queue):
+  def __init__(self, baud_rate,port_path, out_queue,trigger_queue, data_queue, send_queue):
     self.port_path = port_path
     self.baud_rate = baud_rate
     self.ser = serial.Serial(self.port_path, 
@@ -25,8 +25,10 @@ class Transceiver:
                             parity=serial.PARITY_NONE,
                             stopbits=serial.STOPBITS_ONE,
                             bytesize=serial.EIGHTBITS)
-    self.receive_queue = receive_queue
-    self.send_queue = send_queue
+    self.send_queue= send_queue
+    self.out_queue = out_queue
+    self.trigger_queue = trigger_queue
+    self.data_queue = data_queue
 
   def close_serial(self):
     '''
@@ -49,7 +51,6 @@ class Transceiver:
     message = ""
     if self.ser.isOpen():
       if not self.send_queue.empty():
-        print("trying sending message")
         message =  self.send_queue.get()
         message = message + "\n"
         self.send_queue.task_done()
@@ -64,15 +65,15 @@ class Transceiver:
         self.flush_input()
         message = message.strip('\n')
         if message != "" and len(message) >= 3:
-          self.receive_queue.put(message)
-          # if message == "out" or message == "oyes":
-          #   self.receive_queue.put(Job(1,message))
-          # elif message == "tri" or message == "tyes" or message == "ryes":
-          #   self.receive_queue.put(Job(2,message))
-          # else:
-          #   self.receive_queue.put(Job(3,message))
+          if message == "out" or message == "oyes":
+            self.out_queue.put(message)
+          elif message == "tri" or message == "tyes" or message == "ryes":
+            self.trigger_queue.put(message)
+          else:
+            self.data_queue.put(message)
       except:
         pass
+
 
   def flush_input(self):
     sleep(0.5)

@@ -43,36 +43,35 @@ def xbee_usb_port():
   else:
       return None
 
-def send_confirmation(receive_queue,send_queue):
+def send_confirmation(tri_queue,send_queue):
   message = ""
   flag = False
   while not flag:
-    while not receive_queue.empty():
-      sleep(random.random())
-      message = receive_queue.get()
+    while not tri_queue.empty():
+      message = tri_queue.get()
       print("inside send_confirmation")
       print(message)
-      receive_queue.task_done()
+      tri_queue.task_done()
       if message == "tri":
         print("received trigger")
-        for x in range(4):
+        for x in range(2):
           send_queue.put("tyes")
         flag = True
         break
   print("sending rainfall confirmation")
 
-def receive_data(receive_queue,send_queue):
+def receive_data(data_queue,send_queue):
   rain_flag = False
   pool_flag = False
   rain_val = 0
   pool_val = 0
   message = ""
   while not (rain_flag and pool_flag):
-    if not receive_queue.empty():
-      message = receive_queue.get()
+    if not data_queue.empty():
+      message = data_queue.get()
       print("inside receive data")
       print(message)
-      receive_queue.task_done()
+      data_queue.task_done()
       if message != "out" or message != "tri":
         if message[0] == 'r' and not rain_flag:
           rain_val = remove_character(message,'r')
@@ -80,67 +79,69 @@ def receive_data(receive_queue,send_queue):
         elif message[0] == 'p'and not pool_flag:
           pool_val = remove_character(message,'p')
           pool_flag = True
-  for x in range(4):
+  for x in range(2):
     send_queue.put("ryes")
   return (rain_val, pool_val)
 
 
-def send_outfall_conf(receive_queue,send_queue):
+def send_outfall_conf(out_queue,send_queue):
   message = ""
   flag = False
   while not flag:
-    while not receive_queue.empty():
-      sleep(random.random())
-      message = receive_queue.get()
+    while not out_queue.empty():
+      message = out_queue.get()
       print("inside send_outfall confirmation")
       print(message)
-      receive_queue.task_done()
+      out_queue.task_done()
       if message == "out":
-        for x in range(4):
+        for x in range(2):
           send_queue.put("oyes")
         flag = True
         break
   print("sending outfall confirmation")
 
 
-def detect_rain(receive_queue,send_queue):
+def detect_rain(tri_queue,data_queue,send_queue):
   while True:
     print("waiting on rainfall")
-    send_confirmation(receive_queue,send_queue)
+    send_confirmation(tri_queue,send_queue)
     start_timeDate = datetime.datetime.now()
     print("waiting on the data")
-    rain_fall, pool_level = receive_data(receive_queue,send_queue)
+    rain_fall, pool_level = receive_data(data_queue,send_queue)
     end_timeDate = datetime.datetime.now() 
     end_time = '%s:%s:%s'%(end_timeDate.hour,end_timeDate.minute,end_timeDate.second)
     start_time = '%s:%s:%s'%(start_timeDate.hour,start_timeDate.minute,start_timeDate.second)
     print("Rain: %s and Pool_level: %s " %(rain_fall, pool_level))
     print('start_time: %s and endtime: %s\n' %(start_time, end_time))
 
-def detect_outfall(receive_queue,send_queue):
+def detect_outfall(out_queue,send_queue):
   while True:
     print("waiting for outfall")
-    send_outfall_conf(receive_queue,send_queue)
+    send_outfall_conf(out_queue,send_queue)
     sleep(200)
 
 def transmission(xbee):
   while True:
-    xbee.receive_message()
-    xbee.send_message()
+    for x in range(100):
+      xbee.receive_message()
+      xbee.send_message()
+
 
 def main():
     try:
-        receive_queue = Queue.Queue()
-        send_queue = Queue.Queue()
+        send_queue= Queue.Queue()
+        out_queue = Queue.Queue()
+        tri_queue = Queue.Queue()
+        data_queue = Queue.Queue()
         xbee_port = xbee_usb_port()
         if xbee_port != None:
-            bravo_xbee = Transceiver(9600,xbee_port,receive_queue,send_queue)
+            bravo_xbee = Transceiver(9600,xbee_port,out_queue,tri_queue,data_queue, send_queue)
             print("starting the threads")
-            t = Thread(target=detect_rain, args=(receive_queue,send_queue,))
+            t = Thread(target=detect_rain, args=(tri_queue,data_queue,send_queue,))
             t.start()
             t1 = Thread(target=transmission, args =(bravo_xbee,))
-            t1.setDaemon(True)
             t1.start()
-            detect_outfall(receive_queue,send_queue)
+            detect_outfall(out_queue,send_queue)
         else:
             print("Check the Xbee connection")
     except KeyboardInterrupt:
