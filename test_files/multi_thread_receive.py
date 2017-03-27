@@ -29,7 +29,6 @@ def xbee_usb_port():
     ports = glob.glob('/dev/ttyU*')
   elif sys.platform.startswith('darwin'):
     ports = glob.glob('/dev/tty.usbserial*')
-
   if len(ports) != 0:
       result = []
       for port in ports:
@@ -50,13 +49,10 @@ def send_confirmation(tri_queue,send_queue):
     while len(tri_queue) != 0:#not tri_queue.empty():
       message = tri_queue.pop(0)
       # message = tri_queue.get()
-      print("inside send_confirmation")
-      print(message)
       # tri_queue.task_done()
       if message == "tri":
         print("received trigger")
-        for x in range(2):
-          send_queue.append("tyes")
+        send_queue.append("tyes")
           # send_queue.put("tyes")
         flag = True
         break
@@ -73,8 +69,6 @@ def receive_data(data_queue,send_queue):
     # if not data_queue.empty():
       # message = data_queue.get()
       message = data_queue.pop(0)
-      print("inside receive data")
-      print(message)
       # data_queue.task_done()
       if message != "out" or message != "tri":
         if message[0] == 'r' and not rain_flag:
@@ -83,9 +77,8 @@ def receive_data(data_queue,send_queue):
         elif message[0] == 'p'and not pool_flag:
           pool_val = remove_character(message,'p')
           pool_flag = True
-  for x in range(2):
     # send_queue.put("ryes")
-    send_queue.append("ryes")
+  send_queue.append("ryes")
   return (rain_val, pool_val)
 
 
@@ -96,13 +89,10 @@ def send_outfall_conf(out_queue,send_queue):
     while len(out_queue) != 0:#not out_queue.empty():
       # message = out_queue.get()
       message = out_queue.pop(0)
-      print("inside send_outfall confirmation")
-      print(message)
       # out_queue.task_done()
       if message == "out":
-        for x in range(2):
           # send_queue.put("oyes")
-          send_queue.append("oyes")
+        send_queue.append("oyes")
         flag = True
         break
   print("sending outfall confirmation")

@@ -82,13 +82,13 @@ class Transceiver:
 
 
   def flush_input(self):
-    sleep(0.5)
+    sleep(0.25)
     self.ser.flushInput()
-    sleep(0.5)
+    sleep(0.25)
 
   def flush_output(self):
-    sleep(0.5)
+    sleep(0.25)
     self.ser.flushOutput()
-    sleep(0.5)
+    sleep(0.25)
 
 
