@@ -55,7 +55,7 @@ def send_confirmation(receive_queue,send_queue):
       receive_queue.task_done()
       if message == "tri":
         print("received trigger")
-        for x in range(4):
+        for x in range(8):
           send_queue.put("tyes")
         flag = True
         break
@@ -80,7 +80,7 @@ def receive_data(receive_queue,send_queue):
         elif message[0] == 'p'and not pool_flag:
           pool_val = remove_character(message,'p')
           pool_flag = True
-  for x in range(4):
+  for x in range(8):
     send_queue.put("ryes")
   return (rain_val, pool_val)
 
@@ -96,7 +96,7 @@ def send_outfall_conf(receive_queue,send_queue):
       print(message)
       receive_queue.task_done()
       if message == "out":
-        for x in range(4):
+        for x in range(8):
           send_queue.put("oyes")
         flag = True
         break
@@ -136,9 +136,10 @@ def main():
             bravo_xbee = Transceiver(9600,xbee_port,receive_queue,send_queue)
             print("starting the threads")
             t = Thread(target=detect_rain, args=(receive_queue,send_queue,))
-            t1 = Thread(target=transmission, args =(bravo_xbee,))
-            t1.start()
             t.start()
+            t1 = Thread(target=transmission, args =(bravo_xbee,))
+            t1.setDaemon(True)
+            t1.start()
             detect_outfall(receive_queue,send_queue)
         else:
             print("Check the Xbee connection")

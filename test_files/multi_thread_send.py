@@ -128,8 +128,6 @@ def send_data(receive_queue, send_queue):
         if not receive_queue.empty():
             sleep(random.random())
             message = receive_queue.get()
-            print("in send data")
-            print(message)
             receive_queue.task_done()
         send_queue.put(rain_val)
         send_queue.put(pool_val)
@@ -148,8 +146,9 @@ def main():
             charlie_xbee = Transceiver(9600,port,receive_queue,send_queue)
             print("starting threads")
             t = Thread(target = detect_rainfall, args = (receive_queue,send_queue,))
-            t1 = Thread(target = transmission, args = (charlie_xbee,))
             t.start()
+            t1 = Thread(target = transmission, args = (charlie_xbee,))
+            t1.setDaemon(True)
             t1.start()
             detect_outfall(receive_queue,send_queue)
         except KeyboardInterrupt:
