@@ -87,7 +87,9 @@ def send_outfall(receive_queue,send_queue):
             print("in send outfall")
             print(message)
             receive_queue.task_done()
-        send_queue.put("out")
+        else:
+            send_queue.put("out")
+            sleep(1)
 
 def detect_outfall(receive_queue,send_queue):
     while True:
@@ -101,14 +103,11 @@ def create_trigger(receive_queue, send_queue):
     message = ""
     while message != "tyes":
         if not receive_queue.empty():
-            print("create_trigger")
-            sleep(random.random())
             message = receive_queue.get()
             receive_queue.task_done()
-            print(message == "tyes")
-            print(len(message))
-            print(message)
-        send_queue.put("tri")
+        else:
+            send_queue.put("tri")
+            sleep(1)
 
 def detect_rainfall(receive_queue,send_queue):
     while True:
@@ -129,8 +128,10 @@ def send_data(receive_queue, send_queue):
             sleep(random.random())
             message = receive_queue.get()
             receive_queue.task_done()
-        send_queue.put(rain_val)
-        send_queue.put(pool_val)
+        else:
+            send_queue.put(rain_val)
+            send_queue.put(pool_val)
+            sleep(1)
 
 def transmission(xbee):
     while True:
@@ -148,7 +149,6 @@ def main():
             t = Thread(target = detect_rainfall, args = (receive_queue,send_queue,))
             t.start()
             t1 = Thread(target = transmission, args = (charlie_xbee,))
-            t1.setDaemon(True)
             t1.start()
             detect_outfall(receive_queue,send_queue)
         except KeyboardInterrupt:

@@ -55,7 +55,7 @@ def send_confirmation(receive_queue,send_queue):
       receive_queue.task_done()
       if message == "tri":
         print("received trigger")
-        for x in range(8):
+        for x in range(4):
           send_queue.put("tyes")
         flag = True
         break
@@ -80,7 +80,7 @@ def receive_data(receive_queue,send_queue):
         elif message[0] == 'p'and not pool_flag:
           pool_val = remove_character(message,'p')
           pool_flag = True
-  for x in range(8):
+  for x in range(4):
     send_queue.put("ryes")
   return (rain_val, pool_val)
 
@@ -96,7 +96,7 @@ def send_outfall_conf(receive_queue,send_queue):
       print(message)
       receive_queue.task_done()
       if message == "out":
-        for x in range(8):
+        for x in range(4):
           send_queue.put("oyes")
         flag = True
         break
