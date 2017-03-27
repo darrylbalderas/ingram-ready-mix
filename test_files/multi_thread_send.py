@@ -83,12 +83,12 @@ def send_outfall(out_queue,send_queue):
     while message != "oyes":
         if not out_queue.empty():
             message = out_queue.get()
+            out_queue.task_done()
             print("in send outfall")
             print(message)
-            out_queue.task_done()
         else:
             send_queue.put("out")
-            sleep(1)
+            sleep(0.5)
 
 def detect_outfall(out_queue,send_queue):
     while True:
@@ -116,7 +116,7 @@ def create_trigger(tri_queue, send_queue):
             tri_queue.task_done()
         else:
             send_queue.put("tri")
-            sleep(1)
+            sleep(0.5)
 
 def send_data(tri_queue,send_queue):
     rain_val = get_total_rainfall()
@@ -131,7 +131,7 @@ def send_data(tri_queue,send_queue):
         else:
             send_queue.put(rain_val)
             send_queue.put(pool_val)
-            sleep(1)
+            sleep(0.5)
 
 def transmission(xbee):
     while True:
