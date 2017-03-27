@@ -100,12 +100,14 @@ def detect_outfall(receive_queue,send_queue):
 def create_trigger(receive_queue, send_queue):
     message = ""
     while message != "tyes":
+        print("in create trigger")
         if not receive_queue.empty():
             sleep(random.random())
             message = receive_queue.get()
-            print("in create trigger")
-            print(message)
             receive_queue.task_done()
+            print(message == "tyes")
+            print(len(message))
+            print(message)
         send_queue.put("tri")
 
 def detect_rainfall(receive_queue,send_queue):
