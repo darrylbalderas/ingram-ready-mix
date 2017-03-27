@@ -100,8 +100,8 @@ def detect_outfall(receive_queue,send_queue):
 def create_trigger(receive_queue, send_queue):
     message = ""
     while message != "tyes":
-        print("in create trigger")
         if not receive_queue.empty():
+            print("create_trigger")
             sleep(random.random())
             message = receive_queue.get()
             receive_queue.task_done()

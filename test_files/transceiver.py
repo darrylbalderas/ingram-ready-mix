@@ -54,13 +54,14 @@ class Transceiver:
         message = message + "\n"
         self.send_queue.task_done()
         self.ser.write(message)
-        sleep(0.5)
+        self.flush_output()
  
   def receive_message(self):
     message = ""
     if self.ser.isOpen():
       try:
         message = self.ser.readline()
+        self.flush_input()
         message = message.strip('\n')
         if message != "" and len(message) >= 3:
           self.receive_queue.put(message)
