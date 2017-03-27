@@ -78,11 +78,19 @@ def get_total_rainfall():
             rainfall += 2.769
     return rainfall
 
+def empty_queue(q):
+    while not q.empty():
+        q.pop(0)
+
 def send_outfall(out_queue,send_queue):
     message = ""
-    while message != "oyes":
+    flag = False
+    while not flag:
         if len(out_queue) != 0:#not out_queue.empty():
             message = out_queue.pop(0)
+            if message == "oyes":
+                empty_queue(send_queue)
+                flag = True
             # message = out_queue.get()
             # out_queue.task_done()
             # print("in send outfall")
@@ -112,9 +120,13 @@ def detect_rainfall(tri_queue,send_queue,):
 
 def create_trigger(tri_queue, send_queue):
     message = ""
-    while message != "tyes":
+    flag = False
+    while not flag:
         if len(tri_queue) != 0: #not tri_queue.empty():
             message = tri_queue.pop(0)
+            if message == "tyes":
+                empty_queue(send_queue)
+                flag = True
             # message = tri_queue.get()
             # tri_queue.task_done()
         else:
@@ -128,9 +140,13 @@ def send_data(tri_queue,send_queue):
     pool_val = 'p' + str(pool_val)
     rain_val = 'r' + str(rain_val)
     message = ""
-    while message != "ryes":
+    flag = False
+    while not flag:
         if len(tri_queue) != 0:#not tri_queue.empty():
             message = tri_queue.pop(0)
+            if message == "ryes":
+                empty_queue(send_queue)
+                flag = True
             # message = tri_queue.get()
             # tri_queue.task_done()
         else:
