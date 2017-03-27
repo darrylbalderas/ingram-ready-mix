@@ -21,12 +21,12 @@ gpio.setup(level,gpio.IN)
 gpio.setup(rain,gpio.IN)
 
 
-class Job(object):
-    def __init__(self, priority, message):
-        self.priority = priority
-        self.description = message
-    def __cmp__(self, other):
-        return cmp(self.priority, other.priority)
+# class Job(object):
+#     def __init__(self, priority, message):
+#         self.priority = priority
+#         self.description = message
+#     def __cmp__(self, other):
+#         return cmp(self.priority, other.priority)
 
 def xbee_usb_port():
     if sys.platform.startswith('linux'):
@@ -83,12 +83,11 @@ def send_outfall(receive_queue,send_queue):
     while message != "oyes":
         if not receive_queue.empty():
             sleep(random.random())
-            job = receive_queue.get()
-            message = job.description
+            message = receive_queue.get()
             print("in send outfall")
             print(message)
             receive_queue.task_done()
-        send_queue.put(Job(1,"out"))
+        send_queue.put("out")
 
 def detect_outfall(receive_queue,send_queue):
     while True:
@@ -103,12 +102,11 @@ def create_trigger(receive_queue, send_queue):
     while message != "tyes":
         if not receive_queue.empty():
             sleep(random.random())
-            job = receive_queue.get()
-            message = job.description
+            message = receive_queue.get()
             print("in create trigger")
             print(message)
             receive_queue.task_done()
-        send_queue.put(Job(2,"tri"))
+        send_queue.put("tri")
 
 def detect_rainfall(receive_queue,send_queue):
     while True:
@@ -126,13 +124,13 @@ def send_data(receive_queue, send_queue):
     message = ""
     while message != "ryes":
         if not receive_queue.empty():
-            job = receive_queue.get()
-            message = job.description
+            sleep(random.random())
+            message = receive_queue.get()
             print("in send data")
             print(message)
             receive_queue.task_done()
-        send_queue.put(Job(3,rain_val))
-        send_queue.put(Job(3,pool_val))
+        send_queue.put(rain_val)
+        send_queue.put(pool_val)
 
 def transmission(xbee):
     while True:
@@ -140,8 +138,8 @@ def transmission(xbee):
         xbee.send_message()
 
 def main():
-    receive_queue = Queue.PriorityQueue()
-    send_queue = Queue.PriorityQueue()
+    receive_queue = Queue.Queue()
+    send_queue = Queue.Queue()
     port = xbee_usb_port()
     if port != None:
         try:

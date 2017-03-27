@@ -14,12 +14,12 @@ from multiprocessing import Process
 import Queue
 import random
 
-class Job(object):
-    def __init__(self, priority, message):
-        self.priority = priority
-        self.description = message
-    def __cmp__(self, other):
-        return cmp(self.priority,other.priority)
+# class Job(object):
+#     def __init__(self, priority, message):
+#         self.priority = priority
+#         self.description = message
+#     def __cmp__(self, other):
+#         return cmp(self.priority,other.priority)
 
 def remove_character(message,character):
   return message.strip(character)
@@ -49,15 +49,14 @@ def send_confirmation(receive_queue,send_queue):
   while not flag:
     while not receive_queue.empty():
       sleep(random.random())
-      job = receive_queue.get()
-      message = job.description
+      message = receive_queue.get()
       print("inside send_confirmation")
       print(message)
       receive_queue.task_done()
       if message == "tri":
         print("received trigger")
         for x in range(4):
-          send_queue.put(Job(2,"tyes"))
+          send_queue.put("tyes")
         flag = True
         break
   print("sending rainfall confirmation")
@@ -70,8 +69,7 @@ def receive_data(receive_queue,send_queue):
   message = ""
   while not (rain_flag and pool_flag):
     if not receive_queue.empty():
-      job = receive_queue.get()
-      message = job.description
+      message = receive_queue.get()
       print("inside receive data")
       print(message)
       receive_queue.task_done()
@@ -83,7 +81,7 @@ def receive_data(receive_queue,send_queue):
           pool_val = remove_character(message,'p')
           pool_flag = True
   for x in range(4):
-    send_queue.put(Job(2,"ryes"))
+    send_queue.put("ryes")
   return (rain_val, pool_val)
 
 
@@ -93,14 +91,13 @@ def send_outfall_conf(receive_queue,send_queue):
   while not flag:
     while not receive_queue.empty():
       sleep(random.random())
-      job = receive_queue.get()
-      message = job.description
+      message = receive_queue.get()
       print("inside send_outfall confirmation")
       print(message)
       receive_queue.task_done()
       if message == "out":
         for x in range(4):
-          send_queue.put(Job(1, "oyes"))
+          send_queue.put("oyes")
         flag = True
         break
   print("sending outfall confirmation")
@@ -132,8 +129,8 @@ def transmission(xbee):
 
 def main():
     try:
-        receive_queue = Queue.PriorityQueue()
-        send_queue = Queue.PriorityQueue()
+        receive_queue = Queue.Queue()
+        send_queue = Queue.Queue()
         xbee_port = xbee_usb_port()
         if xbee_port != None:
             bravo_xbee = Transceiver(9600,xbee_port,receive_queue,send_queue)

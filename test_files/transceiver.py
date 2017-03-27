@@ -2,7 +2,6 @@ import serial
 import glob
 import sys
 from time import sleep
-import Queue
 
 '''
 This Transmitter class was created for the sole purpose 
@@ -10,12 +9,12 @@ of testing our Xbee modules. In our senior design project,
 the role of transmitter will be assigned to Team Charlie
 since we have to wait for their signal to invoke our functionality
 '''
-class Job(object):
-    def __init__(self, priority, message):
-        self.priority = priority
-        self.description = message
-    def __cmp__(self, other):
-        return cmp(self.priority, other.priority)
+# class Job(object):
+#     def __init__(self, priority, message):
+#         self.priority = priority
+#         self.description = message
+#     def __cmp__(self, other):
+#         return cmp(self.priority, other.priority)
 
 class Transceiver:
   def __init__(self, baud_rate,port_path, receive_queue, send_queue):
@@ -51,8 +50,8 @@ class Transceiver:
     if self.ser.isOpen():
       if not self.send_queue.empty():
         print("trying sending message")
-        job =  self.send_queue.get()
-        message = job.description + "\n"
+        message =  self.send_queue.get()
+        message = message + "\n"
         self.send_queue.task_done()
         self.ser.write(message)
         sleep(0.5)
@@ -64,12 +63,13 @@ class Transceiver:
         message = self.ser.readline()
         message = message.strip('\n')
         if message != "" and len(message) >= 3:
-          if message == "out" or message == "oyes":
-            self.receive_queue.put(Job(1,message))
-          elif message == "tri" or message == "tyes" or message == "ryes":
-            self.receive_queue.put(Job(2,message))
-          else:
-            self.receive_queue.put(Job(3,message))
+          self.receive_queue.put(message)
+          # if message == "out" or message == "oyes":
+          #   self.receive_queue.put(Job(1,message))
+          # elif message == "tri" or message == "tyes" or message == "ryes":
+          #   self.receive_queue.put(Job(2,message))
+          # else:
+          #   self.receive_queue.put(Job(3,message))
       except:
         pass
 
