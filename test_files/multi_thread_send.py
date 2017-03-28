@@ -89,7 +89,7 @@ def send_outfall(out_queue,send_queue):
         if len(out_queue) != 0:#not out_queue.empty():
             message = out_queue.pop(0)
             if message == "oyes":
-                empty_queue(send_queue)
+                # empty_queue(send_queue)
                 flag = True
             # message = out_queue.get()
             # out_queue.task_done()
@@ -125,7 +125,7 @@ def create_trigger(tri_queue, send_queue):
         if len(tri_queue) != 0: #not tri_queue.empty():
             message = tri_queue.pop(0)
             if message == "tyes":
-                empty_queue(send_queue)
+                # empty_queue(send_queue)
                 flag = True
             # message = tri_queue.get()
             # tri_queue.task_done()
@@ -145,7 +145,7 @@ def send_data(tri_queue,send_queue):
         if len(tri_queue) != 0:#not tri_queue.empty():
             message = tri_queue.pop(0)
             if message == "ryes":
-                empty_queue(send_queue)
+                # empty_queue(send_queue)
                 flag = True
             # message = tri_queue.get()
             # tri_queue.task_done()
