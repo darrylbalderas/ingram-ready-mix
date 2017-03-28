@@ -85,19 +85,23 @@ def empty_queue(q):
 def send_outfall(out_queue,send_queue):
     message = ""
     flag = False
+    send_flag = True
     while not flag:
         if len(out_queue) != 0:#not out_queue.empty():
             message = out_queue.pop(0)
             if message == "oyes":
                 # empty_queue(send_queue)
                 flag = True
+            else:
+                send_flag = True
             # message = out_queue.get()
             # out_queue.task_done()
             # print("in send outfall")
             # print(message)
-        else:
+        elif send_flag:
             if not "out" in send_queue: 
                 send_queue.append("out")
+                send_flag = False
             # send_queue.put("out")
 
 def detect_outfall(out_queue,send_queue):
@@ -121,17 +125,22 @@ def detect_rainfall(tri_queue,send_queue,):
 def create_trigger(tri_queue, send_queue):
     message = ""
     flag = False
+    send_flag = True
     while not flag:
         if len(tri_queue) != 0: #not tri_queue.empty():
             message = tri_queue.pop(0)
             if message == "tyes":
                 # empty_queue(send_queue)
                 flag = True
+            else:
+                send_flag = True
             # message = tri_queue.get()
             # tri_queue.task_done()
-        else:
+        elif send_flag:
             if not "tri" in send_queue:
                 send_queue.append("tri")
+                send_flag = False
+
             # send_queue.put("tri")
 
 def send_data(tri_queue,send_queue):
@@ -141,21 +150,25 @@ def send_data(tri_queue,send_queue):
     rain_val = 'r' + str(rain_val)
     message = ""
     flag = False
+    send_flag = True
     while not flag:
         if len(tri_queue) != 0:#not tri_queue.empty():
             message = tri_queue.pop(0)
             if message == "ryes":
                 # empty_queue(send_queue)
                 flag = True
+            else:
+                send_flag = True
             # message = tri_queue.get()
             # tri_queue.task_done()
-        else:
+        elif send_flag:
             # send_queue.put(rain_val)
             # send_queue.put(pool_val)
-            if not rain_val in send_queue:
-                send_queue.append(rain_val)
-            if not pool_val in send_queue:
-                send_queue.append(pool_val)
+            # if not rain_val in send_queue:
+            send_queue.append(rain_val)
+            # if not pool_val in send_queue:
+            send_queue.append(pool_val)
+            send_flag = False
 
 def transmission(xbee):
     while True:
