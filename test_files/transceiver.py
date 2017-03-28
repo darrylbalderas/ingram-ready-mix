@@ -51,6 +51,7 @@ class Transceiver:
     message = ""
     if self.ser.isOpen():
       if len(self.send_queue) != 0:#not self.send_queue.empty():
+        print(self.send_queue)
         message =  self.send_queue.pop(0)#self.send_queue.get()
         message = message + "\n"
         # self.send_queue.task_done()
@@ -62,9 +63,11 @@ class Transceiver:
     if self.ser.isOpen():
       try:
         message = self.ser.readline()
-        self.flush_input()
         message = message.strip('\n')
         if message != "" and len(message) >= 3:
+          print(self.out_queue)
+          print(self.trigger_queue)
+          print(self.data_queue)
           if message == "out" or message == "oyes":
             if not message in self.out_queue:
               self.out_queue.append(message)
@@ -79,7 +82,6 @@ class Transceiver:
             # self.data_queue.put(message)
       except:
         pass
-
 
   def flush_input(self):
     sleep(0.25)
