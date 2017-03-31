@@ -8,7 +8,7 @@ import RPi.GPIO as GPIO
 import datetime
 from calendar import monthrange
 
-# OUTFALL = './config_files/outfall_val.txt'
+OUTFALL = './config_files/outfall_val.txt'
 
 rain_guage_pin = 8
 flow_sensor_pin = 10
@@ -16,44 +16,43 @@ GPIO.setmode(GPIO.BOARD)
 GPIO.setup(flow_sensor_pin,GPIO.IN)
 GPIO.setup(rain_guage_pin,GPIO.IN)
 
-# def initialize_files():
-#   files = {'outfall': OUTFALL
-#           }
-#   if not os.path.exists('./config_files'):
-#     os.system('mkdir config_files')
+def initialize_files():
+  files = {'outfall': OUTFALL
+          }
+  if not os.path.exists('./config_files'):
+    os.system('mkdir config_files')
 
-#   for key,value in files.items():
-#     if os.path.exists(value):
-#       fopen = open(value, 'w')
-#       fopen.write('0')
-#       fopen.close()
+  for key,value in files.items():
+    if os.path.exists(value):
+      fopen = open(value, 'w')
+      fopen.write('0')
+      fopen.close()
 
-# def check_value_file(file_name):
-#   if os.path.exists(file_name):
-#     fopen = open(file_name,'r')
-#     tmp = fopen.read()
-#     return tmp
-#   else:
-#     return None
+def check_value_file(file_name):
+  if os.path.exists(file_name):
+    fopen = open(file_name,'r')
+    tmp = fopen.read()
+    return tmp
+  else:
+    return None
 
-# def set_value_file(file_name, value):
-#   if os.path.exists(file_name):
-#     fopen = open(file_name,'w')
-#     fopen.write(value)
-#     fopen.close()
-#   else:
-#     return None
+def set_value_file(file_name, value):
+  if os.path.exists(file_name):
+    fopen = open(file_name,'w')
+    fopen.write(value)
+    fopen.close()
+  else:
+    return None
 
-# def calculate_days():
-#   time_date = datetime.datetime.now()
-#   month, days_left = monthrange(time_date.year,time_date.month)
-#   time_left = (days_left - time_date.day) * 24 * 60 * 60
-#   return time_left
+
+def calculate_days():
+  time_date = datetime.datetime.now()
+  month, days_left = monthrange(time_date.year,time_date.month)
+  return (days_left - time_date.day)
 
 def calculate_hours():
   time_date = datetime.datetime.now()
-  hour_left = (24 - time_date.hour) * 60 * 60
-  return hour_left
+  return (24 - time_date.hour)
 
 def xbee_usb_port():
 	if sys.platform.startswith('linux'):
@@ -71,46 +70,78 @@ def xbee_usb_port():
 	else:
 		return None
 
-def detect_outfall(xbee, flow_sensor,level_sensor,lock,event):
-	while not event.isSet():
-		while flow_sensor.check_outfall() and level_sensor.check_overflow():
-			lock.aquire()
-	  		xbee.send_message('out\n')
-	  		sleep(0.5)
-	  		if xbee.receive_message() == 'oyes':
-	  			lock.release()
-	  			break
-	  		lock.release()
-	  	sleep(calculate_hours)
+def send_outfall(out_queue, send_queue):
+	message = ""
+	flag = False
+	send_flag = True
+	while not flag:
+		if len(out_queue) != 0:
+			message = out_queue.pop(0)
+			if message == "oyes":
+				flag = True
+			else:
+				send_flag = True
+		elif send_flag == True:
+				send_queue.append("out")
+                send_flag = False
+
+def detect_outfall(flow_sensor,level_sensor,out_queue,send_queue):
+	while True:
+		if flow_sensor.check_outfall() and level_sensor.check_overflow():
+			time_date = datetime.datetime.now()
+			outfall_date = "%s/%s"%(time_date.month,time_date.year)
+			if check_value_file(OUTFALL) == outfall_date:
+				while calculate_days() > 0:
+					pass
+			else:
+				send_outfall(out_queue,send_queue)
+				set_value_file(OUTFALL,outfall_date)
+
 	  	
-def detect_rainfall(rain_guage,xbee,level_sensor, lock,event):
-	while not event.isSet():
+def detect_rainfall(rain_guage,level_sensor,tri_queue,send_queue):
+	while True:
 		if rain_guage.get_tick():
-			lock.acquire()
-			create_trigger(xbee)
-			lock.release()
-			send_data(xbee,rain_guage,level_sensor,lock)
-		sleep(0.25)
+			create_trigger(tri_queue,send_queue)
+			send_data(rain_guage,level_sensor,tri_queue,send_queue)
 
-def create_trigger(xbee):
-	message = ""
-	while not message == "tyes":
-		xbee.send_message('tri\n')
-		message = xbee.receive_message()
+def create_trigger(tri_queue,send_queue):
+    message = ""
+    flag = False
+    send_flag = True
+    while not flag:
+        if len(tri_queue) != 0:
+            message = tri_queue.pop(0)
+            if message == "tyes":
+                flag = True
+            else:
+                send_flag = True
+        elif send_flag == True:
+        	send_queue.append("tri")
+        	send_flag = False
 
-def send_data(xbee,rain_gauge,level_sensor,lock):
-	pool_val = level_sensor.get_pool_level()
-	rain_val = rain_gauge.get_total_rainfall()
-	pool_val = level_sensor.get_pool_level()
-	pool_val = 'p' + str(pool_val) + '\n'
-	rain_val = 'r' + str(rain_val) + '\n'
+def send_data(rain_gauge,level_sensor,tri_queue,send_queue):
+	tmp_pool_val = level_sensor.get_pool_level()
+	tmp_rain_val = rain_gauge.get_total_rainfall()
+	tmp_pool_val = level_sensor.get_pool_level()
+	pool_val = 'p' + str(tmp_pool_val)
+	rain_val = 'r' + str(tmp_rain_val)
 	message = ""
-	lock.acquire()
-	create_trigger(xbee)
-	while not message == "ryes":
-		xbee.send_message(rain_val)
-		sleep(0.5)
-		xbee.send_message(pool_val)
-		sleep(0.5)
-		message  = xbee.receive_message()
-	lock.release()
+	flag = False
+	send_flag = True
+	while not flag:
+	    if len(tri_queue) != 0:
+	        message = tri_queue.pop(0)
+	        if message == "ryes":
+	            flag = True
+	        else:
+	            send_flag = True
+	    elif send_flag:
+	        send_queue.append(rain_val)
+	        send_queue.append(pool_val)
+	        send_flag = False
+
+
+def transmission(xbee):
+    while True:
+        xbee.receive_message()
+        xbee.send_message()

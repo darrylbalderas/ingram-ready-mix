@@ -14,13 +14,6 @@ from multiprocessing import Process
 import Queue
 import random
 
-# class Job(object):
-#     def __init__(self, priority, message):
-#         self.priority = priority
-#         self.description = message
-#     def __cmp__(self, other):
-#         return cmp(self.priority,other.priority)
-
 def remove_character(message,character):
   return message.strip(character)
 
@@ -46,17 +39,12 @@ def send_confirmation(tri_queue,send_queue):
   message = ""
   flag = False
   while not flag:
-    while len(tri_queue) != 0:#not tri_queue.empty():
+    while len(tri_queue) != 0:
       message = tri_queue.pop(0)
-      # message = tri_queue.get()
-      # tri_queue.task_done()
       if message == "tri":
-        print("received trigger")
         send_queue.append("tyes")
-          # send_queue.put("tyes")
         flag = True
         break
-  print("sending rainfall confirmation")
 
 def receive_data(data_queue,send_queue):
   rain_flag = False
@@ -66,10 +54,7 @@ def receive_data(data_queue,send_queue):
   message = ""
   while not (rain_flag and pool_flag):
     if len(data_queue) != 0:
-    # if not data_queue.empty():
-      # message = data_queue.get()
       message = data_queue.pop(0)
-      # data_queue.task_done()
       if message != "out" or message != "tri":
         if message[0] == 'r' and not rain_flag:
           rain_val = remove_character(message,'r')
@@ -77,7 +62,6 @@ def receive_data(data_queue,send_queue):
         elif message[0] == 'p'and not pool_flag:
           pool_val = remove_character(message,'p')
           pool_flag = True
-    # send_queue.put("ryes")
   send_queue.append("ryes")
   return (rain_val, pool_val)
 
@@ -86,50 +70,32 @@ def send_outfall_conf(out_queue,send_queue):
   message = ""
   flag = False
   while not flag:
-    while len(out_queue) != 0:#not out_queue.empty():
-      # message = out_queue.get()
+    while len(out_queue) != 0:
       message = out_queue.pop(0)
-      # out_queue.task_done()
       if message == "out":
-          # send_queue.put("oyes")
         send_queue.append("oyes")
         flag = True
         break
-  print("sending outfall confirmation")
 
 
 def detect_rain(tri_queue,data_queue,send_queue):
   while True:
-    print("waiting on rainfall")
     send_confirmation(tri_queue,send_queue)
-    start_timeDate = datetime.datetime.now()
-    print("waiting on the data")
+    # start timer
     rain_fall, pool_level = receive_data(data_queue,send_queue)
-    end_timeDate = datetime.datetime.now() 
-    end_time = '%s:%s:%s'%(end_timeDate.hour,end_timeDate.minute,end_timeDate.second)
-    start_time = '%s:%s:%s'%(start_timeDate.hour,start_timeDate.minute,start_timeDate.second)
-    print("Rain: %s and Pool_level: %s " %(rain_fall, pool_level))
-    print('start_time: %s and endtime: %s\n' %(start_time, end_time))
+    # end timer
 
 def detect_outfall(out_queue,send_queue):
   while True:
-    print("waiting for outfall")
     send_outfall_conf(out_queue,send_queue)
-    sleep(200)
 
 def transmission(xbee):
   while True:
-    for x in range(100):
       xbee.receive_message()
       xbee.send_message()
 
-
 def main():
     try:
-        # send_queue= Queue.Queue()
-        # out_queue = Queue.Queue()
-        # tri_queue = Queue.Queue()
-        # data_queue = Queue.Queue()
         send_queue= []
         out_queue = []
         tri_queue = []
@@ -137,7 +103,6 @@ def main():
         xbee_port = xbee_usb_port()
         if xbee_port != None:
             bravo_xbee = Transceiver(9600,xbee_port,out_queue,tri_queue,data_queue, send_queue)
-            print("starting the threads")
             t = Thread(target=detect_rain, args=(tri_queue,data_queue,send_queue,))
             t.start()
             t1 = Thread(target=transmission, args =(bravo_xbee,))
@@ -146,7 +111,6 @@ def main():
         else:
             print("Check the Xbee connection")
     except KeyboardInterrupt:
-            print("Ending the Program")
             t.join()
             t1.join()
 

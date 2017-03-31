@@ -9,16 +9,21 @@ of testing our Xbee modules. In our senior design project,
 the role of transmitter will be assigned to Team Charlie
 since we have to wait for their signal to invoke our functionality
 '''
+
 class Transceiver:
-  def __init__(self, baud_rate,port_path):
+  def __init__(self, baud_rate,port_path, out_queue,trigger_queue, data_queue,voltage_queue,send_queue):
     self.port_path = port_path
     self.baud_rate = baud_rate
     self.ser = serial.Serial(self.port_path, 
-                            self.baud_rate, timeout=3.0, 
+                            self.baud_rate, timeout=1.0, 
                             parity=serial.PARITY_NONE,
                             stopbits=serial.STOPBITS_ONE,
-                            bytesize=serial.EIGHTBITS,
-                            writeTimeout=3.0)
+                            bytesize=serial.EIGHTBITS)
+    self.send_queue= send_queue
+    self.out_queue = out_queue
+    self.trigger_queue = trigger_queue
+    self.data_queue = data_queue
+    self.voltage_queue = voltage_queue
 
   def close_serial(self):
     '''
@@ -32,27 +37,51 @@ class Transceiver:
     '''    
     self.ser.close()
     self.ser = serial.Serial(self.port_path, 
-                            self.baud_rate, timeout=3.0, 
+                            self.baud_rate, timeout=1.0, 
                             parity=serial.PARITY_NONE,
                             stopbits=serial.STOPBITS_ONE,
-                            bytesize=serial.EIGHTBITS,
-                            writeTimeout=3.0)
+                            bytesize=serial.EIGHTBIT)
     
-  def send_message(self,message):
+  def send_message(self):
+    message = ""
     if self.ser.isOpen():
-      self.ser.write(message)
+      if len(self.send_queue) != 0:
+        print(self.send_queue)
+        message =  self.send_queue.pop(0)
+        message = message + "\n"
+        self.ser.write(message)
+        sleep(0.5)
  
   def receive_message(self):
     message = ""
     if self.ser.isOpen():
-      message = self.ser.readline()
-    return message.strip('\n')
+      try:
+        message = self.ser.readline()
+        message = message.strip('\n')
+        if message != "" and len(message) >= 3:
+          if message == "out" or message == "oyes":
+            if not message in self.out_queue:
+              self.out_queue.append(message)
+          elif message == "tri" or message == "tyes" or message == "ryes":
+            if not message in self.trigger_queue:
+              self.trigger_queue.append(message)
+          elif message == 'vyes' or message == 'vol' or message[0] == 'v':
+            if not message in self.voltage_queue:
+              self.voltage_queue.append(message)
+          elif message[0] == 'r' or message[0] == 'p':
+            if not message in self.data_queue:
+              self.data_queue.append(message)
+      except:
+        pass
 
-  def clear_serial(self):
+  def flush_input(self):
+    sleep(0.25)
     self.ser.flushInput()
-    self.ser.flushOutput()
+    sleep(0.25)
 
-  def remove_character(self,message,character):
-    return message.strip(character)
+  def flush_output(self):
+    sleep(0.25)
+    self.ser.flushOutput()
+    sleep(0.25)
 
 

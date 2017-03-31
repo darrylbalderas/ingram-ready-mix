@@ -21,6 +21,7 @@ INVOKE_DATE = './config_files/invoke_date_val.txt'
 RAIN = './config_files/rain_val.txt'
 POOL_LEVEL = './config_files/pool_level_val.txt'
 RESTART = './config_files/restart_val.txt'
+VOLTAGE = './config_files/voltage_val.txt'
 
 months = {'1': 'January',
           '2': 'February',
@@ -36,9 +37,10 @@ months = {'1': 'January',
           '12': 'December'
           }
 
-
+start_shift = 9
+end_shift  = 17
 ## gpio pins used 
-buzzers = [4,17,22,27,5,6,13,19] ## wiring in beardboard
+buzzers = [4,17,22,27,5,6,13,19] 
 complete = 12 
 mute = 20
 miss = 16
@@ -56,7 +58,8 @@ def initialize_files():
            'invoke_date': './config_files/invoke_date_val.txt',
            'rain': './rain_val.txt',
            'pool_level': './config_files/pool_level_val.txt',
-           'restart' : './config_files/restart_val.txt'
+           'restart' : './config_files/restart_val.txt',
+           'voltage' : './config_files/voltage_val.txt'
           }
   if not os.path.exists('./config_files'):
     os.system('mkdir config_files')
@@ -74,6 +77,8 @@ def initialize_files():
         fopen.write('0')
       elif key == 'invoke_date':
         fopen.write('None')
+      elif key == 'voltage':
+        fopen.write('12.0')
       else:
         fopen.write('-1')
       fopen.close()
@@ -143,7 +148,7 @@ def xbee_usb_port():
   else:
     return None
 
-def logger(start_time, end_time, amount_rain, pool_level, tag=None, outfall=None, status=None):
+def logger(start_time, end_time, amount_rain, pool_level, tag=None, outfall=None, status=None, comment=None):
   time_date = datetime.datetime.now()
   directory = '/home/pi/Desktop/log_data/'
   if not os.path.exists(directory):
@@ -167,11 +172,11 @@ def logger(start_time, end_time, amount_rain, pool_level, tag=None, outfall=None
   else:
     fopen = open(collect_datafile, 'w')
     fopen.write('Start time, End time, AmountRained(inches), Inches till Overflow, \
-                 Outfall status, Collection Status')
+                 Outfall status, Collection Status','Comments')
     fopen.write('\n')
 
   fopen.write("{},{},{},{},{},{}".format(start_time, end_time, amount_rain 
-                                         ,pool_level, outfall, status))
+                                         ,pool_level, outfall, status,comment))
   fopen.write("\n")
   fopen.close()
 
@@ -215,10 +220,11 @@ def complete_state(led_matrix,start_time):
   outfall = 'Yes'
   pool_level = check_value_file(POOL_LEVEL)
   amount_rain = check_value_file(RAIN)
-  status = "completed"  
+  status = "completed"
+  comment = "  -  "
   time_date = datetime.datetime.now()
   end_time =  '%s:%s:%s'%(time_date.hour,time_date.minute,time_date.second)
-  logger(start_time, end_time, amount_rain, pool_level, 'C', outfall, status)
+  logger(start_time, end_time, amount_rain, pool_level, 'C', outfall, status,comment)
   set_value_file(INVOKE,'0')
   set_value_file(RESTART,'0')
 
@@ -230,9 +236,10 @@ def missed_state(lcd,led_matrix,start_time):
   pool_level = check_value_file(POOL_LEVEL)
   amount_rain = check_value_file(RAIN)
   status = "missed"  
+  comment = "  -  "
   time_date = datetime.datetime.now() 
   end_time =  '%s:%s:%s'%(time_date.hour,time_date.minute,time_date.second)
-  logger(start_time, end_time ,amount_rain, pool_level, 'M', outfall, status)
+  logger(start_time, end_time ,amount_rain, pool_level, 'M', outfall, status,comment)
   set_value_file(INVOKE,'0')
   set_value_file(RESTART,'0')
   while not check_miss():
@@ -255,8 +262,7 @@ def restart_state(lcd,led_matrix):
   lcd.restart_message()
   led_matrix.clear_matrix()
   set_value_file(RESTART, '1')
-  print("reset")  # for testing purposes
-  # os.system("sudo reboot")
+  os.system("sudo reboot")
 
 def checkmonth_sample():
   time_date = datetime.datetime.now()
@@ -287,84 +293,139 @@ def calculate_hours():
   time_date = datetime.datetime.now()
   return (24 - time_date.hour)
 
-def send_confirmation(xbee):
-  message = ""
-  while not message == 'tri':
-      message = xbee.receive_message()
-  xbee.send_message("tyes\n")
-  sleep(0.5)
+def transmission(xbee):
+  while True:
+      xbee.receive_message()
+      xbee.send_message()
 
-def receive_data(bravo_xbee):
+def remove_character(message,character):
+  return message.strip(character)
+
+def send_confirmation(tri_queue,send_queue):
+  message = ""
+  flag = False
+  while not flag:
+    while len(tri_queue) != 0:
+      message = tri_queue.pop(0)
+      if message == "tri":
+        send_queue.append("tyes")
+        flag = True
+        break
+
+def receive_data(data_queue,send_queue):
   rain_flag = False
   pool_flag = False
   rain_val = 0
   pool_val = 0
   message = ""
   while not (rain_flag and pool_flag):
-    message = bravo_xbee.receive_message()
-    if len(message) != 0:
-      if message[0] == 'r' and not rain_flag:
-        rain_val = bravo_xbee.remove_character(message,'r')
-        set_value_file(RAIN,rain_val)
-        rain_flag = True
-      elif message[0] == 'p' and not pool_flag:
-        pool_val = bravo_xbee.remove_character(message,'p')
-        set_value_file(POOL_LEVEL,pool_val)
-        pool_flag = True
-    bravo_xbee.send_message("rno\n")
-    sleep(0.5)
-  bravo_xbee.send_message("ryes\n")
-  sleep(0.5)
+    if len(data_queue) != 0:
+      message = data_queue.pop(0)
+      if message != "out" or message != "tri":
+        if message[0] == 'r' and not rain_flag:
+          rain_val = remove_character(message,'r')
+          rain_flag = True
+        elif message[0] == 'p'and not pool_flag:
+          pool_val = remove_character(message,'p')
+          pool_flag = True
+  send_queue.append("ryes")
   return (rain_val, pool_val)
 
-def rain_detection(bravo_xbee,lock,event):
-  while not event.isSet():
-    lock.acquire()
-    send_confirmation(bravo_xbee)
-    lock.release()
+def rain_detection(tri_queue,data_queue,send_queue):
+  while True:
+    send_confirmation(tri_queue,send_queue)
     start_timeDate = datetime.datetime.now()
-    lock.acquire()
-    send_confirmation(bravo_xbee)
-    rain_fall, pool_level = receive_data(bravo_xbee)
-    lock.release()
-    end_timeDate = datetime.datetime.now() 
-    # time_delay = datetime.datetime.now() - timedelta(minute = 5)  
+    rain_fall, pool_level = receive_data(data_queue,send_queue)
+    end_timeDate = datetime.datetime.now()  
     end_time = '%s:%s:%s'%(end_timeDate.hour,end_timeDate.minute,end_timeDate.second)
     start_time = '%s:%s:%s'%(start_timeDate.hour,start_timeDate.minute,start_timeDate.second)
-    logger(start_time, end_time, rain_fall, pool_level, None ,"  -  ","  -  ")
+    logger(start_time, end_time, rain_fall, pool_level, None ,"  -  ","  -  ","  -  ")
 
-def send_outfall_conf(lcd, xbee):
+def send_outfall_conf(out_queue,send_queue):
   message = ""
-  while not message == 'out':
-    lcd.waiting_outfall()
-    message = xbee.receive_message()
-  xbee.send_message("oyes\n")
-  sleep(0.5)
+  flag = False
+  while not flag:
+    while len(out_queue) != 0:
+      message = out_queue.pop(0)
+      if message == "out":
+        send_queue.append("oyes")
+        flag = True
+        break
 
-def outfall_detection(bravo_xbee,lcd,led_matrix,lock,event):
+
+def check_operation_hours(current_hour, current_min):
+  working = False
+  if current_hour >= start_shift and current_hour <= end_shift:
+    if current_hour == end_shift and current_min > 0:
+      working = False
+    else:
+      working = True
+  return working
+
+def outfall_detection(lcd,led_matrix,out_queue,send_queue):
   set_value_file(STATUS,'-1')
-  while not event.isSet():
+  while True:
     status = checkmonth_sample()
     set_value_file(STATUS,status)
     if status  == '1':
       while check_sleep('complete'):
         num_days = calculate_days()
+        #check voltage
         if check_restart():
           restart_state(lcd,led_matrix)
         lcd.display_days(num_days)
     elif status == '0':
       while check_sleep('missed'):
+        #check voltage
         num_hours = calculate_hours()
         if check_restart():
           restart_state(lcd,led_matrix)
         lcd.display_hour(num_hours)
     elif status == '-1':
-      lock.acquire()
-      send_outfall_conf(lcd,bravo_xbee)
-      lock.release()
+      #check voltage
+      send_outfall_conf(out_queue,send_queue)
       time_date = datetime.datetime.now()
       restart_date = '%s/%s'%(time_date.month,time_date.year)
       if check_value_file(RESTART) == '1' and restart_date == check_value_file(INVOKE_DATE):
         invoke_system(led_matrix,lcd)
       elif check_value_file(INVOKE) == '0':
-        invoke_system(led_matrix, lcd)
+        if check_operation_hours(time_date.hour,time_date.minute):
+          invoke_system(led_matrix,lcd)
+        else:
+          rain = check_value_file(RAIN)
+          level = check_value_file(POOL_LEVEL)
+          comment = "The IngramReady Mix is not in operation hours"
+          outfall = "Yes"
+          collection_status = "missed"
+          logger("  -  ","  -  ",rain,level, None, outfall ,collection_status, comment)
+
+
+def get_voltageLevel(voltage_queue,send_queue):
+  while True:
+    send_voltage_conf(voltage_queue,send_queue)
+    voltage_level = receive_voltage(voltage_queue,send_queue)
+    set_value_file(VOLTAGE,voltage_level)
+
+def send_voltage_conf(voltage_queue,send_queue):
+  message = ""
+  flag = False
+  while not flag:
+    while len(voltage_queue) != 0:
+      message = voltage_queue.pop(0)
+      if message == "vol":
+        send_queue.append("vyes")
+        flag = True
+        break
+
+def receive_voltage(voltage_queue,send_queue):
+  voltage_flag = False
+  voltage_val = 0
+  message = ""
+  while not voltage_flag:
+    if len(voltage_queue) != 0:
+      message = voltage_queue.pop(0)
+      if message[0] == 'r' and not voltage_flag:
+        voltage_val = remove_character(message,'v')
+        voltage_flag = True
+  send_queue.append("vyes")
+  return voltage_val
