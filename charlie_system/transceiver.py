@@ -62,13 +62,13 @@ class Transceiver:
           if message == "out" or message == "oyes":
             if not message in self.out_queue:
               self.out_queue.append(message)
-          elif message == "tri" or message == "tyes" or message == "ryes":
+          elif message == "tri" or message == "tyes":
             if not message in self.trigger_queue:
               self.trigger_queue.append(message)
           elif message == 'vyes' or message == 'vol' or message[0] == 'v':
             if not message in self.voltage_queue:
               self.voltage_queue.append(message)
-          elif message[0] == 'r' or message[0] == 'p':
+          elif message[0] == 'r' or message[0] == 'p' or message == "ryes":
             if not message in self.data_queue:
               self.data_queue.append(message)
       except:

@@ -129,7 +129,6 @@ class LCD:
     hour = str(int(floor(num_time/3600))).zfill(2)
     minute = str(int(14- floor(num_time/60))).zfill(2)
     seconds =  str(int(59 - floor(num_time))%60).zfill(2)
-    # time_m = "{0:.3f}\r".format(num_time)
     time_m = "%s:%s:%s"%(hour,minute,seconds)
     self.send_message(self.center_message('Timer'))
     self.send_command('ENTER')
@@ -147,6 +146,10 @@ class LCD:
     self.send_command('ENTER')
     self.send_message(self.center_message('left' + str(num_hours)))
     self.send_command("HOME")
+
+  
+  def display_voltage(self,voltage_level):
+    pass
 
 def usleep(seconds):
     number = seconds/float(1000)

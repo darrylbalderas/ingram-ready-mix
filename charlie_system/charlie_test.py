@@ -9,6 +9,7 @@ import datetime
 from calendar import monthrange
 
 OUTFALL = './config_files/outfall_val.txt'
+OUTFALL_DATE = './config_files/outfall_date.txt'
 
 rain_guage_pin = 8
 flow_sensor_pin = 10
@@ -18,6 +19,7 @@ GPIO.setup(rain_guage_pin,GPIO.IN)
 
 def initialize_files():
   files = {'outfall': OUTFALL
+           ,'date': OUTFALL_DATE
           }
   if not os.path.exists('./config_files'):
     os.system('mkdir config_files')
@@ -25,7 +27,10 @@ def initialize_files():
   for key,value in files.items():
     if os.path.exists(value):
       fopen = open(value, 'w')
-      fopen.write('0')
+      if key == 'date':
+      	fopen.write('None')
+      else:	
+      	fopen.write('0')
       fopen.close()
 
 def check_value_file(file_name):
@@ -43,7 +48,6 @@ def set_value_file(file_name, value):
     fopen.close()
   else:
     return None
-
 
 def calculate_days():
   time_date = datetime.datetime.now()
@@ -89,9 +93,9 @@ def detect_outfall(flow_sensor,level_sensor,out_queue,send_queue):
 	while True:
 		if flow_sensor.check_outfall() and level_sensor.check_overflow():
 			time_date = datetime.datetime.now()
-			outfall_date = "%s/%s"%(time_date.month,time_date.year)
+			outfall_date = "%s/%s"%(time_date.month,time_date.day,time_date.year)
 			if check_value_file(OUTFALL) == outfall_date:
-				while calculate_days() > 0:
+				while calculate_hours() > 0:
 					pass
 			else:
 				send_outfall(out_queue,send_queue)

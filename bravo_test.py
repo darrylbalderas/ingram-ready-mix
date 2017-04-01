@@ -37,8 +37,9 @@ months = {'1': 'January',
           '12': 'December'
           }
 
-start_shift = 9
+start_shift = 6
 end_shift  = 17
+
 ## gpio pins used 
 buzzers = [4,17,22,27,5,6,13,19] 
 complete = 12 
@@ -70,9 +71,9 @@ def initialize_files():
       if key == 'invoke':
         fopen.write('0')
       elif key == 'rain':
-        fopen.write('0.011')
+        fopen.write('2.769')
       elif key == "pool_level":
-        fopen.write('8')
+        fopen.write('8.0')
       elif key == 'restart':
         fopen.write('0')
       elif key == 'invoke_date':
@@ -148,8 +149,9 @@ def xbee_usb_port():
   else:
     return None
 
-def logger(start_time, end_time, amount_rain, pool_level, tag=None, outfall=None, status=None, comment=None):
+def logger(start_time, end_time, amount_rain, pool_level, tag=None, outfall=None, status=None, operation):
   time_date = datetime.datetime.now()
+  old_file = ""
   directory = '/home/pi/Desktop/log_data/'
   if not os.path.exists(directory):
     os.system('mkdir ' + directory)
@@ -160,23 +162,34 @@ def logger(start_time, end_time, amount_rain, pool_level, tag=None, outfall=None
   if not os.path.exists(month_directory):
     os.system('mkdir ' + month_directory)
   file_name = '%s_%s_%s'%(time_date.month, time_date.day,time_date.year)
-  if tag == 'C':
-    collect_datafile = month_directory + file_name+'_completed.ods'
-  elif tag == 'M':
-    collect_datafile = month_directory + file_name+'_missed.ods'
-  else:
-    collect_datafile = month_directory + file_name+'.ods'
 
-  if os.path.exists(collect_datafile):
-    fopen = open(collect_datafile, 'a')
+  old_file = month_directory + file_name+'.ods'
+  if os.path.exists(old_file):
+    if tag == 'C':
+      collect_datafile = month_directory + file_name+'_completed.ods'
+    elif tag == 'M':
+      collect_datafile = month_directory + file_name+'_missed.ods'
+    else:
+      collect_datafile = old_file
+    command = "cp %s %s"%(old_file,collect_datafile)
+    command2 = "rm %s"%(old_file)
+    os.system(command)
+    os.system(command2)
+    fopen = open(collect_datafile,'a')
   else:
+    if tag == 'C':
+      collect_datafile = month_directory + file_name+'_completed.ods'
+    elif tag == 'M':
+      collect_datafile = month_directory + file_name+'_missed.ods'
+    else:
+      collect_datafile = old_file
     fopen = open(collect_datafile, 'w')
     fopen.write('Start time, End time, AmountRained(inches), Inches till Overflow, \
-                 Outfall status, Collection Status','Comments')
+                 Outfall status, Collection Status','Hours of Operation')
     fopen.write('\n')
 
-  fopen.write("{},{},{},{},{},{}".format(start_time, end_time, amount_rain 
-                                         ,pool_level, outfall, status,comment))
+  fopen.write("{},{},{},{},{},{},{}".format(start_time, end_time, amount_rain 
+                                         ,pool_level, outfall, status, operation))
   fopen.write("\n")
   fopen.close()
 
@@ -221,10 +234,10 @@ def complete_state(led_matrix,start_time):
   pool_level = check_value_file(POOL_LEVEL)
   amount_rain = check_value_file(RAIN)
   status = "completed"
-  comment = "  -  "
+  operation = "Yes"
   time_date = datetime.datetime.now()
   end_time =  '%s:%s:%s'%(time_date.hour,time_date.minute,time_date.second)
-  logger(start_time, end_time, amount_rain, pool_level, 'C', outfall, status,comment)
+  logger(start_time, end_time, amount_rain, pool_level, 'C', outfall, status,operation)
   set_value_file(INVOKE,'0')
   set_value_file(RESTART,'0')
 
@@ -236,10 +249,10 @@ def missed_state(lcd,led_matrix,start_time):
   pool_level = check_value_file(POOL_LEVEL)
   amount_rain = check_value_file(RAIN)
   status = "missed"  
-  comment = "  -  "
+  operation = "Yes"
   time_date = datetime.datetime.now() 
   end_time =  '%s:%s:%s'%(time_date.hour,time_date.minute,time_date.second)
-  logger(start_time, end_time ,amount_rain, pool_level, 'M', outfall, status,comment)
+  logger(start_time, end_time ,amount_rain, pool_level, 'M', outfall, status,operation)
   set_value_file(INVOKE,'0')
   set_value_file(RESTART,'0')
   while not check_miss():
@@ -339,7 +352,11 @@ def rain_detection(tri_queue,data_queue,send_queue):
     end_timeDate = datetime.datetime.now()  
     end_time = '%s:%s:%s'%(end_timeDate.hour,end_timeDate.minute,end_timeDate.second)
     start_time = '%s:%s:%s'%(start_timeDate.hour,start_timeDate.minute,start_timeDate.second)
-    logger(start_time, end_time, rain_fall, pool_level, None ,"  -  ","  -  ","  -  ")
+    if check_operation_hours(start_timeDate) and check_operation_days(start_timeDate):
+      operation = "Yes"
+    else:
+      operation = "No"
+    logger(start_time, end_time, rain_fall, pool_level, None ,"  -  ","  -  ",operation)
 
 def send_outfall_conf(out_queue,send_queue):
   message = ""
@@ -353,14 +370,23 @@ def send_outfall_conf(out_queue,send_queue):
         break
 
 
-def check_operation_hours(current_hour, current_min):
-  working = False
+def check_operation_hours(time_date):
+  current_hour = time_date.hour
+  current_min = time_date.minute
+  working_hours = False
   if current_hour >= start_shift and current_hour <= end_shift:
     if current_hour == end_shift and current_min > 0:
-      working = False
+      working_hours = False
     else:
-      working = True
-  return working
+      working_hours = True
+  return working_hours
+
+def check_operation_days(time_date):
+  working_days = False
+  if time_date.weekday()>= 0 and time_date.weekday() < 5:
+    working_days = True
+  return working_days
+
 
 def outfall_detection(lcd,led_matrix,out_queue,send_queue):
   set_value_file(STATUS,'-1')
@@ -389,15 +415,15 @@ def outfall_detection(lcd,led_matrix,out_queue,send_queue):
       if check_value_file(RESTART) == '1' and restart_date == check_value_file(INVOKE_DATE):
         invoke_system(led_matrix,lcd)
       elif check_value_file(INVOKE) == '0':
-        if check_operation_hours(time_date.hour,time_date.minute):
+        if check_operation_hours(time_date) and check_operation_days(time_date):
           invoke_system(led_matrix,lcd)
         else:
           rain = check_value_file(RAIN)
           level = check_value_file(POOL_LEVEL)
-          comment = "The IngramReady Mix is not in operation hours"
+          operation = "No"
           outfall = "Yes"
           collection_status = "missed"
-          logger("  -  ","  -  ",rain,level, None, outfall ,collection_status, comment)
+          logger("  -  ","  -  ", rain,level, None, outfall ,collection_status, operation)
 
 
 def get_voltageLevel(voltage_queue,send_queue):
@@ -424,7 +450,7 @@ def receive_voltage(voltage_queue,send_queue):
   while not voltage_flag:
     if len(voltage_queue) != 0:
       message = voltage_queue.pop(0)
-      if message[0] == 'r' and not voltage_flag:
+      if message[0] == 'v' and not voltage_flag:
         voltage_val = remove_character(message,'v')
         voltage_flag = True
   send_queue.append("vyes")

@@ -8,8 +8,6 @@ import numpy as np
 # Import the ADS1x15 module.
 import Adafruit_ADS1x15
 
-
-
 class LevelSensor:
     def __init__(self):
         self.pool_level = 8

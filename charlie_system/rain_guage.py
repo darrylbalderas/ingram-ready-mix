@@ -23,8 +23,7 @@ class RainGuage:
 			        current_state = self.check_guage()
 			    return 1
 		return 0
-
-                            
+              
 	def get_total_rainfall(self):
 		rainfall = 2.769
 		ticking = 0
@@ -35,5 +34,6 @@ class RainGuage:
 				break
 			else:
 				rainfall += 2.769
+		rainfall = rainfall/float(16.3871)
 		return rainfall
 
