@@ -117,14 +117,6 @@ class LCD:
     sleep(2)
     self.send_command('CLEAR')
 
-  def pressed_missed(self):
-    self.send_command("CLEAR")
-    self.send_message(self.center_message("Press Missed"))
-    self.send_command("ENTER")
-    self.send_message(self.center_message("Button"))
-    self.send_command("HOME")
-
-
   def display_timer(self,num_time):
     hour = str(int(floor(num_time/3600))).zfill(2)
     minute = str(int(14- floor(num_time/60))).zfill(2)
@@ -135,21 +127,29 @@ class LCD:
     self.send_message(self.center_message(time_m))
     self.send_command("HOME")
 
-  def display_days(self,num_days):
-    self.send_message(self.center_message('Num of Days'))
+  def display_voltage(self,voltage_level,time_left,status):
+    if status == 'complete':
+        self.send_message(self.center_message('Days left: ' + str(time_left)))
+        self.send_command('ENTER')
+        self.send_message(self.center_message('Voltage: ' + str(voltage_level)))
+        self.send_command("HOME")
+    elif status == 'missed':
+        self.send_message(self.center_message('Hours left: '+ str(time_left)))
+        self.send_command('ENTER')
+        self.send_message(self.center_message('Voltage: ' + str(voltage_level)))
+        self.send_command("HOME")
+    else:
+        self.send_message(self.center_message('Checking Outfall'))
+        self.send_command('ENTER')
+        self.send_message(self.center_message('Voltage: ' + str(voltage_level)))
+        self.send_command("HOME")
+
+  def low_voltage(self):
+    self.send_message(self.center_message('Check Rainfall'))
     self.send_command('ENTER')
-    self.send_message(self.center_message('left' + str(num_days)))
+    self.send_message(self.center_message('Detection system'))
     self.send_command("HOME")
 
-  def display_hour(self,num_hours):
-    self.send_message(self.center_message('Num of Hrs'))
-    self.send_command('ENTER')
-    self.send_message(self.center_message('left' + str(num_hours)))
-    self.send_command("HOME")
-
-  
-  def display_voltage(self,voltage_level):
-    pass
 
 def usleep(seconds):
     number = seconds/float(1000)

@@ -11,7 +11,7 @@ since we have to wait for their signal to invoke our functionality
 '''
 
 class Transceiver:
-  def __init__(self, baud_rate,port_path, out_queue,trigger_queue, data_queue,voltage_queue,send_queue):
+  def __init__(self, baud_rate,port_path, out_queue,trigger_queue, rain_queue,voltage_queue,sender_queue):
     self.port_path = port_path
     self.baud_rate = baud_rate
     self.ser = serial.Serial(self.port_path, 
@@ -19,10 +19,10 @@ class Transceiver:
                             parity=serial.PARITY_NONE,
                             stopbits=serial.STOPBITS_ONE,
                             bytesize=serial.EIGHTBITS)
-    self.send_queue= send_queue
+    self.sender_queue= sender_queue
     self.out_queue = out_queue
     self.trigger_queue = trigger_queue
-    self.data_queue = data_queue
+    self.rain_queue = rain_queue
     self.voltage_queue = voltage_queue
 
   def close_serial(self):
@@ -45,9 +45,8 @@ class Transceiver:
   def send_message(self):
     message = ""
     if self.ser.isOpen():
-      if len(self.send_queue) != 0:
-        print(self.send_queue)
-        message =  self.send_queue.pop(0)
+      if len(self.sender_queue) != 0:
+        message =  self.sender_queue.pop(0)
         message = message + "\n"
         self.ser.write(message)
         sleep(0.5)
@@ -69,8 +68,8 @@ class Transceiver:
             if not message in self.voltage_queue:
               self.voltage_queue.append(message)
           elif message[0] == 'r' or message[0] == 'p' or message == "ryes":
-            if not message in self.data_queue:
-              self.data_queue.append(message)
+            if not message in self.rain_queue:
+              self.rain_queue.append(message)
       except:
         pass
 

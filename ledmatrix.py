@@ -24,8 +24,8 @@ class LedMatrix:
                           'blue' : self.make_image('b'),
                           'white' : self.make_image('w')  
                         }
-    self.__row_duration = 1.875*2
-    self.__max_time = 2*15
+    self.__row_duration = 1.875*60
+    self.__max_time = 60*15
     
   def make_image(self,color):
       image = [] 
@@ -78,6 +78,7 @@ class LedMatrix:
     yellow = [255,135,0]
     green = [0,255,0]
     red = [255,0,0]
+    blue = [0,0,255]
     image = []
     for i in range(64):
       if color.lower() == "yellow":
@@ -86,6 +87,8 @@ class LedMatrix:
         image.append(red)
       elif color.lower() == "green":
         image.append(green)
+      elif color.lower() == "blue":
+        image.append(blue)
     return image
 
   def get_greenImage(self):
@@ -96,6 +99,12 @@ class LedMatrix:
 
   def get_yellowImage(self):
     return self.__color_images['yellow']
+
+  def get_blueImage(self):
+    return self.__color_images['blue']
+
+  def get_blue(self):
+    return self.__colors['b']
 
   def get_green(self):
     return self.__colors['g']
