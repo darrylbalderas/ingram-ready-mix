@@ -72,7 +72,7 @@ def initialize_files():
       if key == 'invoke':
         fopen.write('0')
       elif key == 'rain':
-        fopen.write('2.769')
+        fopen.write('0.1690')
       elif key == "pool_level":
         fopen.write('8.0')
       elif key == 'restart':
@@ -192,7 +192,7 @@ def logger(start_time, end_time, amount_rain, pool_level, tag, outfall, status, 
     else:
       collect_datafile = old_file
     fopen = open(collect_datafile, 'w')
-    fopen.write('Start time, End time, AmountRained(inches), Inches till Overflow, \
+    fopen.write('Start time, End time, AmountRained(cubic inches), Inches till Overflow, \
                  Outfall status, Collection Status','Hours of Operation')
     fopen.write('\n')
 
@@ -395,7 +395,7 @@ def check_operation_days(time_date):
 def check_end_day():
   time_date = datetime.datetime.now()
   if time_date.hour == 24:
-    set_value_file(RAIN,'2.769')
+    set_value_file(RAIN,'0.1690')
     set_value_file(POOL_LEVEL,'8.0')
 
 def empty_queue(q):
