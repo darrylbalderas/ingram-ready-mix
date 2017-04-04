@@ -355,6 +355,8 @@ def receive_data(rain_queue,sender_queue):
           pool_val = remove_character(message,'p')
           pool_flag = True
   sender_queue.append("ryes")
+  set_value_file(RAIN,rain_val)
+  set_value_file(POOL_LEVEL,pool_val)
   return (rain_val, pool_val)
 
 def rain_detection(trigger_queue,rain_queue,sender_queue):
@@ -389,6 +391,12 @@ def check_operation_days(time_date):
   if time_date.weekday()>= 0 and time_date.weekday() < 5:
     working_days = True
   return working_days
+
+def check_end_day():
+  time_date = datetime.datetime.now()
+  if time_date.hour == 24:
+    set_value_file(RAIN,'2.769')
+    set_value_file(POOL_LEVEL,'8.0')
 
 def empty_queue(q):
   while len(q) != 0:
@@ -485,7 +493,10 @@ def outfall_detection(lcd,led_matrix,out_queue,sender_queue):
       if check_value_file(RESTART) == '1' and restart_date == check_value_file(INVOKE_DATE):
         collection_time = int(check_value_file(COLLECTION_TIME))
         if collection_time >= 10:
-          invoke_system(led_matrix,lcd,collection_time)
+          if check_operation_hours() and check_operation_days():
+            invoke_system(led_matrix,lcd,collection_time)
+          else:
+            set_value_file(COLLECTION_TIME,'900')
       elif check_value_file(INVOKE) == '0':
         if check_operation_hours(time_date) and check_operation_days(time_date):
           collection_time = int(led_matrix.get_collection_time)
@@ -504,7 +515,6 @@ def check_low_voltage(voltage_level):
     return True
   else:
     return False
-
 
 def get_voltageLevel(voltage_queue,send_queue):
   while True:

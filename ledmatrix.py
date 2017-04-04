@@ -16,7 +16,6 @@ class LedMatrix:
 
     self.__row = 8
     self.__column = 8
-    
     self.__color_images = {'red' : self.make_image('r'),
                           'yellow' : self.make_image('y'),
                           'green' : self.make_image('g'),
@@ -24,6 +23,7 @@ class LedMatrix:
                           'blue' : self.make_image('b'),
                           'white' : self.make_image('w')  
                         }
+
     self.__row_duration = 1.875*60
     self.__collection_time = 60*15
     

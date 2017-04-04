@@ -43,26 +43,17 @@ class LCD:
         usleep(1)
 
   def bappend_blanks(self,message):
-    '''
-    appends blanks spaces at the end of the message
-    '''
     if len(message) != 16:
         blanks = 16 - len(message)
         return (blanks*" " + message)
 
   def center_message(self,message):
-    '''
-    appends blanks spaces in order to center the message
-    '''
     length = len(message)
     if length < 16 and length > 0:
         blanks = int(floor((16 - length)/2))
         return (blanks*" " + message)
 
   def welcome_message(self):
-    '''
-    creates a default message to 
-    '''
     self.send_command('CLEAR')
     self.send_message(self.center_message('Welcome to'))
     self.send_command('ENTER')
