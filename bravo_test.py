@@ -22,6 +22,7 @@ RAIN = './config_files/rain_val.txt'
 POOL_LEVEL = './config_files/pool_level_val.txt'
 RESTART = './config_files/restart_val.txt'
 VOLTAGE = './config_files/voltage_val.txt'
+COLLECTION_TIME = './config_files/collection_time.txt'
 
 months = {'1': 'January',
           '2': 'February',
@@ -59,7 +60,8 @@ def initialize_files():
            'rain': RAIN,
            'pool_level': POOL_LEVEL,
            'restart' : RESTART,
-           'voltage' : VOLTAGE
+           'voltage' : VOLTAGE,
+           'collection_time': COLLECTION_TIME
           }
   if not os.path.exists('./config_files'):
     os.system('mkdir config_files')
@@ -79,6 +81,8 @@ def initialize_files():
         fopen.write('None')
       elif key == 'voltage':
         fopen.write('12.0')
+      elif key == 'collection_time':
+        fopen.write('900')
       else:
         fopen.write('-1')
       fopen.close()
@@ -197,7 +201,7 @@ def logger(start_time, end_time, amount_rain, pool_level, tag, outfall, status, 
   fopen.write("\n")
   fopen.close()
 
-def invoke_system(led_matrix,lcd):
+def invoke_system(led_matrix,lcd, collection_time):
   time_date = datetime.datetime.now()
   start_time = '%s:%s:%s'%(time_date.hour,time_date.minute,time_date.second)
   start_buzzer()
@@ -209,7 +213,8 @@ def invoke_system(led_matrix,lcd):
   led_matrix.change_color(led_matrix.get_yellowImage())
   current_time = 0
   timer = time()
-  while current_time <= led_matrix.get_max_time():
+  row_duration = collection_time/float(8)
+  while current_time <= collection_time:
     if check_complete():
       lcd.complete_message()
       complete_state(led_matrix,start_time)
@@ -217,15 +222,15 @@ def invoke_system(led_matrix,lcd):
     elif check_mute():
       stop_buzzer()
     elif check_restart():
-      restart_state(lcd,led_matrix)
+      restart_state(lcd,led_matrix,collection_time-current_time)
     elif check_miss():
       lcd.missed_message()
       missed_state(led_matrix,start_time)
       break
 
     current_time = time() - timer
-    lcd.display_timer(led_matrix.get_max_time()-current_time)
-    if current_time >= led_matrix.get_row_duration()*count_row:
+    lcd.display_timer(collection_time-current_time)
+    if current_time >= row_duration * count_row:
           led_matrix.change_color_row(invoke_color,led_matrix.get_red(),count_row)
           count_row += 1
   if count_row >= 8: 
@@ -234,6 +239,8 @@ def invoke_system(led_matrix,lcd):
   else:
     stop_buzzer()
     led_matrix.change_color(led_matrix.get_greenImage())
+
+  set_value_file(COLLECTION_TIME,'900')
  
 def complete_state(led_matrix,start_time):
   stop_buzzer()
@@ -265,7 +272,7 @@ def missed_state(led_matrix,start_time):
   set_value_file(INVOKE,'0')
   set_value_file(RESTART,'0')
   
-def restart_state(lcd,led_matrix):
+def restart_state(lcd,led_matrix,current_time):
   lcd.send_command('CLEAR')
   state  = 0
   end_time = 0
@@ -279,6 +286,7 @@ def restart_state(lcd,led_matrix):
   stop_buzzer()
   lcd.restart_message()
   led_matrix.clear_matrix()
+  set_value_file(COLLECTION_TIME,current_time)
   set_value_file(RESTART, '1')
   os.system("sudo reboot")
 
@@ -461,6 +469,7 @@ def stop_outfall(out_queue,sender_queue,status,lcd,led_matrix):
 def outfall_detection(lcd,led_matrix,out_queue,sender_queue):
   set_value_file(STATUS,'-1')
   while True:
+    collection_time = 900
     status = checkmonth_sample()
     set_value_file(STATUS,status)
     if check_value_file(STATUS) == '1':
@@ -474,10 +483,13 @@ def outfall_detection(lcd,led_matrix,out_queue,sender_queue):
       time_date = datetime.datetime.now()
       restart_date = '%s/%s'%(time_date.month,time_date.year)
       if check_value_file(RESTART) == '1' and restart_date == check_value_file(INVOKE_DATE):
-        invoke_system(led_matrix,lcd)
+        collection_time = int(check_value_file(COLLECTION_TIME))
+        if collection_time >= 10:
+          invoke_system(led_matrix,lcd,collection_time)
       elif check_value_file(INVOKE) == '0':
         if check_operation_hours(time_date) and check_operation_days(time_date):
-          invoke_system(led_matrix,lcd)
+          collection_time = int(led_matrix.get_collection_time)
+          invoke_system(led_matrix,lcd,collection_time)
         else:
           rain = check_value_file(RAIN)
           level = check_value_file(POOL_LEVEL)

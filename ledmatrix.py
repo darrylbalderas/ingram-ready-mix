@@ -25,7 +25,7 @@ class LedMatrix:
                           'white' : self.make_image('w')  
                         }
     self.__row_duration = 1.875*60
-    self.__max_time = 60*15
+    self.__collection_time = 60*15
     
   def make_image(self,color):
       image = [] 
@@ -65,11 +65,11 @@ class LedMatrix:
   def set_row_duration(self,new_row_duration):
     self.__row_duration = new_row_duration
 
-  def get_max_time(self):
-    return self.__max_time
+  def get_collection_time(self):
+    return self.__collection_time
 
-  def set_max_time(self):
-    return self.__max_time
+  def set_collection_time(self,new_collection_time):
+    self.__collection_time = new_collection_time
 
   def show_message(self,message):
     return self.__sense_hat.show_message(message,text_colour = [255,255,255])
