@@ -1,4 +1,4 @@
-import RPi.GPIO as GPIO
+import RPi.GPIO as gpio
 import time
 import Adafruit_ADS1x15
 

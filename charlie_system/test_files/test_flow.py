@@ -7,6 +7,7 @@ from time import time
 class FlowSensor:
         def __init__(self, pin):
                 self.pin = pin
+                gpio.setup(self.pin,gpio.IN)
 
 	def check_flow(self):
                 return gpio.input(self.pin)

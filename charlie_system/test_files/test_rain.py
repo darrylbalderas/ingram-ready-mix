@@ -6,6 +6,7 @@ class RainGuage:
 	def __init__(self,pin,time_interval):
 		self.pin = pin
 		self.max_time = time_interval * 60
+		gpio.setup(self.pin,gpio.IN)
 
 	def check_guage(self):
 		return gpio.input(self.pin)
