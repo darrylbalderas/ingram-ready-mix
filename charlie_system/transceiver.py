@@ -11,7 +11,7 @@ since we have to wait for their signal to invoke our functionality
 '''
 
 class Transceiver:
-  def __init__(self, baud_rate,port_path, out_queue,trigger_queue, rain_queue,voltage_queue,sender_queue):
+  def __init__(self, baud_rate,port_path, out_queue,trigger_queue, rain_queue,sender_queue):
     self.port_path = port_path
     self.baud_rate = baud_rate
     self.ser = serial.Serial(self.port_path, 
@@ -23,7 +23,6 @@ class Transceiver:
     self.out_queue = out_queue
     self.trigger_queue = trigger_queue
     self.rain_queue = rain_queue
-    self.voltage_queue = voltage_queue
 
   def close_serial(self):
     '''
@@ -64,9 +63,6 @@ class Transceiver:
           elif message == "tri" or message == "tyes":
             if not message in self.trigger_queue:
               self.trigger_queue.append(message)
-          elif message == 'vyes' or message == 'vol' or message[0] == 'v':
-            if not message in self.voltage_queue:
-              self.voltage_queue.append(message)
           elif message[0] == 'r' or message[0] == 'p' or message == "ryes":
             if not message in self.rain_queue:
               self.rain_queue.append(message)

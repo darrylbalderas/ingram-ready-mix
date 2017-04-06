@@ -1,6 +1,6 @@
 import sys
 from time import sleep
-import RPi.GPIO as GPIO
+import RPi.GPIO as gpio
 from time import time
 
 
@@ -9,7 +9,7 @@ class FlowSensor:
 		self.pin = pin
 
 	def check_flow(self):
-		return GPIO.input(self.pin)
+		return gpio.input(self.pin)
 
 	def check_outfall(self):
                 previous_state = 0

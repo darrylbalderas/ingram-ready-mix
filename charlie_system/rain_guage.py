@@ -1,7 +1,8 @@
 import glob 
 import sys
 from time import sleep
-import RPi.GPIO as GPIO
+import os
+import RPi.GPIO as gpio
 from time import time
 
 class RainGuage:
@@ -10,7 +11,8 @@ class RainGuage:
 		self.max_time = time_interval * 60
 
 	def check_guage(self):
-		return GPIO.input(self.pin)
+		return gpio.input(self.pin)
+
 	def get_tick(self):
 		previous_state = 0
 		previous_time = time()
@@ -24,7 +26,7 @@ class RainGuage:
 			    return 1
 		return 0
               
-	def get_total_rainfall(self):
+	def get_total_rainfall(self,restart_pin,restart_hold):
 		rainfall = 0.1690
 		ticking = 0
 		previous_time = time()
@@ -34,5 +36,21 @@ class RainGuage:
 				break
 			else:
 				rainfall += 0.1690
+
+			if gpio.input(restart_pin):
+				restart_state(restart_pin, restart_hold)
+
 		return rainfall
+
+
+def restart_state(restart_pin,restart_hold):
+  state  = 0
+  end_time = 0
+  start_time = time()
+  while end_time < restart_hold:
+    end_time = time() - start_time
+    state = gpio.input(restart_pin)
+    if not state:
+      return
+  os.system("sudo reboot")
 

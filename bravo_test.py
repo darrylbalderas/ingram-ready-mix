@@ -5,15 +5,11 @@ import glob
 import serial
 from time import time
 import datetime
-from time import sleep 
+from time import sleep
 from calendar import monthrange
-# from transceiver import Transceiver
-# from lcd import LCD
-# from ledmatrix import LedMatrix
-# from datetime import timedelta
 
 global RESTART_HOLD 
-RESTART_HOLD = 3 #seconds 
+RESTART_HOLD = 3 
 
 STATUS = './config_files/status_val.txt'
 INVOKE = './config_files/invoke_val.txt'
@@ -166,7 +162,7 @@ def logger(start_time, end_time, amount_rain, pool_level, tag, outfall, status, 
     os.system('mkdir ' + month_directory)
   file_name = '%s_%s_%s'%(time_date.month, time_date.day,time_date.year)
 
-  old_file = month_directory + file_name+'.ods'
+  old_file = month_directory + file_name + '.ods'
   if os.path.exists(old_file):
     if tag == 'C':
       collect_datafile = month_directory + file_name+'_completed.ods'
@@ -182,7 +178,6 @@ def logger(start_time, end_time, amount_rain, pool_level, tag, outfall, status, 
       os.system(command2)
     else:
       collect_datafile = old_file
-
     fopen = open(collect_datafile,'a')
   else:
     if tag == 'C':
@@ -327,10 +322,12 @@ def transmission(xbee):
 def remove_character(message,character):
   return message.strip(character)
 
-def send_confirmation(trigger_queue,sender_queue):
+def send_confirmation(trigger_queue,sender_queue,voltage_queue):
   message = ""
   flag = False
   while not flag:
+    check_end_day()
+    receive_voltage(voltage_queue)
     while len(trigger_queue) != 0:
       message = trigger_queue.pop(0)
       if message == "tri":
@@ -338,7 +335,7 @@ def send_confirmation(trigger_queue,sender_queue):
         flag = True
         break
 
-def receive_data(rain_queue,sender_queue):
+def receive_data(rain_queue,sender_queue,voltage_queue):
   rain_flag = False
   pool_flag = False
   rain_val = 0
@@ -347,13 +344,14 @@ def receive_data(rain_queue,sender_queue):
   while not (rain_flag and pool_flag):
     if len(rain_queue) != 0:
       message = rain_queue.pop(0)
-      if message != "out" or message != "tri":
-        if message[0] == 'r' and not rain_flag:
-          rain_val = remove_character(message,'r')
-          rain_flag = True
-        elif message[0] == 'p'and not pool_flag:
-          pool_val = remove_character(message,'p')
-          pool_flag = True
+      if message[0] == 'r' and not rain_flag:
+        rain_val = remove_character(message,'r')
+        rain_flag = True
+      elif message[0] == 'p'and not pool_flag:
+        pool_val = remove_character(message,'p')
+        pool_flag = True
+  receive_voltage(voltage_queue)
+
   sender_queue.append("ryes")
   set_value_file(RAIN,rain_val)
   set_value_file(POOL_LEVEL,pool_val)
@@ -415,7 +413,6 @@ def send_outfall_conf(out_queue,sender_queue,lcd,led_matrix):
     else:
       lcd.display_voltage(voltage_level,'None','None')
 
-
     if check_low_voltage(voltage_level) == True:
       led_matrix.change_color(led_matrix.get_blueImage())
       low_voltage_flag = True
@@ -423,10 +420,8 @@ def send_outfall_conf(out_queue,sender_queue,lcd,led_matrix):
       low_voltage_flag = False
       led_matrix.change_color(led_matrix.get_blueImage())
 
-
     if check_restart():
       restart_state(lcd,led_matrix)
-
 
     while len(out_queue) != 0:
       message = out_queue.pop(0)
@@ -516,32 +511,41 @@ def check_low_voltage(voltage_level):
   else:
     return False
 
-def get_voltageLevel(voltage_queue,send_queue):
-  while True:
-    send_voltage_conf(voltage_queue,send_queue)
-    voltage_level = receive_voltage(voltage_queue,send_queue)
-    set_value_file(VOLTAGE,voltage_level)
-
-def send_voltage_conf(voltage_queue,send_queue):
+def receive_voltage(voltage_queue):
   message = ""
-  flag = False
-  while not flag:
-    while len(voltage_queue) != 0:
-      message = voltage_queue.pop(0)
-      if message == "vol":
-        send_queue.append("vyes")
-        flag = True
-        break
+  if len(voltage_queue) != 0:
+    message = voltage_queue.pop(0)
+    if message[0] == 'v':
+      voltage_val = remove_character(message,'v')
+      set_value_file(VOLTAGE,voltage_val)
 
-def receive_voltage(voltage_queue,send_queue):
-  voltage_flag = False
-  voltage_val = 0
-  message = ""
-  while not voltage_flag:
-    if len(voltage_queue) != 0:
-      message = voltage_queue.pop(0)
-      if message[0] == 'v' and not voltage_flag:
-        voltage_val = remove_character(message,'v')
-        voltage_flag = True
-  send_queue.append("vyes")
-  return voltage_val
+
+# def get_voltageLevel(voltage_queue,send_queue):
+#   while True:
+#     send_voltage_conf(voltage_queue,send_queue)
+#     receive_voltage(voltage_queue,send_queue)
+
+# def send_voltage_conf(voltage_queue,send_queue):
+#   message = ""
+#   flag = False
+#   while not flag:
+#     while len(voltage_queue) != 0:
+#       message = voltage_queue.pop(0)
+#       if message == "vol":
+#         send_queue.append("vyes")
+#         flag = True
+#         break
+
+# def receive_voltage(voltage_queue,send_queue):
+#   voltage_flag = False
+#   voltage_val = 0
+#   message = ""
+#   while not voltage_flag:
+#     if len(voltage_queue) != 0:
+#       message = voltage_queue.pop(0)
+#       if message[0] == 'v' and not voltage_flag:
+#         voltage_val = remove_character(message,'v')
+#         voltage_flag = True
+#   send_queue.append("vyes")
+#   set_value_file(VOLTAGE,voltage_val)
+#   return voltage_val
