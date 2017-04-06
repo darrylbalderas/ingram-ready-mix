@@ -1,8 +1,5 @@
 import serial
-import glob
-import sys
 from time import sleep
-
 '''
 This Transmitter class was created for the sole purpose 
 of testing our Xbee modules. In our senior design project,

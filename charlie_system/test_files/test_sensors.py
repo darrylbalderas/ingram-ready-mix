@@ -23,9 +23,9 @@ def main():
 	while True:
 		try:
 			pool_level = level.get_pool_level()
-			voltage_level = battery.get_voltage_level(restart_pin,restart_hold)
+			voltage_level = battery.get_voltage_level()
 			if rain.get_tick():
-				rainfall, num_ticks = rain.get_total_rainfall()
+				rainfall, num_ticks = rain.get_total_rainfall(restart_pin,restart_hold)
 				print("%f inches of rainfall and %d number of ticks collected from rain guage"%(rainfall,num_ticks))
 			else:
 				print("%f inches of rainfall and %d number of ticks collected from rain guage"%(0.0,0))
@@ -40,6 +40,8 @@ def main():
 			print("\n")
 		except KeyboardInterrupt:
 			gpio.clear()
+			print("\n")
+			print("Exiting programming")
 
 
 
