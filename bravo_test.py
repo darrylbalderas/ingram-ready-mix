@@ -5,12 +5,13 @@ import glob
 import serial
 from time import time
 import datetime
-from time import sleep
 from calendar import monthrange
+
+
+################ Global Variables #####################
 
 global RESTART_HOLD 
 RESTART_HOLD = 3 
-
 STATUS = './config_files/status_val.txt'
 INVOKE = './config_files/invoke_val.txt'
 INVOKE_DATE = './config_files/invoke_date_val.txt'
@@ -19,7 +20,6 @@ POOL_LEVEL = './config_files/pool_level_val.txt'
 RESTART = './config_files/restart_val.txt'
 VOLTAGE = './config_files/voltage_val.txt'
 COLLECTION_TIME = './config_files/collection_time.txt'
-
 months = {'1': 'January',
           '2': 'February',
           '3': 'March',
@@ -33,21 +33,57 @@ months = {'1': 'January',
           '11': 'November',
           '12': 'December'
           }
-
 start_shift = 6
 end_shift  = 17
+pin_dictionary = {'buzzers' : [7,11,13,15,29,31,33,35]
+                , 'complete': 32
+                , 'mute': 36
+                , 'restart': 38
+                , 'miss': 40}
 
-buzzers = [4,17,22,27,5,6,13,19] 
-complete = 12 
-mute = 20
-miss = 16
-restart = 21
-gpio.setmode(gpio.BCM)
-gpio.setup(complete,gpio.IN)
-gpio.setup(mute,gpio.IN)
-gpio.setup(miss,gpio.IN)
-gpio.setup(restart,gpio.IN)
 
+################ GPIO Functions #####################
+gpio.setmode(gpio.BOARD)
+gpio.setup(pin_dictionary['complete'],gpio.IN)
+gpio.setup(pin_dictionary['mute'],gpio.IN)
+gpio.setup(pin_dictionary['miss'],gpio.IN)
+gpio.setup(pin_dictionary['restart'],gpio.IN)
+
+def check_complete():
+  return gpio.input(pin_dictionary['complete'])
+
+def check_miss():
+  return gpio.input(pin_dictionary['miss'])
+
+def check_mute():
+  return gpio.input(pin_dictionary['mute'])
+
+def check_restart():
+  return gpio.input(pin_dictionary['restart'])
+
+def initalize_buzzers(buzzers):
+  for buzzer in buzzers:
+    gpio.setup(buzzer,gpio.OUT)
+
+def start_buzzer():
+  for buzzer in pin_dictionary['buzzers']:
+    gpio.output(buzzer,True)
+
+def stop_buzzer():
+  for buzzer in pin_dictionary['buzzers']:
+    gpio.output(buzzer,False)
+
+################ Helper Functions ###################
+
+def get_pins():
+  return pin_dictionary
+
+def remove_character(message,character):
+  return message.strip(character)
+
+def empty_queue(q):
+  while len(q) != 0:
+    q.pop(0)
 
 def initialize_files():
   files = {'status':STATUS,
@@ -99,30 +135,6 @@ def set_value_file(file_name, value):
   else:
     return None
 
-def check_complete():
-  return gpio.input(complete)
-
-def check_miss():
-  return gpio.input(miss)
-
-def check_mute():
-  return gpio.input(mute)
-
-def check_restart():
-  return gpio.input(restart)
-
-def initalize_buzzers(buzzers):
-  for buzzer in buzzers:
-    gpio.setup(buzzer,gpio.OUT)
-
-def start_buzzer():
-  for buzzer in buzzers:
-    gpio.output(buzzer,True)
-
-def stop_buzzer():
-  for buzzer in buzzers:
-    gpio.output(buzzer,False)
-
 def lcd_serial_port():
   port =  glob.glob('/dev/ttyACM*')
   if len(port) != 0:
@@ -147,6 +159,39 @@ def xbee_usb_port():
     return result[0]
   else:
     return None
+
+def calculate_days():
+  time_date = datetime.datetime.now()
+  month, days_left = monthrange(time_date.year,time_date.month)
+  return (days_left - time_date.day)
+
+def calculate_hours():
+  time_date = datetime.datetime.now()
+  return (24 - time_date.hour)
+
+
+def check_operation_hours(time_date):
+  current_hour = time_date.hour
+  current_min = time_date.minute
+  working_hours = False
+  if current_hour >= start_shift and current_hour <= end_shift:
+    if current_hour == end_shift and current_min > 0:
+      working_hours = False
+    else:
+      working_hours = True
+  return working_hours
+
+def check_operation_days(time_date):
+  working_days = False
+  if time_date.weekday()>= 0 and time_date.weekday() < 5:
+    working_days = True
+  return working_days
+
+def check_end_day():
+  time_date = datetime.datetime.now()
+  if time_date.hour == 24:
+    set_value_file(RAIN,'0.1690')
+    set_value_file(POOL_LEVEL,'8.0')
 
 def logger(start_time, end_time, amount_rain, pool_level, tag, outfall, status, operation):
   time_date = datetime.datetime.now()
@@ -195,6 +240,127 @@ def logger(start_time, end_time, amount_rain, pool_level, tag, outfall, status, 
                                          ,pool_level, outfall, status, operation))
   fopen.write("\n")
   fopen.close()
+
+################ Rainfall Thread Functions ############
+def receive_voltage(voltage_queue):
+  message = ""
+  if len(voltage_queue) != 0:
+    message = voltage_queue.pop(0)
+    if message[0] == 'v':
+      voltage_val = remove_character(message,'v')
+      set_value_file(VOLTAGE,voltage_val)
+
+def send_confirmation(trigger_queue,sender_queue,voltage_queue):
+  message = ""
+  flag = False
+  while not flag:
+    check_end_day()
+    receive_voltage(voltage_queue)
+    while len(trigger_queue) != 0:
+      message = trigger_queue.pop(0)
+      if message == "tri":
+        sender_queue.append("tyes")
+        flag = True
+        break
+
+def receive_data(rain_queue,sender_queue,voltage_queue):
+  rain_flag = False
+  pool_flag = False
+  rain_val = 0
+  pool_val = 0
+  message = ""
+  while not (rain_flag and pool_flag):
+    if len(rain_queue) != 0:
+      message = rain_queue.pop(0)
+      if message[0] == 'r' and not rain_flag:
+        rain_val = remove_character(message,'r')
+        rain_flag = True
+      elif message[0] == 'p'and not pool_flag:
+        pool_val = remove_character(message,'p')
+        pool_flag = True
+  receive_voltage(voltage_queue)
+
+  sender_queue.append("ryes")
+  set_value_file(RAIN,rain_val)
+  set_value_file(POOL_LEVEL,pool_val)
+  return (rain_val, pool_val)
+
+################ Outfall thread Functions ##############
+
+def check_low_voltage(voltage_level):
+  if float(voltage_level) <= 6.0:
+    return True
+  else:
+    return False
+
+def send_outfall_conf(out_queue,sender_queue,lcd,led_matrix):
+  message = ""
+  flag = False
+  voltage_level = ""
+  low_voltage_flag = False
+  while not flag:
+    voltage_level = check_value_file(VOLTAGE)
+
+    if low_voltage_flag == True:
+      lcd.low_voltage()
+    else:
+      lcd.display_voltage(voltage_level,'None','None')
+
+    if check_low_voltage(voltage_level) == True:
+      led_matrix.change_color(led_matrix.get_blueImage())
+      low_voltage_flag = True
+    else:
+      low_voltage_flag = False
+      led_matrix.change_color(led_matrix.get_blueImage())
+
+    if check_restart():
+      restart_state(lcd,led_matrix)
+
+    while len(out_queue) != 0:
+      message = out_queue.pop(0)
+      if message == "out":
+        lcd.send_command("CLEAR")
+        sender_queue.append("oyes")
+        flag = True
+        break
+
+def stop_outfall(out_queue,sender_queue,status,lcd,led_matrix):
+  message = ""
+  flag = False
+  voltage_level = ""
+  low_voltage_flag = False
+  while not flag:
+    voltage_level = check_value_file(VOLTAGE)
+    if status == "complete":
+      time_left = calculate_days()
+    elif status == "missed":
+      time_left = calculate_hours()
+
+    if low_voltage_flag == True:
+      lcd.low_voltage()
+    else:
+      lcd.display_voltage(voltage_level,time_left,status)
+
+    if check_restart():
+      restart_state(lcd,led_matrix)
+
+    if check_low_voltage(voltage_level) == True:
+      led_matrix.change_color(led_matrix.get_blueImage())
+      low_voltage_flag = True
+    else:
+      low_voltage_flag = False
+      led_matrix.change_color(led_matrix.get_greenImage())
+
+    if check_sleep(status) == False:
+      lcd.send_command("CLEAR")
+      flag = True
+
+    while len(out_queue) != 0:
+      message = out_queue.pop(0)
+      if message == "out":
+        sender_queue.append("oyes")
+        flag = True
+        break
 
 def invoke_system(led_matrix,lcd, collection_time):
   time_date = datetime.datetime.now()
@@ -305,63 +471,13 @@ def check_sleep(status):
     return True
   return False
 
-def calculate_days():
-  time_date = datetime.datetime.now()
-  month, days_left = monthrange(time_date.year,time_date.month)
-  return (days_left - time_date.day)
+################ Thread Functions ########################
 
-def calculate_hours():
-  time_date = datetime.datetime.now()
-  return (24 - time_date.hour)
-
-def transmission(xbee):
-  while True:
-      xbee.receive_message()
-      xbee.send_message()
-
-def remove_character(message,character):
-  return message.strip(character)
-
-def send_confirmation(trigger_queue,sender_queue,voltage_queue):
-  message = ""
-  flag = False
-  while not flag:
-    check_end_day()
-    receive_voltage(voltage_queue)
-    while len(trigger_queue) != 0:
-      message = trigger_queue.pop(0)
-      if message == "tri":
-        sender_queue.append("tyes")
-        flag = True
-        break
-
-def receive_data(rain_queue,sender_queue,voltage_queue):
-  rain_flag = False
-  pool_flag = False
-  rain_val = 0
-  pool_val = 0
-  message = ""
-  while not (rain_flag and pool_flag):
-    if len(rain_queue) != 0:
-      message = rain_queue.pop(0)
-      if message[0] == 'r' and not rain_flag:
-        rain_val = remove_character(message,'r')
-        rain_flag = True
-      elif message[0] == 'p'and not pool_flag:
-        pool_val = remove_character(message,'p')
-        pool_flag = True
-  receive_voltage(voltage_queue)
-
-  sender_queue.append("ryes")
-  set_value_file(RAIN,rain_val)
-  set_value_file(POOL_LEVEL,pool_val)
-  return (rain_val, pool_val)
-
-def rain_detection(trigger_queue,rain_queue,sender_queue):
-  while True:
-    send_confirmation(trigger_queue,sender_queue)
+def rain_detection(trigger_queue,rain_queue,voltage_queue,sender_queue,event):
+  while not event.is_set():
+    send_confirmation(trigger_queue,sender_queue,voltage_queue)
     start_timeDate = datetime.datetime.now()
-    rain_fall, pool_level = receive_data(rain_queue,sender_queue)
+    rain_fall, pool_level = receive_data(rain_queue,sender_queue,voltage_queue)
     end_timeDate = datetime.datetime.now()  
     end_time = '%s:%s:%s'%(end_timeDate.hour,end_timeDate.minute,end_timeDate.second)
     start_time = '%s:%s:%s'%(start_timeDate.hour,start_timeDate.minute,start_timeDate.second)
@@ -371,107 +487,9 @@ def rain_detection(trigger_queue,rain_queue,sender_queue):
       operation = "No"
     logger(start_time, end_time, rain_fall, pool_level, None ,"  -  ","  -  ",operation)
 
-
-
-def check_operation_hours(time_date):
-  current_hour = time_date.hour
-  current_min = time_date.minute
-  working_hours = False
-  if current_hour >= start_shift and current_hour <= end_shift:
-    if current_hour == end_shift and current_min > 0:
-      working_hours = False
-    else:
-      working_hours = True
-  return working_hours
-
-def check_operation_days(time_date):
-  working_days = False
-  if time_date.weekday()>= 0 and time_date.weekday() < 5:
-    working_days = True
-  return working_days
-
-def check_end_day():
-  time_date = datetime.datetime.now()
-  if time_date.hour == 24:
-    set_value_file(RAIN,'0.1690')
-    set_value_file(POOL_LEVEL,'8.0')
-
-def empty_queue(q):
-  while len(q) != 0:
-    q.pop(0)
-
-def send_outfall_conf(out_queue,sender_queue,lcd,led_matrix):
-  message = ""
-  flag = False
-  voltage_level = ""
-  low_voltage_flag = False
-  while not flag:
-    voltage_level = check_value_file(VOLTAGE)
-
-    if low_voltage_flag == True:
-      lcd.low_voltage()
-    else:
-      lcd.display_voltage(voltage_level,'None','None')
-
-    if check_low_voltage(voltage_level) == True:
-      led_matrix.change_color(led_matrix.get_blueImage())
-      low_voltage_flag = True
-    else:
-      low_voltage_flag = False
-      led_matrix.change_color(led_matrix.get_blueImage())
-
-    if check_restart():
-      restart_state(lcd,led_matrix)
-
-    while len(out_queue) != 0:
-      message = out_queue.pop(0)
-      if message == "out":
-        lcd.send_command("CLEAR")
-        sender_queue.append("oyes")
-        flag = True
-        break
-
-def stop_outfall(out_queue,sender_queue,status,lcd,led_matrix):
-  message = ""
-  flag = False
-  voltage_level = ""
-  low_voltage_flag = False
-  while not flag:
-    voltage_level = check_value_file(VOLTAGE)
-    if status == "complete":
-      time_left = calculate_days()
-    elif status == "missed":
-      time_left = calculate_hours()
-
-    if low_voltage_flag == True:
-      lcd.low_voltage()
-    else:
-      lcd.display_voltage(voltage_level,time_left,status)
-
-    if check_restart():
-      restart_state(lcd,led_matrix)
-
-    if check_low_voltage(voltage_level) == True:
-      led_matrix.change_color(led_matrix.get_blueImage())
-      low_voltage_flag = True
-    else:
-      low_voltage_flag = False
-      led_matrix.change_color(led_matrix.get_greenImage())
-
-    if check_sleep(status) == False:
-      lcd.send_command("CLEAR")
-      flag = True
-
-    while len(out_queue) != 0:
-      message = out_queue.pop(0)
-      if message == "out":
-        sender_queue.append("oyes")
-        flag = True
-        break
-
-def outfall_detection(lcd,led_matrix,out_queue,sender_queue):
+def outfall_detection(lcd,led_matrix,out_queue,sender_queue,event):
   set_value_file(STATUS,'-1')
-  while True:
+  while not event.is_set():
     collection_time = 900
     status = checkmonth_sample()
     set_value_file(STATUS,status)
@@ -504,48 +522,8 @@ def outfall_detection(lcd,led_matrix,out_queue,sender_queue):
           collection_status = "missed"
           logger("  -  ","  -  ", rain,level, None, outfall ,collection_status, operation)
 
+def transmission(xbee, event):
+  while not event.is_set():
+      xbee.receive_message()
+      xbee.send_message()
 
-def check_low_voltage(voltage_level):
-  if float(voltage_level) <= 6.0:
-    return True
-  else:
-    return False
-
-def receive_voltage(voltage_queue):
-  message = ""
-  if len(voltage_queue) != 0:
-    message = voltage_queue.pop(0)
-    if message[0] == 'v':
-      voltage_val = remove_character(message,'v')
-      set_value_file(VOLTAGE,voltage_val)
-
-
-# def get_voltageLevel(voltage_queue,send_queue):
-#   while True:
-#     send_voltage_conf(voltage_queue,send_queue)
-#     receive_voltage(voltage_queue,send_queue)
-
-# def send_voltage_conf(voltage_queue,send_queue):
-#   message = ""
-#   flag = False
-#   while not flag:
-#     while len(voltage_queue) != 0:
-#       message = voltage_queue.pop(0)
-#       if message == "vol":
-#         send_queue.append("vyes")
-#         flag = True
-#         break
-
-# def receive_voltage(voltage_queue,send_queue):
-#   voltage_flag = False
-#   voltage_val = 0
-#   message = ""
-#   while not voltage_flag:
-#     if len(voltage_queue) != 0:
-#       message = voltage_queue.pop(0)
-#       if message[0] == 'v' and not voltage_flag:
-#         voltage_val = remove_character(message,'v')
-#         voltage_flag = True
-#   send_queue.append("vyes")
-#   set_value_file(VOLTAGE,voltage_val)
-#   return voltage_val

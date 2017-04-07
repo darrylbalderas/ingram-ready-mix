@@ -1,6 +1,4 @@
 import serial
-import glob
-import sys
 from time import sleep
 
 '''

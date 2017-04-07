@@ -7,6 +7,8 @@ import RPi.GPIO as gpio
 import datetime
 from time import time 
 
+############### Global Variables #################
+
 global RESTART_HOLD 
 RESTART_HOLD = 3 
 
@@ -15,18 +17,21 @@ RAIN = './config_files/rain_val.txt'
 POOL_LEVEL = './config_files/pool_level.txt'
 RESTART = './config_files/restart.txt'
 
-
 pin_dictionary = { 'rain': 12,
                    'flow': 10,
                    'restart': 8
                  }
 
+############### GPIO Functions #################
 gpio.setmode(gpio.BOARD)
 gpio.setup(pin_dictionary['flow'], gpio.IN)
 gpio.setup(pin_dictionary['rain'], gpio.IN)
 gpio.setup(pin_dictionary['restart'], gpio.IN)
 
-######## Helper Functions ########
+def check_restart():
+	return gpio.input(pin_dictionary['restart'])
+
+############### Helper Functions #################
 
 def initialize_files():
   files = {'rain': RAIN
@@ -67,29 +72,6 @@ def set_value_file(file_name, value):
   else:
     return None
 
-def check_restart():
-	return gpio.input(pin_dictionary['restart'])
-
-def restart_state():
-  state  = 0
-  end_time = 0
-  start_time = time()
-  while end_time < RESTART_HOLD:
-    end_time = time() - start_time
-    state = check_restart()
-    if not state:
-      return
-  os.system("sudo reboot")
-
-def calculate_sleep():
-	time_date = datetime.datetime.now()
-	time_sleep = (24 - time_date.hour) * 60 * 60
-	return time_sleep
-
-
-
-######## Charlie Main Program Functions ########
-
 def get_pins():
 	return pin_dictionary
 
@@ -109,6 +91,13 @@ def xbee_usb_port():
 	else:
 		return None
 
+def calculate_sleep():
+	time_date = datetime.datetime.now()
+	time_sleep = (24 - time_date.hour) * 60 * 60
+	return time_sleep
+
+################ Outfall Thread Functions #############
+
 def send_outfall(out_queue, send_queue):
 	message = ""
 	flag = False
@@ -123,6 +112,9 @@ def send_outfall(out_queue, send_queue):
 		elif send_flag == True:
 				send_queue.append("out")
                 send_flag = False
+
+
+############## Rainfall Thread Functions ###############
 
 def check_voltage_interval(send_queue,battery):
 	time_date = datetime.datetime.now()
@@ -168,7 +160,18 @@ def send_data(rain_gauge,level_sensor,rain_queue,send_queue,battery):
 	        send_flag = False
 	    check_voltage_interval(send_queue,battery)
 
-######## Thread Functions ########
+def restart_state():
+  state  = 0
+  end_time = 0
+  start_time = time()
+  while end_time < RESTART_HOLD:
+    end_time = time() - start_time
+    state = check_restart()
+    if not state:
+      return
+  os.system("sudo reboot")
+
+################# Thread Functions #####################
 
 def detect_rainfall(rain_guage,level_sensor,tri_queue,rain_queue,send_queue,battery,event):
 	while not event.is_set():
