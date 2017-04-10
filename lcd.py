@@ -1,9 +1,25 @@
+'''
+Created by: Alison Chan, Darryl Balderas, and Michael Rodriguez
+Programmed in: Python 2.7
+Purpose: This module was created to utilize and organize the 
+functionality of the 16x2 lcd screen
+'''
+
 import serial 
 from time import sleep
 from math import floor
 
 class LCD:
   def __init__(self,lcd_port,baudrate):
+    '''
+    Parameters: lcd_port (string), baudrate (integer)
+    Function: Initializes variables when an instance
+    of a 16x2 LCD screen object. 
+    Creates a list of commands used by 
+    lcd object.  Clears and turn offs
+    autoscroll off.
+    Returns: None
+    '''
     self.ser = serial.Serial(lcd_port,baudrate,
                             parity=serial.PARITY_NONE,
                             stopbits=serial.STOPBITS_ONE,
@@ -33,27 +49,53 @@ class LCD:
       self.ser.write(self.commands['AUTOSCROLL_OFF'])
       
   def send_command(self,command):
+    '''
+    Parameters: command(string)
+    Function: Writes a command to the 16x2 LCD screen
+    Returns: None
+    '''
     if self.ser.isOpen():
         self.ser.write(self.commands[command])
-        usleep(1)
+        msleep(1)
 
   def send_message(self,message):
+    '''
+    Parameters: message(string)
+    Function: Writes a message to the 16x2 LCD screen
+    Returns: None
+    '''
     if self.ser.isOpen():
         self.ser.write(message)
-        usleep(1)
+        msleep(1)
 
   def bappend_blanks(self,message):
+    '''
+    Parameters: message(string)
+    Function: appends a certain blanks to end of the message
+    Returns: message with blanks appended to it 
+    '''
     if len(message) != 16:
         blanks = 16 - len(message)
         return (blanks*" " + message)
 
   def center_message(self,message):
+    '''
+    Parameters: message(string)
+    Function: appends blanks characters to center the message in 
+    the lcd screen
+    Returns: a message that will be centered in the lcd screen
+    '''
     length = len(message)
     if length < 16 and length > 0:
         blanks = int(floor((16 - length)/2))
         return (blanks*" " + message)
 
   def welcome_message(self):
+    '''
+    Parameters: None
+    Function: displays a welcome message on 16x2 lcd screen
+    Returns: None
+    '''
     self.send_command('CLEAR')
     self.send_message(self.center_message('Welcome to'))
     self.send_command('ENTER')
@@ -62,12 +104,24 @@ class LCD:
     self.send_command('CLEAR')
 
   def waiting_outfall(self):
+    '''
+    Parameters: None
+    Function: displays a message on the 16x2 lcd screen whenever
+    the our system is waiting for outfall
+    Returns: None
+    '''
     self.send_message(self.center_message("waiting on"))
     self.send_command('ENTER')
     self.send_message(self.center_message('outfall trigger'))
     self.send_command('HOME')
 
   def complete_message(self):
+    '''
+    Parameters: None
+    Function: displays a message on the 16x2 lcd screen whenever 
+    the user has pressed the complete button 
+    Returns: None
+    '''
     self.send_command('CLEAR')
     self.send_message(self.center_message('completed'))
     self.send_command('ENTER')
@@ -81,6 +135,12 @@ class LCD:
     self.send_command('CLEAR')
 
   def missed_message(self):
+    '''
+    Parameters: None
+    Function: displays a message on the 16x2 lcd screen whenever the 
+    user has pressed the missed button
+    Returns: None
+    '''
     self.send_command('CLEAR')
     self.send_message(self.center_message(' missed'))
     self.send_command('ENTER')
@@ -94,6 +154,12 @@ class LCD:
     self.send_command('CLEAR')
 
   def holding_restart(self,num_time):
+    '''
+    Parameters: None
+    Function: displays a counted down message on the 16x2 lcd 
+    screen whenever the user is pressing the restart button
+    Returns: None
+    '''
     self.send_message(self.center_message("RESTART HOLD"))
     self.send_command('ENTER')
     seconds = str(int(3-floor(num_time)%3)).zfill(2)
@@ -101,6 +167,12 @@ class LCD:
     self.send_command('HOME')
 
   def restart_message(self):
+    '''
+    Parameters: None
+    Function: displays a message on the 16x2 lcd screen 
+    whenever the user has pressed the restart message
+    Returns: None
+    '''
     self.send_command('CLEAR')
     self.send_message(self.center_message("Restarting"))
     self.send_command('ENTER')
@@ -109,6 +181,13 @@ class LCD:
     self.send_command('CLEAR')
 
   def display_timer(self,num_time):
+    '''
+    Parameters: None
+    Function: displays a counted timer on the 16x2 screen 
+    whenever our system has been invoked to show how much time 
+    left to collect the sample.
+    Returns: None
+    '''
     hour = str(int(floor(num_time/3600))).zfill(2)
     minute = str(int(14- floor(num_time/60))).zfill(2)
     seconds =  str(int(59 - floor(num_time))%60).zfill(2)
@@ -119,6 +198,12 @@ class LCD:
     self.send_command("HOME")
 
   def display_voltage(self,voltage_level,time_left,status):
+    '''
+    Parameters: None
+    Function: displays a message on the 16x2 lcd screen whenever the user
+    is waiting to collect a sample
+    Returns: None
+    '''
     if status == 'complete':
         self.send_message(self.center_message('Days left: ' + str(time_left)))
         self.send_command('ENTER')
@@ -136,13 +221,24 @@ class LCD:
         self.send_command("HOME")
 
   def low_voltage(self):
+    '''
+    Parameters: None
+    Function: displays a message on the 16x2 lcd screen whenever our received
+    low voltage from the rain detection system.
+    Returns: None
+    '''
     self.send_message(self.center_message('Check Rainfall'))
     self.send_command('ENTER')
     self.send_message(self.center_message('Detection system'))
     self.send_command("HOME")
 
 
-def usleep(seconds):
+def msleep(seconds):
+    '''
+    Parameters: seconds(integers)
+    Function: changes seconds into miliseconds
+    Returns: None
+    '''
     number = seconds/float(1000)
     sleep(number)
 

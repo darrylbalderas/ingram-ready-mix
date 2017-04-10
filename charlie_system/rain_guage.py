@@ -1,6 +1,10 @@
-import glob 
-import sys
-from time import sleep
+'''
+Created by: Matthew Smith, Michael Rodriguez, and Darryl Balderas
+Programmed in: Python 2.7
+Purpose: This module was created to utilize and organize the 
+functionality of the Rain guage sensor 
+'''
+
 import os
 import RPi.GPIO as gpio
 from time import time
@@ -11,9 +15,21 @@ class RainGuage:
 		self.max_time = time_interval * 60
 
 	def check_guage(self):
+		'''
+		Parameters: None
+		Function: Checks whether the gpio pin for check_guage has
+		been invoked resulting in the status either a 1 or 0
+		Returns: The status of the rain_guage
+		'''
 		return gpio.input(self.pin)
 
 	def get_tick(self):
+		'''
+		Parameters: None
+		Function: Checks whether the rain guage has been triggered. It
+		has a 3 second timeout. 
+		Returns: The status of the rain_guage
+		'''
 		previous_state = 0
 		previous_time = time()
 		collection_duration = 3
@@ -27,6 +43,12 @@ class RainGuage:
 		return 0
               
 	def get_total_rainfall(self,restart_pin,restart_hold):
+		'''
+		Parameters: restart_pin(integer), restart_hold(integer)
+		Function: Collects the number of rainfall until the max collection time 
+		has been reached or rain_guage stop ticking. 
+		Returns: The amount of rainfall
+		'''
 		rainfall = 0.1690
 		ticking = 0
 		previous_time = time()
@@ -44,6 +66,13 @@ class RainGuage:
 
 
 def restart_state(restart_pin,restart_hold):
+  '''
+  Paramter: restart_pin(integer), restart_hold(integer)
+  Function: If the user has succesfully hold the restart
+  button for 3 seconds then the system will restart otherwise it break 
+  from this function.
+  Returns: None
+  '''
   state  = 0
   end_time = 0
   start_time = time()

@@ -1,13 +1,14 @@
+'''
+Created by: Matthew Smith, Michael Rodriguez, and Darryl Balderas
+Programmed in: Python 2.7
+Purpose: This module was created to utilize and organize the 
+functionality of the flow sensor.
+'''
 import RPi.GPIO as GPIO
-
 import time
-
-#Import numpy to send the median on the recorded pool level values
 import numpy as np
-
-#Import the ADS1x15 module.
-import Adafruit_ADS1x15
-
+import Adafruit_ADS1x15 #library for ADC hardware
+ 
 class Battery:
     def __init__(self):
         self.voltage_level = 12.0

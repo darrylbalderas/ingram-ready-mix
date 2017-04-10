@@ -1,9 +1,13 @@
+'''
+Created by: Matthew Smith, Michael Rodriguez, and Darryl Balderas
+Programmed in: Python 2.7
+Purpose: This module was created to utilize and organize the 
+functionality of the pool level sensor.
+'''
 import RPi.GPIO as GPIO
-import time
-#Import numpy to send the median on the recorded pool level values
-import numpy as np
-# Import the ADS1x15 module.
-import Adafruit_ADS1x15
+import time 
+import numpy as np #Import numpy to send the median on the recorded pool level values
+import Adafruit_ADS1x15  #library for ADC hardware
 
 class LevelSensor:
     def __init__(self):
@@ -36,7 +40,7 @@ class LevelSensor:
         return self.pool_level
 
     def check_overflow(self):
-        if self.pool_level == 0.0:
+        if self.pool_level  < 0.5:
             return 1
         else:
             return 0
