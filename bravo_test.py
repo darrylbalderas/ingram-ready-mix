@@ -335,7 +335,6 @@ def logger(start_time, end_time, amount_rain, pool_level, tag, outfall, status, 
   if not os.path.exists(month_directory):
     os.system('mkdir ' + month_directory)
   file_name = '%s_%s_%s'%(time_date.month, time_date.day,time_date.year)
-
   old_file = month_directory + file_name + '.ods'
   if os.path.exists(old_file):
     if tag == 'C':
@@ -351,16 +350,19 @@ def logger(start_time, end_time, amount_rain, pool_level, tag, outfall, status, 
       os.system(command)
       os.system(command2)
     else:
-      collect_datafile = old_file
+      files = glob.glob(month_directory + file_name + '*.ods')
+      if len(files) != 0:
+        collect_datafile = files[0]
+      else:
+        collect_datafile = old_file
     fopen = open(collect_datafile,'a')
   else:
     if tag == 'C':
-      collect_datafile = month_directory + file_name+'_completed.ods'
+      collect_datafile = month_directory + file_name + '_completed.ods'
     elif tag == 'M':
-      collect_datafile = month_directory + file_name+'_missed.ods'
+      collect_datafile = month_directory + file_name + '_missed.ods'
     else:
       collect_datafile = old_file
-      
     fopen = open(collect_datafile, 'w')
     fopen.write('Start time, End time, AmountRained(cubic inches), Inches till Overflow, \
                  Outfall status, Collection Status, Hours of Operation')
@@ -371,9 +373,10 @@ def logger(start_time, end_time, amount_rain, pool_level, tag, outfall, status, 
   fopen.write("\n")
   fopen.close()
 
+
 ################ Rainfall Thread Functions ############
 
-def receive_voltage(voltage_queue):
+def receive_voltage(voltage_queue,lock):
   '''
   Paramter: voltage_queue( list for voltages)
   Function: Checks the list if voltage has been recieved. If voltage is received,
@@ -383,12 +386,14 @@ def receive_voltage(voltage_queue):
   message = ""
   if len(voltage_queue) != 0:
     message = voltage_queue.pop(0)
-    if len(message) > 1:
+    if len(message)  >= 3:
       if message[0] == 'v':
         voltage_val = remove_character(message,'v')
+        lock.acquire()
         set_value_file(VOLTAGE,voltage_val)
+        lock.release()
 
-def send_confirmation(trigger_queue,sender_queue,voltage_queue):
+def send_confirmation(trigger_queue,sender_queue,voltage_queue,lock):
   '''
   Paramter: trigger_queue (list for rain guage triggers), sender_queue (list for 
   sending information), and voltage_queue( list for voltages)
@@ -400,7 +405,7 @@ def send_confirmation(trigger_queue,sender_queue,voltage_queue):
   flag = False
   while not flag:
     check_end_day()
-    receive_voltage(voltage_queue)
+    receive_voltage(voltage_queue,lock)
     while len(trigger_queue) != 0:
       message = trigger_queue.pop(0)
       if message == "tri":
@@ -408,7 +413,7 @@ def send_confirmation(trigger_queue,sender_queue,voltage_queue):
         flag = True
         break
 
-def receive_data(rain_queue,sender_queue,voltage_queue):
+def receive_data(rain_queue,sender_queue,voltage_queue,lock):
   '''
   Paramter: rain_queue (list for rain and pool level data), sender_queue (list for 
   sending information), and voltage_queue ( list for voltages)
@@ -431,7 +436,7 @@ def receive_data(rain_queue,sender_queue,voltage_queue):
       elif message[0] == 'p'and not pool_flag:
         pool_val = remove_character(message,'p')
         pool_flag = True
-  receive_voltage(voltage_queue)
+  receive_voltage(voltage_queue,lock)
 
   sender_queue.append("ryes")
   set_value_file(RAIN,rain_val)
@@ -446,7 +451,6 @@ def check_low_voltage(voltage_level):
   Function: Checks if voltage level is below a certain threshold
   Returns: True if voltage is below the threshold otherwise False
   '''
-  print(voltage_level)
   if float(voltage_level) <= 6.0:
     return True
   else:
@@ -466,6 +470,7 @@ def send_outfall_conf(out_queue,sender_queue,lcd,led_matrix):
   voltage_level = ""
   low_voltage_flag = False
   while not flag:
+
     voltage_level = check_value_file(VOLTAGE)
 
     if low_voltage_flag == True:
@@ -575,7 +580,7 @@ def invoke_system(led_matrix,lcd, collection_time):
       missed_state(led_matrix,start_time)
       break
     current_time = time() - timer
-    lcd.display_timer(collection_time-current_time)
+    lcd.display_timer(current_time)
     if current_time >= row_duration * count_row:
           led_matrix.change_color_row(invoke_color,led_matrix.get_red(),count_row)
           count_row += 1
@@ -695,7 +700,7 @@ def check_sleep(status):
 
 ################ Thread Functions ########################
 
-def rain_detection(trigger_queue,rain_queue,voltage_queue,sender_queue,event):
+def rain_detection(trigger_queue,rain_queue,voltage_queue,sender_queue,event, lock):
   '''
   Paramter: trigger_queue (list for rain guage triggers), rain_queue ( list for rainfall and pool
   level data), voltage_queue (list for voltage), sender_queue (list for sending information),
@@ -706,7 +711,7 @@ def rain_detection(trigger_queue,rain_queue,voltage_queue,sender_queue,event):
   Also checks for receiving the voltage and updates the voltage text files
   Returns: 
   '''
-  while not event.is_set():
+  while True:
     send_confirmation(trigger_queue,sender_queue,voltage_queue)
     start_timeDate = datetime.datetime.now()
     rain_fall, pool_level = receive_data(rain_queue,sender_queue,voltage_queue)
@@ -719,7 +724,7 @@ def rain_detection(trigger_queue,rain_queue,voltage_queue,sender_queue,event):
       operation = "No"
     logger(start_time, end_time, rain_fall, pool_level, None ,"  -  ","  -  ",operation)
 
-def outfall_detection(lcd,led_matrix,out_queue,sender_queue,event):
+def outfall_detection(lcd,led_matrix,out_queue,sender_queue,event,lock):
   '''
   Paramter: lcd (object), led_matrix(object), out_queue( list for 
   flow sensor triqqers), sender_queue (list for sending information), 
@@ -729,7 +734,7 @@ def outfall_detection(lcd,led_matrix,out_queue,sender_queue,event):
   Returns: None
   '''
   set_value_file(STATUS,'-1')
-  while not event.is_set():
+  while True:
     collection_time = 900
     status = checkmonth_sample()
     set_value_file(STATUS,status)
@@ -769,7 +774,7 @@ def transmission(xbee, event):
   places in there respect queue
   Returns: None
   '''
-  while not event.is_set():
+  while True:
       xbee.receive_message()
       xbee.send_message()
 
