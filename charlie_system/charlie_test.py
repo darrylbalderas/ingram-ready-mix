@@ -125,20 +125,20 @@ def check_voltage_interval(send_queue,battery):
 			voltage = battery.get_voltage_level()
 			send_queue.append(str(voltage))
 	
-def create_trigger(tri_queue,send_queue):
+def create_trigger(trigger_queue,sender_queue):
     message = ""
     flag = False
     send_flag = True
     while not flag:
-        if len(tri_queue) != 0:
-            message = tri_queue.pop(0)
+        if len(trigger_queue) != 0:
+            message = trigger_queue.pop(0)
             if message == "tyes":
                 flag = True
             else:
                 send_flag = True
         elif send_flag == True:
-        	send_queue.append("tri")
-        	send_flag = False
+          sender_queue.append("tri")
+          send_flag = False
 
 def send_data(rain_gauge,level_sensor,rain_queue,send_queue,battery):
 	tmp_pool_val = level_sensor.get_pool_level()
