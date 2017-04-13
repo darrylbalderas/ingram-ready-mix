@@ -215,7 +215,7 @@ class LCD:
         self.send_message(self.center_message('Voltage: ' + str(voltage_level)))
         self.send_command("HOME")
     else:
-        self.send_message(self.center_message('Checking Outfall'))
+        self.send_message(self.center_message('No outfall'))
         self.send_command('ENTER')
         self.send_message(self.center_message('Voltage: ' + str(voltage_level)))
         self.send_command("HOME")
@@ -229,7 +229,7 @@ class LCD:
     '''
     self.send_message(self.center_message('Check Rainfall'))
     self.send_command('ENTER')
-    self.send_message(self.center_message('Detection system'))
+    self.send_message(self.center_message('Detect system'))
     self.send_command("HOME")
 
 

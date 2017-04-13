@@ -19,11 +19,12 @@ from lcd import LCD
 from ledmatrix import LedMatrix
 
 from threading import Thread
-from event import Event
+from threading import Event
 
 # bravo test is a module that contains all of the function 
 # for alarm system 
 import bravo_test as bt
+import RPi.GPIO as gpio
 
 def main():
   event = Event() # use as a flag for ending all of the threads at once
@@ -48,19 +49,20 @@ def main():
     thread2.start()
     thread3 = Thread(target=bt.transmission, args = (bravo_xbee,event,))
     thread3.start()
-    while not event.is_set():
-      user_input = raw_input("Enter Y or N to stop program")
-
-      if user_input.lower() == 'y':
-            print("Ending the Program")
-            event.set()
-            thread1.join()
-            thread2.join()
-            thread3.join()
-            bt.stop_buzzer()
-            led_matrix.clear_matrix()
-            bravo_xbee.clear_serial()
-            lcd.send_command('CLEAR')
+##    while not event.is_set():
+##      user_input = raw_input("Enter (Y) or (N) to stop program: ")
+##
+##      if user_input.lower() == 'y':
+##            print("Ending the Program")
+##            event.set()
+##            thread1.join()
+##            thread2.join()
+##            thread3.join()
+##            gpio.cleanup()
+##            bt.stop_buzzer()
+##            led_matrix.clear_matrix()
+##            bravo_xbee.clear_serial()
+##            lcd.send_command('CLEAR')
   else:
       print("Check the Xbee and LCD connection")
 if __name__ == "__main__":

@@ -175,7 +175,7 @@ def initialize_files():
   if not os.path.exists('./config_files'):
     os.system('mkdir config_files')
   for key,value in files.items():
-    if os.path.exists(value):
+    if not os.path.exists(value):
       fopen = open(value, 'w')
       if key == 'invoke':
         fopen.write('0')
@@ -360,9 +360,10 @@ def logger(start_time, end_time, amount_rain, pool_level, tag, outfall, status, 
       collect_datafile = month_directory + file_name+'_missed.ods'
     else:
       collect_datafile = old_file
+      
     fopen = open(collect_datafile, 'w')
     fopen.write('Start time, End time, AmountRained(cubic inches), Inches till Overflow, \
-                 Outfall status, Collection Status','Hours of Operation')
+                 Outfall status, Collection Status, Hours of Operation')
     fopen.write('\n')
 
   fopen.write("{},{},{},{},{},{},{}".format(start_time, end_time, amount_rain 
@@ -445,6 +446,7 @@ def check_low_voltage(voltage_level):
   Function: Checks if voltage level is below a certain threshold
   Returns: True if voltage is below the threshold otherwise False
   '''
+  print(voltage_level)
   if float(voltage_level) <= 6.0:
     return True
   else:
@@ -502,6 +504,7 @@ def stop_outfall(out_queue,sender_queue,status,lcd,led_matrix):
   flag = False
   voltage_level = ""
   low_voltage_flag = False
+  time_left = 0
   while not flag:
     voltage_level = check_value_file(VOLTAGE)
     if status == "complete":
@@ -731,9 +734,9 @@ def outfall_detection(lcd,led_matrix,out_queue,sender_queue,event):
     status = checkmonth_sample()
     set_value_file(STATUS,status)
     if check_value_file(STATUS) == '1':
-      stop_outfall(out_queue,sender_queue,status,lcd,led_matrix)
+      stop_outfall(out_queue,sender_queue,'complete',lcd,led_matrix)
     elif check_value_file(STATUS) == '0':
-      stop_outfall(out_queue,sender_queue,status,lcd,led_matrix)
+      stop_outfall(out_queue,sender_queue,'missed',lcd,led_matrix)
     elif check_value_file(STATUS) == '-1':
       empty_queue(out_queue)
       lcd.send_command('CLEAR')
@@ -749,7 +752,7 @@ def outfall_detection(lcd,led_matrix,out_queue,sender_queue,event):
             set_value_file(COLLECTION_TIME,'900')
       elif check_value_file(INVOKE) == '0':
         if check_operation_hours(time_date) and check_operation_days(time_date):
-          collection_time = int(led_matrix.get_collection_time)
+          collection_time = int(led_matrix.get_collection_time())
           invoke_system(led_matrix,lcd,collection_time)
         else:
           rain = check_value_file(RAIN)
