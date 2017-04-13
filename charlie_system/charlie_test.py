@@ -16,6 +16,7 @@ OUTFALL_DATE = './config_files/outfall_date.txt'
 RAIN = './config_files/rain_val.txt'
 POOL_LEVEL = './config_files/pool_level.txt'
 RESTART = './config_files/restart.txt'
+RAINING = './config_files/raining.txt'
 
 pin_dictionary = { 'rain': 12,
                    'flow': 10,
@@ -38,6 +39,7 @@ def initialize_files():
            ,'date': OUTFALL_DATE
            ,'pool': POOL_LEVEL
            ,'restart': RESTART
+           ,'raining': RAINING
           }
 
   if not os.path.exists('./config_files'):
@@ -119,7 +121,7 @@ def send_outfall(out_queue, send_queue):
 def check_voltage_interval(send_queue,battery):
 	time_date = datetime.datetime.now()
 	if time_date.minute == 59:
-		if time_date.second >= 0 and time_date.second <= 5:
+		if time_date.second >= 0 and time_date.second <= 2:
 			voltage = battery.get_voltage_level()
 			send_queue.append(str(voltage))
 	
@@ -140,8 +142,32 @@ def create_trigger(tri_queue,send_queue):
 
 def send_data(rain_gauge,level_sensor,rain_queue,send_queue,battery):
 	tmp_pool_val = level_sensor.get_pool_level()
-	tmp_rain_val = rain_gauge.get_total_rainfall(pin_dictionary['restart'],RESTART_HOLD)
+	tmp_rain_val = rain_gauge.get_total_rainfall(pin_dictionary['restart'],
+		                                         RESTART_HOLD, level_sensor)
 	tmp_pool_val = level_sensor.get_pool_level()
+	pool_val = 'p' + str(tmp_pool_val)
+	rain_val = 'r' + str(tmp_rain_val)
+	message = ""
+	flag = False
+	send_flag = True
+	while not flag:
+	    if len(rain_queue) != 0:
+	        message = rain_queue.pop(0)
+	        if message == "ryes":
+	            flag = True
+	        else:
+	            send_flag = True
+	    elif send_flag:
+	        send_queue.append(rain_val)
+	        send_queue.append(pool_val)
+	        send_flag = False
+	    check_voltage_interval(send_queue,battery)
+
+def send_restart_data(rain_queue,send_queue,battery):
+	tmp_pool_val = check_value_file(POOL_LEVEL)
+	tmp_rain_val = check_value_file(RAIN)
+	set_value_file(POOL_LEVEL,'12')
+	set_value_file(RAIN,'0.1690')
 	pool_val = 'p' + str(tmp_pool_val)
 	rain_val = 'r' + str(tmp_rain_val)
 	message = ""
@@ -173,12 +199,17 @@ def restart_state():
 
 ################# Thread Functions #####################
 
-def detect_rainfall(rain_guage,level_sensor,tri_queue,rain_queue,send_queue,battery,event):
+def detect_rainfall(rain_guage, level_sensor, tri_queue, rain_queue,send_queue,battery,event):
 	while not event.is_set():
 		check_voltage_interval(send_queue,battery)
 		if check_restart():
 			restart_state()
-		if rain_guage.get_tick():
+		elif check_value_file(RESTART) == '1' and check_value_file(RAINING) == '1':
+			set_value_file(RESTART, '0')
+			set_value_file(RAINING, '0')
+			create_trigger(tri_queue,send_queue)
+			send_restart_data(rain_queue,send_queue,battery)
+		elif rain_guage.get_tick():
 			create_trigger(tri_queue,send_queue)
 			send_data(rain_guage,level_sensor,rain_queue,send_queue,battery)
 

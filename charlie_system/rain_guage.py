@@ -42,7 +42,7 @@ class RainGuage:
 			    return 1
 		return 0
               
-	def get_total_rainfall(self,restart_pin,restart_hold):
+	def get_total_rainfall(self,restart_pin,restart_hold, level_sensor):
 		'''
 		Parameters: restart_pin(integer), restart_hold(integer)
 		Function: Collects the number of rainfall until the max collection time 
@@ -60,12 +60,18 @@ class RainGuage:
 				rainfall += 0.1690
 
 			if gpio.input(restart_pin):
-				restart_state(restart_pin, restart_hold)
+				restart_state(restart_pin, restart_hold, level_sensor, rainfall)
 
 		return rainfall
 
 
-def restart_state(restart_pin,restart_hold):
+RAIN = './config_files/rain_val.txt'
+POOL_LEVEL = './config_files/pool_level.txt'
+RESTART = './config_files/restart.txt'
+RAINING = './config_files/raining.txt'
+
+
+def restart_state(restart_pin, restart_hold, level_sensor, rainfall):
   '''
   Paramter: restart_pin(integer), restart_hold(integer)
   Function: If the user has succesfully hold the restart
@@ -81,5 +87,19 @@ def restart_state(restart_pin,restart_hold):
     state = gpio.input(restart_pin)
     if not state:
       return
+  str_rainfall = str(rainfall)
+  str_pool_level = str(level_sensor.get_pool_level())
+  set_value_file(RAIN,str_rainfall)
+  set_value_file(POOL_LEVEL,str_pool_level)
+  set_value_file(RESTART, '1')
+  set_value_file(RAINING,'1')
   os.system("sudo reboot")
+
+def set_value_file(file_name, value):
+  if os.path.exists(file_name):
+    fopen = open(file_name,'w')
+    fopen.write(value)
+    fopen.close()
+  else:
+    return None
 

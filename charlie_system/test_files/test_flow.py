@@ -8,11 +8,9 @@ class FlowSensor:
         def __init__(self, pin):
                 self.pin = pin
                 gpio.setup(self.pin,gpio.IN)
-
-	def check_flow(self):
+        def check_flow(self):
                 return gpio.input(self.pin)
-
-	def check_outfall(self):
+        def check_outfall(self):
                 previous_state = 0
                 current_state = self.check_flow()
                 if current_state  > previous_state:
@@ -25,13 +23,17 @@ class FlowSensor:
 
 
 def main():
-        flow = FlowSensor()
+        gpio.setmode(gpio.BOARD)
+        flow_sensor_pin = 10
+        flow = FlowSensor(flow_sensor_pin)
         outfall = 0
         while True:
-                outfall = flow.check_outfall()
-                if outfall == 1:
-                        print("There is outfall being detected")
-
+                try:
+                        outfall = flow.check_outfall()
+                        if outfall == 1:
+                                print("There is outfall being detected")
+                except KeyboardInterrupt:
+                        gpio.cleanup()
 
 
 if __name__ == "__main__":
