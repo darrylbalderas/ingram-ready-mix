@@ -77,6 +77,7 @@ class Transceiver:
     if self.ser.isOpen():
       try:
         message = self.ser.readline()
+        self.flush_input()
         message = message.strip('\n')
         if message != "" and len(message) >= 3:
           if message == "out" or message == "oyes":
@@ -93,5 +94,15 @@ class Transceiver:
               self.rain_queue.append(message)
       except:
         pass
+
+  def flush_input(self):
+    sleep(0.1)
+    self.ser.flushInput()
+    sleep(0.1)
+
+  def flush_output(self):
+    sleep(0.1)
+    self.ser.flushOutput()
+    sleep(0.1)
 
 

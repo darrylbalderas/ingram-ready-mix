@@ -43,6 +43,7 @@ def main():
     bt.initalize_buzzers()
     led_matrix = LedMatrix()
     lcd = LCD(lcd_port,9600)
+    led_matrix.clear_matrix()
     led_matrix.change_color(led_matrix.get_greenImage())
     lcd.welcome_message()
     thread1 = Thread(target=bt.outfall_detection, args=(lcd,led_matrix,out_queue,send_queue,event,lock,))

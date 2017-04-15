@@ -47,7 +47,7 @@ months = {'1': 'January',
 
 #Operation hours for the ingram ready mix facility
 start_shift = 6
-end_shift  = 17
+end_shift  = 21
 
 # Data structure that contains of the pins used for the system
 pin_dictionary = {'buzzers' : [7,11,13,15,29,31,33,35]
@@ -386,9 +386,10 @@ def receive_voltage(voltage_queue,lock):
   message = ""
   if len(voltage_queue) != 0:
     message = voltage_queue.pop(0)
-    if len(message)  >= 3:
+    if len(message)  >= 4:
       if message[0] == 'v':
         voltage_val = remove_character(message,'v')
+        print(voltage_val)
         lock.acquire()
         set_value_file(VOLTAGE,voltage_val)
         lock.release()
@@ -405,7 +406,7 @@ def send_confirmation(trigger_queue,sender_queue,voltage_queue,lock):
   flag = False
   while not flag:
     check_end_day()
-    receive_voltage(voltage_queue,lock)
+    receive_voltage(voltage_queue, lock)
     while len(trigger_queue) != 0:
       message = trigger_queue.pop(0)
       if message == "tri":
@@ -451,9 +452,13 @@ def check_low_voltage(voltage_level):
   Function: Checks if voltage level is below a certain threshold
   Returns: True if voltage is below the threshold otherwise False
   '''
-  if float(voltage_level) <= 6.0:
-    return True
-  else:
+  try:
+    if float(voltage_level) <= 6.0:
+      return True
+    else:
+      return False
+  except:
+    print("no voltage received")
     return False
 
 def send_outfall_conf(out_queue,sender_queue,lcd,led_matrix):
@@ -470,9 +475,7 @@ def send_outfall_conf(out_queue,sender_queue,lcd,led_matrix):
   voltage_level = ""
   low_voltage_flag = False
   while not flag:
-
     voltage_level = check_value_file(VOLTAGE)
-
     if low_voltage_flag == True:
       lcd.low_voltage()
     else:
@@ -486,11 +489,12 @@ def send_outfall_conf(out_queue,sender_queue,lcd,led_matrix):
       led_matrix.change_color(led_matrix.get_greenImage())
 
     if check_restart():
-      restart_state(lcd,led_matrix)
+      restart(lcd,led_matrix)
 
     while len(out_queue) != 0:
       message = out_queue.pop(0)
       if message == "out":
+        print("out while loop")
         lcd.send_command("CLEAR")
         sender_queue.append("oyes")
         flag = True
@@ -523,7 +527,7 @@ def stop_outfall(out_queue,sender_queue,status,lcd,led_matrix):
       lcd.display_voltage(voltage_level,time_left,status)
 
     if check_restart():
-      restart_state(lcd,led_matrix)
+      restart(lcd,led_matrix)
 
     if check_low_voltage(voltage_level) == True:
       led_matrix.change_color(led_matrix.get_blueImage())
@@ -542,6 +546,32 @@ def stop_outfall(out_queue,sender_queue,status,lcd,led_matrix):
         sender_queue.append("oyes")
         flag = True
         break
+
+def restart(lcd,led_matrix):
+  '''
+  Paramter: lcd (object), led_matrix(objec), current_time(float)
+  Function: Display count down timer in 16x2 lcd screen for holding
+  the restart button.If the user has succesfully hold the restart
+  button for 3 seconds then the system will restart otherwise it break 
+  from this function.
+  Returns: None
+  '''
+  lcd.send_command('CLEAR')
+  state  = 0
+  end_time = 0
+  start_time = time()
+  while end_time < RESTART_HOLD:
+    end_time = time() - start_time
+    lcd.holding_restart(end_time)
+    state = check_restart()
+    if not state:
+      return
+  stop_buzzer()
+  lcd.restart_message()
+  led_matrix.clear_matrix()
+  set_value_file(RESTART, '1')
+  os.system("sudo reboot")
+
 
 def invoke_system(led_matrix,lcd, collection_time):
   '''
@@ -700,7 +730,7 @@ def check_sleep(status):
 
 ################ Thread Functions ########################
 
-def rain_detection(trigger_queue,rain_queue,voltage_queue,sender_queue,event, lock):
+def rain_detection(trigger_queue,rain_queue,voltage_queue,sender_queue,event,lock):
   '''
   Paramter: trigger_queue (list for rain guage triggers), rain_queue ( list for rainfall and pool
   level data), voltage_queue (list for voltage), sender_queue (list for sending information),
@@ -712,9 +742,9 @@ def rain_detection(trigger_queue,rain_queue,voltage_queue,sender_queue,event, lo
   Returns: 
   '''
   while True:
-    send_confirmation(trigger_queue,sender_queue,voltage_queue)
+    send_confirmation(trigger_queue,sender_queue,voltage_queue,lock)
     start_timeDate = datetime.datetime.now()
-    rain_fall, pool_level = receive_data(rain_queue,sender_queue,voltage_queue)
+    rain_fall, pool_level = receive_data(rain_queue,sender_queue,voltage_queue,lock)
     end_timeDate = datetime.datetime.now()  
     end_time = '%s:%s:%s'%(end_timeDate.hour,end_timeDate.minute,end_timeDate.second)
     start_time = '%s:%s:%s'%(start_timeDate.hour,start_timeDate.minute,start_timeDate.second)
