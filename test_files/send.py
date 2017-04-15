@@ -76,7 +76,7 @@ def send_outfall(out_queue, sender_queue):
         send_flag = False
 
 def transmission(xbee,event):
-    while not event.is_set():
+    while True:
         xbee.receive_message()
         xbee.send_message()
 
@@ -86,7 +86,7 @@ def main():
   trigger_queue = [ ]
   rain_queue = [ ]
   port = xbee_usb_port()
-  event  = Event()
+  event = Event()
 
   if port != None:
     charlie_xbee = Transceiver(9600,port,out_queue,trigger_queue,rain_queue,sender_queue)
@@ -97,10 +97,10 @@ def main():
                               \n (V) for voltage \
                               \n (R) for voltage \
                               \n (O) for outfall \
-                              \n (N) for ending program")
+                              \n (N) for ending program\n")
       if user_input.lower() == 'v':
-        voltage = 12.0
-        str_voltage = 'v'+str(voltage)
+        user_input = raw_input("Enter Voltage: ")
+        str_voltage = 'v'+str(user_input)
         sender_queue.append(str_voltage)
       elif user_input.lower() == 'r':
         create_trigger(trigger_queue, sender_queue)
@@ -112,3 +112,7 @@ def main():
         thread1.join()
   else:
     print("No Xbee connected")
+
+
+if __name__ == "__main__":
+  main()
