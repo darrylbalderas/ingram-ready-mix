@@ -47,7 +47,7 @@ months = {'1': 'January',
 
 #Operation hours for the ingram ready mix facility
 start_shift = 6
-end_shift  = 21
+end_shift  = 20
 
 # Data structure that contains of the pins used for the system
 pin_dictionary = {'buzzers' : [7,11,13,15,29,31,33,35]
@@ -706,11 +706,11 @@ def checkmonth_sample():
   complete_files = glob.glob(complete_dir)
   miss_files = glob.glob(missed_dir)
   if len(complete_files) > 0:
-    return '1'
+    set_value_file(STATUS,'1')
   elif len(miss_files) > 0:
-    return '0'
+    set_value_file(STATUS,'0')
   else:
-    return '-1'
+    set_value_file(STATUS,'-1')
 
 def check_sleep(status):
   '''
@@ -766,8 +766,7 @@ def outfall_detection(lcd,led_matrix,out_queue,sender_queue,event,lock):
   set_value_file(STATUS,'-1')
   while True:
     collection_time = 900
-    status = checkmonth_sample()
-    set_value_file(STATUS,status)
+    checkmonth_sample()
     if check_value_file(STATUS) == '1':
       stop_outfall(out_queue,sender_queue,'complete',lcd,led_matrix)
     elif check_value_file(STATUS) == '0':
@@ -778,16 +777,21 @@ def outfall_detection(lcd,led_matrix,out_queue,sender_queue,event,lock):
       send_outfall_conf(out_queue,sender_queue,lcd,led_matrix)
       time_date = datetime.datetime.now()
       restart_date = '%s/%s'%(time_date.month,time_date.year)
+
       if check_value_file(RESTART) == '1' and restart_date == check_value_file(INVOKE_DATE):
-        collection_time = int(check_value_file(COLLECTION_TIME))
-        if collection_time >= 10:
-          if check_operation_hours() and check_operation_days():
+        collection_time = float(check_value_file(COLLECTION_TIME))
+        if collection_time >= 10.0:
+          if check_operation_hours(time_date) and check_operation_days(time_date):
+            set_value_file(RESTART,'0')
+            set_value_file(INVOKE_DATE,'None')
             invoke_system(led_matrix,lcd,collection_time)
           else:
+            set_value_file(RESTART,'0')
+            set_value_file(INVOKE_DATE,'None')
             set_value_file(COLLECTION_TIME,'900')
       elif check_value_file(INVOKE) == '0':
         if check_operation_hours(time_date) and check_operation_days(time_date):
-          collection_time = int(led_matrix.get_collection_time())
+          collection_time = float(led_matrix.get_collection_time())
           invoke_system(led_matrix,lcd,collection_time)
         else:
           rain = check_value_file(RAIN)
@@ -805,6 +809,6 @@ def transmission(xbee, event):
   Returns: None
   '''
   while True:
-      xbee.receive_message()
       xbee.send_message()
+      xbee.receive_message()
 

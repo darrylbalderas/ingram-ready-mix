@@ -35,7 +35,7 @@ class LedMatrix:
                         }
 
     self.__row_duration = 1.875*60
-    self.__collection_time = 60*15
+    self.__collection_time = 60*15.0
     
   def make_image(self,color):
     '''
