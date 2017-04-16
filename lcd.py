@@ -103,18 +103,6 @@ class LCD:
     sleep(3)
     self.send_command('CLEAR')
 
-  def waiting_outfall(self):
-    '''
-    Parameters: None
-    Function: displays a message on the 16x2 lcd screen whenever
-    the our system is waiting for outfall
-    Returns: None
-    '''
-    self.send_message(self.center_message("waiting on"))
-    self.send_command('ENTER')
-    self.send_message(self.center_message('outfall trigger'))
-    self.send_command('HOME')
-
   def complete_message(self):
     '''
     Parameters: None
@@ -160,10 +148,14 @@ class LCD:
     screen whenever the user is pressing the restart button
     Returns: None
     '''
-    self.send_message(self.center_message("RESTART HOLD"))
+    self.send_message(self.center_message("Hld Restart Btn"))
     self.send_command('ENTER')
-    seconds = str(int(3-floor(num_time)%3)).zfill(2)
-    self.send_message(self.center_message(seconds))
+    seconds = int(3-floor(num_time)%3)
+    if seconds == 1:
+      value = str(seconds).zfill(2) + ' second'
+    else:
+      value = str(seconds).zfill(2) + ' seconds'
+    self.send_message(self.center_message(value))
     self.send_command('HOME')
 
   def restart_message(self):
@@ -191,13 +183,13 @@ class LCD:
     hour = str(int(floor(num_time/3600))).zfill(2)
     minute = str(int(14- floor(num_time/60))).zfill(2)
     seconds =  str(int(59 - floor(num_time))%60).zfill(2)
-    time_m = "%s:%s:%s"%(hour,minute,seconds)
+    time_m = "%sh:%sm:%ss"%(hour,minute,seconds)
     self.send_message(self.center_message('Timer'))
     self.send_command('ENTER')
     self.send_message(self.center_message(time_m))
     self.send_command("HOME")
 
-  def display_voltage(self,voltage_level,time_left,status):
+  def display_voltage(self,voltage_level,time_left,status,voltage_flag):
     '''
     Parameters: None
     Function: displays a message on the 16x2 lcd screen whenever the user
@@ -207,30 +199,28 @@ class LCD:
     if status == 'complete':
         self.send_message(self.center_message('Days left: ' + str(time_left)))
         self.send_command('ENTER')
-        self.send_message(self.center_message('Voltage: ' + str(voltage_level)))
+        if voltage_flag == False:
+          self.send_message(self.center_message('Voltage: ' + str(voltage_level)+'V'))
+        else:
+          self.send_message(self.center_message('Check RDS'))
         self.send_command("HOME")
     elif status == 'missed':
         self.send_message(self.center_message('Hours left: '+ str(time_left)))
         self.send_command('ENTER')
-        self.send_message(self.center_message('Voltage: ' + str(voltage_level)))
+        if voltage_flag == False:
+          self.send_message(self.center_message('Voltage: ' + str(voltage_level) + 'V'))
+        else:
+          self.send_message(self.center_message('Check RDS'))
         self.send_command("HOME")
     else:
         self.send_message(self.center_message('No outfall'))
         self.send_command('ENTER')
-        self.send_message(self.center_message('Voltage: ' + str(voltage_level)))
+        if voltage_flag == False:
+          self.send_message(self.center_message('Voltage: ' + str(voltage_level) + 'V'))
+        else:
+          self.send_message(self.center_message('Check RDS'))
         self.send_command("HOME")
 
-  def low_voltage(self):
-    '''
-    Parameters: None
-    Function: displays a message on the 16x2 lcd screen whenever our received
-    low voltage from the rain detection system.
-    Returns: None
-    '''
-    self.send_message(self.center_message('Check Rainfall'))
-    self.send_command('ENTER')
-    self.send_message(self.center_message('Detect system'))
-    self.send_command("HOME")
 
 
 def msleep(seconds):

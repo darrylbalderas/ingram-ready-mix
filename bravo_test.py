@@ -47,14 +47,16 @@ months = {'1': 'January',
 
 #Operation hours for the ingram ready mix facility
 start_shift = 6
-end_shift  = 20
+end_shift  = 23
+first_work_day = 0
+last_work_day = 7
 
 # Data structure that contains of the pins used for the system
 pin_dictionary = {'buzzers' : [7,11,13,15,29,31,33,35]
                 , 'complete': 32
                 , 'mute': 36
-                , 'restart': 38
-                , 'miss': 40}
+                , 'restart': 40
+                , 'miss': 38}
 
 
 ################ GPIO Functions #####################
@@ -180,9 +182,9 @@ def initialize_files():
       if key == 'invoke':
         fopen.write('0')
       elif key == 'rain':
-        fopen.write('0.1690')
+        fopen.write('0.17')
       elif key == "pool_level":
-        fopen.write('8.0')
+        fopen.write('12.0')
       elif key == 'restart':
         fopen.write('0')
       elif key == 'invoke_date':
@@ -299,7 +301,7 @@ def check_operation_days(time_date):
   Returns: True if within operation days ( monday - friday) otherwise False
   '''
   working_days = False
-  if time_date.weekday()>= 0 and time_date.weekday() < 5:
+  if time_date.weekday() >= first_work_day and time_date.weekday() < last_work_day:
     working_days = True
   return working_days
 
@@ -311,8 +313,8 @@ def check_end_day():
   '''
   time_date = datetime.datetime.now()
   if time_date.hour == 24:
-    set_value_file(RAIN,'0.1690')
-    set_value_file(POOL_LEVEL,'8.0')
+    set_value_file(RAIN,'0.17')
+    set_value_file(POOL_LEVEL,'12.0')
     set_value_file(COLLECTION_TIME, '900')
 
 def logger(start_time, end_time, amount_rain, pool_level, tag, outfall, status, operation):
@@ -440,8 +442,10 @@ def receive_data(rain_queue,sender_queue,voltage_queue,lock):
   receive_voltage(voltage_queue,lock)
 
   sender_queue.append("ryes")
+  lock.acquire()
   set_value_file(RAIN,rain_val)
   set_value_file(POOL_LEVEL,pool_val)
+  lock.release()
   return (rain_val, pool_val)
 
 ################ Outfall thread Functions ##############
@@ -458,7 +462,6 @@ def check_low_voltage(voltage_level):
     else:
       return False
   except:
-    print("no voltage received")
     return False
 
 def send_outfall_conf(out_queue,sender_queue,lcd,led_matrix):
@@ -474,19 +477,24 @@ def send_outfall_conf(out_queue,sender_queue,lcd,led_matrix):
   flag = False
   voltage_level = ""
   low_voltage_flag = False
+  lcd_clear_flag = False
+  lcd.send_command("CLEAR")
   while not flag:
     voltage_level = check_value_file(VOLTAGE)
-    if low_voltage_flag == True:
-      lcd.low_voltage()
-    else:
-      lcd.display_voltage(voltage_level,'None','None')
+    lcd.display_voltage(voltage_level,'None','None',low_voltage_flag)
 
     if check_low_voltage(voltage_level) == True:
       led_matrix.change_color(led_matrix.get_blueImage())
       low_voltage_flag = True
+      if lcd_clear_flag == True:
+        lcd.send_command("CLEAR")
+        lcd_clear_flag = False
     else:
       low_voltage_flag = False
       led_matrix.change_color(led_matrix.get_greenImage())
+      if lcd_clear_flag == False:
+        lcd.send_command("CLEAR")
+        lcd_clear_flag = True
 
     if check_restart():
       restart(lcd,led_matrix)
@@ -496,6 +504,7 @@ def send_outfall_conf(out_queue,sender_queue,lcd,led_matrix):
       if message == "out":
         print("out while loop")
         lcd.send_command("CLEAR")
+        sender_queue.append("oyes")
         sender_queue.append("oyes")
         flag = True
         break
@@ -513,6 +522,7 @@ def stop_outfall(out_queue,sender_queue,status,lcd,led_matrix):
   flag = False
   voltage_level = ""
   low_voltage_flag = False
+  lcd_clear_flag = False
   time_left = 0
   while not flag:
     voltage_level = check_value_file(VOLTAGE)
@@ -520,29 +530,34 @@ def stop_outfall(out_queue,sender_queue,status,lcd,led_matrix):
       time_left = calculate_days()
     elif status == "missed":
       time_left = calculate_hours()
-
-    if low_voltage_flag == True:
-      lcd.low_voltage()
-    else:
-      lcd.display_voltage(voltage_level,time_left,status)
+      
+    lcd.display_voltage(voltage_level,time_left,status,low_voltage_flag)
 
     if check_restart():
       restart(lcd,led_matrix)
 
     if check_low_voltage(voltage_level) == True:
-      led_matrix.change_color(led_matrix.get_blueImage())
       low_voltage_flag = True
+      led_matrix.change_color(led_matrix.get_blueImage())
+      if lcd_clear_flag == True:
+        lcd.send_command("CLEAR")
+        lcd_clear_flag = False
     else:
       low_voltage_flag = False
       led_matrix.change_color(led_matrix.get_greenImage())
+      if lcd_clear_flag == False:
+        lcd.send_command("CLEAR")
+        lcd_clear_flag = True
 
     if check_sleep(status) == False:
       lcd.send_command("CLEAR")
       flag = True
 
     while len(out_queue) != 0:
+      print("here")
       message = out_queue.pop(0)
       if message == "out":
+        sender_queue.append("oyes")
         sender_queue.append("oyes")
         flag = True
         break
@@ -642,6 +657,7 @@ def complete_state(led_matrix,start_time):
   logger(start_time, end_time, amount_rain, pool_level, 'C', outfall, status,operation)
   set_value_file(INVOKE,'0')
   set_value_file(RESTART,'0')
+  set_value_file(INVOKE_DATE, 'None')
 
 def missed_state(led_matrix,start_time):
   '''
@@ -662,6 +678,7 @@ def missed_state(led_matrix,start_time):
   logger(start_time, end_time ,amount_rain, pool_level, 'M', outfall, status,operation)
   set_value_file(INVOKE,'0')
   set_value_file(RESTART,'0')
+  set_value_file(INVOKE_DATE,'None')
   sleep(5)
   led_matrix.change_color(led_matrix.get_greenImage())
 
@@ -688,7 +705,7 @@ def restart_state(lcd,led_matrix,current_time):
   stop_buzzer()
   lcd.restart_message()
   led_matrix.clear_matrix()
-  set_value_file(COLLECTION_TIME,current_time)
+  set_value_file(COLLECTION_TIME,str(current_time))
   set_value_file(RESTART, '1')
   os.system("sudo reboot")
 
@@ -772,16 +789,15 @@ def outfall_detection(lcd,led_matrix,out_queue,sender_queue,event,lock):
     elif check_value_file(STATUS) == '0':
       stop_outfall(out_queue,sender_queue,'missed',lcd,led_matrix)
     elif check_value_file(STATUS) == '-1':
-      empty_queue(out_queue)
-      lcd.send_command('CLEAR')
-      send_outfall_conf(out_queue,sender_queue,lcd,led_matrix)
       time_date = datetime.datetime.now()
       restart_date = '%s/%s'%(time_date.month,time_date.year)
-
       if check_value_file(RESTART) == '1' and restart_date == check_value_file(INVOKE_DATE):
         collection_time = float(check_value_file(COLLECTION_TIME))
+        print(collection_time)
+        print("restart while invoked")
         if collection_time >= 10.0:
           if check_operation_hours(time_date) and check_operation_days(time_date):
+            print("restart invoke")
             set_value_file(RESTART,'0')
             set_value_file(INVOKE_DATE,'None')
             invoke_system(led_matrix,lcd,collection_time)
@@ -789,17 +805,22 @@ def outfall_detection(lcd,led_matrix,out_queue,sender_queue,event,lock):
             set_value_file(RESTART,'0')
             set_value_file(INVOKE_DATE,'None')
             set_value_file(COLLECTION_TIME,'900')
-      elif check_value_file(INVOKE) == '0':
-        if check_operation_hours(time_date) and check_operation_days(time_date):
-          collection_time = float(led_matrix.get_collection_time())
-          invoke_system(led_matrix,lcd,collection_time)
-        else:
-          rain = check_value_file(RAIN)
-          level = check_value_file(POOL_LEVEL)
-          operation = "No"
-          outfall = "Yes"
-          collection_status = "missed"
-          logger("  -  ","  -  ", rain,level, None, outfall ,collection_status, operation)
+      else:
+        empty_queue(out_queue)
+        lcd.send_command('CLEAR')
+        send_outfall_conf(out_queue,sender_queue,lcd,led_matrix)
+        time_date = datetime.datetime.now()
+        if check_value_file(INVOKE) == '0':
+          if check_operation_hours(time_date) and check_operation_days(time_date):
+            collection_time = float(led_matrix.get_collection_time())
+            invoke_system(led_matrix,lcd,collection_time)
+          else:
+            rain = check_value_file(RAIN)
+            level = check_value_file(POOL_LEVEL)
+            operation = "No"
+            outfall = "Yes"
+            collection_status = "missed"
+            logger("  -  ","  -  ", rain,level, None, outfall ,collection_status, operation)
 
 def transmission(xbee, event):
   '''

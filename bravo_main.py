@@ -5,7 +5,6 @@ Purpose: This program was written to implement a alarm system in
 conjunction with the outfall detection system for the ingram 
 ready mix plant
 '''
-
 # transceiver is a module that contains all of the functions
 # and initialization of the Xbee module. 
 from transceiver import Transceiver
@@ -17,7 +16,6 @@ from lcd import LCD
 # led matrix is a module that contains all of the function 
 # and variables corresponding to the Sense hat hardware
 from ledmatrix import LedMatrix
-
 from threading import Thread
 from threading import Event
 from threading import Lock 
@@ -48,8 +46,8 @@ def main():
     lcd.welcome_message()
     thread1 = Thread(target=bt.outfall_detection, args=(lcd,led_matrix,out_queue,send_queue,event,lock,))
     thread1.start()
-    thread2 = Thread(target=bt.rain_detection, args=(trigger_queue,data_queue,voltage_queue,send_queue,event,lock,))
-    thread2.start()
+    #thread2 = Thread(target=bt.rain_detection, args=(trigger_queue,data_queue,voltage_queue,send_queue,event,lock,))
+    #thread2.start()
     bt.transmission(bravo_xbee,event)
     # thread3 = Thread(target=bt.transmission, args = (bravo_xbee,event,))
     # thread3.start()
