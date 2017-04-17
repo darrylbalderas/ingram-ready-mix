@@ -73,6 +73,7 @@ def send_outfall(out_queue, sender_queue):
         send_flag = True
     elif send_flag == True:
         sender_queue.append("out")
+        sender_queue.append("out")
         send_flag = False
 
 def transmission(xbee,event):
