@@ -7,8 +7,8 @@ def lcd_serial_port():
   Function: Looks for the port used by the 16x2 LCD screen
   Returns: port used 16x2 screen port
   '''
-  # port =  glob.glob('/dev/ttyACM*')
-  port = glob.glob('/dev/tty.usb*')
+  port =  glob.glob('/dev/ttyACM*')
+  #port = glob.glob('/dev/tty.usb*')
   if len(port) != 0:
     return port[0]
   else:
