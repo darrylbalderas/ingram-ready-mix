@@ -5,6 +5,8 @@ Purpose: This module was created to utilize and organize the
 functionality of the sense_hat hardware
 '''
 from sense_hat import SenseHat
+from time import sleep
+from time import time
 
 class LedMatrix:
   def __init__(self):
@@ -229,3 +231,20 @@ class LedMatrix:
     Function: returns the RGB value for yellow
     '''
     return self.__colors['y']
+  
+  def make_blink(self,color_image,delay):
+    self.change_color(color_image)
+    sleep(delay)
+    self.clear_matrix()
+
+  def blinking(self,color_image,delay,total_time):
+    current_time = 0
+    start_time = time()
+    while current_time <= total_time:
+        self.make_blink(color_image,delay)
+        current_time = time()-(start_time+delay)
+
+
+
+
+
