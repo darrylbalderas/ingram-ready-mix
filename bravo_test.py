@@ -21,14 +21,16 @@ global RESTART_HOLD
 RESTART_HOLD = 3 
 # text file names used to hold values for enviroment variables 
 # implementation
-STATUS = './config_files/status_val.txt'
-INVOKE = './config_files/invoke_val.txt'
-RAIN = './config_files/rain_val.txt'
-POOL_LEVEL = './config_files/pool_level_val.txt'
-RESTART = './config_files/restart_val.txt'
+STATUS = './config_files/status_value.txt'
+RAIN = './config_files/rain_value.txt'
+POOL_LEVEL = './config_files/pool_level_value.txt'
+RESTART = './config_files/restart_value.txt'
 RESTART_DATE = './config_files/restart_date.txt'
 RESTART_TIME = './config_files/restart_time.txt'
-VOLTAGE = './config_files/voltage_val.txt'
+VOLTAGE = './config_files/voltage_value.txt'
+INVOKE = './config_files/invoke_value.txt'
+INVOKE_DATE = './config_files/invoke_date.txt'
+INVOKE_TIME = './config_files/invoke_time.txt'
 
 # Datastructure that contains months
 months = {'1': 'January',
@@ -57,7 +59,6 @@ pin_dictionary = {'buzzers' : [7,11,13,15,29,31,33,35]
                 , 'mute': 36
                 , 'restart': 40
                 , 'miss': 38}
-
 
 ################ GPIO Functions #####################
 gpio.setmode(gpio.BOARD)
@@ -166,13 +167,15 @@ def initialize_files():
   Returns: None
   '''
   files = {'status':STATUS,
-           'invoke': INVOKE,
            'rain': RAIN,
            'pool_level': POOL_LEVEL,
            'restart' : RESTART,
            'restart_date': RESTART_DATE,
            'restart_time': RESTART_TIME,
-           'voltage' : VOLTAGE
+           'voltage' : VOLTAGE,
+           'invoke': INVOKE,
+           'invoke_date': INVOKE_DATE,
+           'invoke_time': INVOKE_TIME
           }
 
   if not os.path.exists('./config_files'):
@@ -194,6 +197,10 @@ def initialize_files():
         fopen.write('None')
       elif key == 'voltage':
         fopen.write('12.0')
+      elif key == 'invoke_date':
+        fopen.write('None')
+      elif key == 'invoke_time':
+        fopen.write('None')
       else:
         fopen.write('-1')
       fopen.close()
@@ -287,11 +294,13 @@ def check_operation_hours(time_date):
   current_hour = time_date.hour
   current_min = time_date.minute
   working_hours = False
-  if current_hour >= start_shift and current_hour <= end_shift:
-    if current_hour == end_shift and current_min > 0:
+  if current_hour >= start_shift and current_hour < end_shift:
+    if current_hour == (end_shift-1) and current_min > 46:
       working_hours = False
     else:
       working_hours = True
+  else:
+    working_hours = False
   return working_hours
 
 def check_operation_days(time_date):
@@ -315,7 +324,10 @@ def check_end_day():
   if time_date.hour == 24:
     set_value_file(RAIN,'0.170')
     set_value_file(POOL_LEVEL,'12.0')
-    set_value_file(COLLECTION_TIME, '900')
+    set_value_file(INVOKE_TIME,'None')
+    set_value_file(RESTART_TIME,'None')
+    #change invoke_time
+    #change restart_time
 
 def logger(start_time, end_time, amount_rain, pool_level, tag, outfall, status, operation):
   '''
@@ -437,7 +449,7 @@ def receive_data(rain_queue,sender_queue,voltage_queue,lock):
       elif message[0] == 'p'and not pool_flag:
         pool_val = remove_character(message,'p')
         pool_flag = True
-  receive_voltage(voltage_queue,lock)
+  receive_voltage(voltage_queue, lock)
   sender_queue.append("ryes")
   lock.acquire()
   set_value_file(RAIN,'%.2f'%(float(rain_val)))
@@ -479,7 +491,6 @@ def send_outfall_conf(out_queue,sender_queue,lcd,led_matrix):
   while not flag:
     voltage_level = check_value_file(VOLTAGE)
     lcd.display_voltage(voltage_level,'None','None',low_voltage_flag)
-
     if check_low_voltage(voltage_level) == True:
       led_matrix.change_color(led_matrix.get_blueImage())
       low_voltage_flag = True
@@ -526,9 +537,7 @@ def stop_outfall(out_queue,sender_queue,status,lcd,led_matrix):
       time_left = calculate_days()
     elif status == "missed":
       time_left = calculate_hours()
-      
     lcd.display_voltage(voltage_level,time_left,status,low_voltage_flag)
-
     if check_restart():
       restart(lcd,led_matrix)
 
@@ -550,7 +559,6 @@ def stop_outfall(out_queue,sender_queue,status,lcd,led_matrix):
       flag = True
 
     while len(out_queue) != 0:
-      print("here")
       message = out_queue.pop(0)
       if message == "out":
         sender_queue.append("oyes")
@@ -620,6 +628,7 @@ def invoke_system(led_matrix,lcd, collection_time):
     current_time = time() - start_time
     led_matrix.make_blink(led_matrix.get_yellowImage(),delay)
     lcd.display_timer(current_time-delay)
+    set_value_file(INVOKE_TIME,str(time()-start_time))
     # if current_time >= row_duration * count_row:
     #       led_matrix.change_color_row(invoke_color,led_matrix.get_red(),count_row)
     #       count_row += 1

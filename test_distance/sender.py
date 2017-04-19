@@ -64,7 +64,7 @@ def main():
   start_time = 0
   end_time = 0
   fopen = open('times.csv','w')
-  fopen.write('Start_time','End_time')
+  fopen.write('%s,%s'%('Start_time','End_time'))
   fopen.write('\n')
   if port != None:
     xbee = Transceiver(9600,port,receiver_queue,sender_queue)
@@ -80,7 +80,7 @@ def main():
         send_hey(receiver_queue,sender_queue)
         end_time = time() - start_time
         print("got confirmation")
-        fopen.write('%s,%s'%(start_time,end_time))
+        fopen.write('%s,%s'%(0,end_time))
         fopen.write('\n')
       if user_input.lower() == 'n':
         fopen.close()
