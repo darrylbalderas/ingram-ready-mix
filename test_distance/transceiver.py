@@ -75,7 +75,7 @@ class Transceiver:
     if self.ser.isOpen():
       try:
         message = self.ser.readline()
-        self.flush_input()
+        # self.flush_input()
         message = message.strip('\n')
         if message != "" and len(message) >= 2:
             if message == "hey":
