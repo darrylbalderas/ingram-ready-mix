@@ -19,10 +19,11 @@ class Transceiver:
     self.port_path = port_path
     self.baud_rate = baud_rate
     self.ser = serial.Serial(self.port_path, 
-                            self.baud_rate, timeout=1.0, 
+                            self.baud_rate, timeout=3.0, 
                             parity=serial.PARITY_NONE,
                             stopbits=serial.STOPBITS_ONE,
-                            bytesize=serial.EIGHTBITS)
+                            bytesize=serial.EIGHTBITS,
+                            writeTimeout=3.0)
     self.sender_queue= sender_queue
     self.receiver_queue = receiver_queue
 
@@ -42,7 +43,7 @@ class Transceiver:
     '''  
     self.ser.close()
     self.ser = serial.Serial(self.port_path, 
-                            self.baud_rate, timeout=1.0, 
+                            self.baud_rate, timeout=3.0, 
                             parity=serial.PARITY_NONE,
                             stopbits=serial.STOPBITS_ONE,
                             bytesize=serial.EIGHTBIT)
@@ -74,7 +75,7 @@ class Transceiver:
     if self.ser.isOpen():
       try:
         message = self.ser.readline()
-        # self.flush_input()
+        self.flush_input()
         message = message.strip('\n')
         if message != "" and len(message) >= 2:
             if message == "hey":

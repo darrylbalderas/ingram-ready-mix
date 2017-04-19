@@ -12,7 +12,7 @@ def xbee_usb_port():
   Returns: port used by XBee
   '''
   if sys.platform.startswith('darwin'):
-    ports = glob.glob('/dev/tty.usbserial-DN01IUO8')
+    ports = glob.glob('/dev/tty.usbserial*')
   elif sys.platform.startswith('linux'):
     ports = glob.glob('/dev/ttyU*')
   if len(ports) != 0:
