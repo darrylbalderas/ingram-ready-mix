@@ -27,10 +27,10 @@ def xbee_usb_port():
   else:
     return None
 
-# def transmission(xbee):
-#   while True:
-#     xbee.send_message()
-#     xbee.receive_message()
+# # def transmission(xbee):
+# #   while True:
+# #     xbee.send_message()
+# #     xbee.receive_message()
 
 def sender(xbee):
   while True:

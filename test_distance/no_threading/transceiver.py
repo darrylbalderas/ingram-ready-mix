@@ -8,7 +8,7 @@ import serial
 from time import sleep
 
 class Transceiver:
-  def __init__(self, baud_rate,port_path, receiver_queue,sender_queue):
+  def __init__(self, baud_rate,port_path):
     '''
     Parameters: Baudrate(integer), port_path(string), out_queue(list used for flow_sensor triggers),
     trigger_queue (list for rain_guage triggers), rain_queue (list for rainfall and pool level data),
@@ -19,12 +19,10 @@ class Transceiver:
     self.port_path = port_path
     self.baud_rate = baud_rate
     self.ser = serial.Serial(self.port_path, 
-                            self.baud_rate, timeout=3.0, 
+                            self.baud_rate, timeout=1.0, 
                             parity=serial.PARITY_NONE,
                             stopbits=serial.STOPBITS_ONE,
                             bytesize=serial.EIGHTBITS)
-    self.sender_queue= sender_queue
-    self.receiver_queue = receiver_queue
 
   def close_serial(self):
     '''
@@ -57,11 +55,7 @@ class Transceiver:
     '''
     # message = ""
     if self.ser.isOpen():
-      if len(self.sender_queue) != 0:
-        message =  self.sender_queue.pop(0)
-        message = message + "\n"
-        self.ser.write(message)
-        sleep(0.25)
+        self.ser.write(message+'\n')
  
   def receive_message(self):
     '''
@@ -72,16 +66,8 @@ class Transceiver:
     '''
     message = ""
     if self.ser.isOpen():
-      try:
         message = self.ser.readline()
-        self.flush_input()
-        message = message.strip('\n')
-        if message != "" and len(message) >= 2:
-            if message == "hey":
-                if not message in self.receiver_queue:
-                    self.receiver_queue.append(message)
-      except:
-        pass
+    return message.strip('\n')
 
   def flush_input(self):
     sleep(0.1)

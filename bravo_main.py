@@ -26,8 +26,9 @@ import bravo_test as bt
 import RPi.GPIO as gpio
 
 def main():
-  event = Event() # use as a flag for ending all of the threads at once
-  lock = Lock()
+  Locks = {'voltage': Lock()
+          ,'logger': Lock()
+          ,'data': Lock()}
   send_queue= [ ]
   out_queue = [ ]
   trigger_queue = [ ]
@@ -44,11 +45,11 @@ def main():
     led_matrix.clear_matrix()
     led_matrix.change_color(led_matrix.get_greenImage())
     lcd.welcome_message()
-    thread1 = Thread(target=bt.outfall_detection, args=(lcd,led_matrix,out_queue,send_queue,event,lock,))
+    thread1 = Thread(target=bt.outfall_detection, args=(lcd,led_matrix,out_queue,send_queue, Locks,))
     thread1.start()
-    #thread2 = Thread(target=bt.rain_detection, args=(trigger_queue,data_queue,voltage_queue,send_queue,event,lock,))
+    #thread2 = Thread(target=bt.rain_detection, args=(trigger_queue,data_queue,voltage_queue,send_queue, Locks,))
     #thread2.start()
-    bt.transmission(bravo_xbee,event)
+    bt.transmission(bravo_xbee)
     # thread3 = Thread(target=bt.transmission, args = (bravo_xbee,event,))
     # thread3.start()
 ##    while not event.is_set():

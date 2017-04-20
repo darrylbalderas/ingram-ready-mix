@@ -28,10 +28,10 @@ def xbee_usb_port():
   else:
     return None
 
-# def transmission(xbee):
-#   while True:
-#     xbee.send_message()
-#     xbee.receive_message()
+# # def transmission(xbee):
+# #   while True:
+# #     xbee.send_message()
+# #     xbee.receive_message()
 
 def sender(xbee):
   while True:
@@ -64,7 +64,7 @@ def main():
   start_time = 0
   end_time = 0
   fopen = open('times.csv','w')
-  fopen.write('%s,%s'%('Start_time','End_time'))
+  fopen.write('Transition Time')
   fopen.write('\n')
   if port != None:
     xbee = Transceiver(9600,port,receiver_queue,sender_queue)
@@ -80,7 +80,7 @@ def main():
         send_hey(receiver_queue,sender_queue)
         end_time = time() - start_time
         print("got confirmation")
-        fopen.write('%s,%s'%(0,end_time))
+        fopen.write(str(end_time))
         fopen.write('\n')
       if user_input.lower() == 'n':
         fopen.close()
@@ -89,3 +89,5 @@ def main():
 
 if __name__ == "__main__":
   main()
+
+
