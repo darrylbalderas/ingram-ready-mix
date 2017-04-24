@@ -47,7 +47,7 @@ class Transceiver:
                             stopbits=serial.STOPBITS_ONE,
                             bytesize=serial.EIGHTBIT)
     
-  def send_message(self,message):
+  def send_message(self):
     '''
     Parameters: None
     Function: Checks if there is items in the sender_queue
