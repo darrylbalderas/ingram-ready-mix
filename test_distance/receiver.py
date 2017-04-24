@@ -3,6 +3,7 @@ import glob
 import serial
 from transceiver import Transceiver
 from threading import Thread
+from time import sleep
 
 def xbee_usb_port():
   '''
@@ -11,7 +12,7 @@ def xbee_usb_port():
   Returns: port used by XBee
   '''
   if sys.platform.startswith('darwin'):
-    ports = glob.glob('/dev/tty.usbserial-DN01IVXV')
+    ports = glob.glob('/dev/tty.usbserial*')
   elif sys.platform.startswith('linux'):
     ports = glob.glob('/dev/ttyU*')
   if len(ports) != 0:
@@ -27,10 +28,15 @@ def xbee_usb_port():
   else:
     return None
 
-# # def transmission(xbee):
-# #   while True:
-# #     xbee.send_message()
-# #     xbee.receive_message()
+def transmission(xbee):
+  switch_flag = False
+  while True:
+    if switch_flag == False:
+      xbee.send_message()
+      switch_flag = True
+    else:
+      xbee.receive_message()
+      switch_flag = False
 
 def sender(xbee):
   while True:
@@ -39,7 +45,6 @@ def sender(xbee):
 def receiver(xbee):
   while True:
     xbee.receive_message()
-
 
 def send_confirmation(receive_queue,sender_queue):
   '''
@@ -63,16 +68,16 @@ def main():
   port =  xbee_usb_port()
   sender_queue = [ ]
   receiver_queue = [ ]
-  message_count = 0
   if port != None:
     xbee = Transceiver(9600,port,receiver_queue,sender_queue)
     thread1 = Thread(target=receiver, args=(xbee,))
     thread1.start()
+    sleep(0.5)
     thread2 = Thread(target=sender, args=(xbee,))
     thread2.start()
+    sleep(0.5)
     while True:
         send_confirmation(receiver_queue,sender_queue)
-        message_count += 1
         print("got it")
   else:
     port('Missing Xbee module')

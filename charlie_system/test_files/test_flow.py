@@ -11,12 +11,11 @@ class FlowSensor:
         def check_flow(self):
                 return gpio.input(self.pin)
         def check_outfall(self):
-                previous_state = 0
+                previous_state = self.check_flow()
                 current_state = self.check_flow()
                 if current_state  > previous_state:
-                        previous_state = current_state
-                        while current_state == previous_state:
-                                current_state = self.check_flow()
+                        return 1
+                elif previous_state > current_state:
                         return 1
                 else:
                         return 0

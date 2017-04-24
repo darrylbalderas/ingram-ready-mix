@@ -5,7 +5,7 @@ Purpose: This module was created to utilize and organize the
 functionality of the Rain guage sensor 
 '''
 
-import os
+# import os
 import RPi.GPIO as gpio
 from time import time
 
@@ -32,7 +32,7 @@ class RainGuage:
 		'''
 		previous_state = 0
 		previous_time = time()
-		collection_duration = 3
+		collection_duration = 2.0
 		while (time()-previous_time) <= collection_duration:
 			current_state = self.check_guage()
 			if current_state  > previous_state:
@@ -42,64 +42,18 @@ class RainGuage:
 			    return 1
 		return 0
               
-	def get_total_rainfall(self,restart_pin,restart_hold, level_sensor):
+	def get_total_rainfall(self):
 		'''
 		Parameters: restart_pin(integer), restart_hold(integer)
 		Function: Collects the number of rainfall until the max collection time 
 		has been reached or rain_guage stop ticking. 
 		Returns: The amount of rainfall
 		'''
-		rainfall = 0.1690
-		ticking = 0
+		rainfall = 0.011
 		previous_time = time()
 		while (time()-previous_time) <= self.max_time:
-			ticking = self.get_tick()
-			if not ticking:
+			if not self.get_tick():
 				break
 			else:
-				rainfall += 0.1690
-
-			if gpio.input(restart_pin):
-				restart_state(restart_pin, restart_hold, level_sensor, rainfall)
-
+				rainfall += 0.011
 		return rainfall
-
-
-RAIN = './config_files/rain_val.txt'
-POOL_LEVEL = './config_files/pool_level.txt'
-RESTART = './config_files/restart.txt'
-RAINING = './config_files/raining.txt'
-
-
-def restart_state(restart_pin, restart_hold, level_sensor, rainfall):
-  '''
-  Paramter: restart_pin(integer), restart_hold(integer)
-  Function: If the user has succesfully hold the restart
-  button for 3 seconds then the system will restart otherwise it break 
-  from this function.
-  Returns: None
-  '''
-  state  = 0
-  end_time = 0
-  start_time = time()
-  while end_time < restart_hold:
-    end_time = time() - start_time
-    state = gpio.input(restart_pin)
-    if not state:
-      return
-  str_rainfall = str(rainfall)
-  str_pool_level = str(level_sensor.get_pool_level())
-  set_value_file(RAIN,str_rainfall)
-  set_value_file(POOL_LEVEL,str_pool_level)
-  set_value_file(RESTART, '1')
-  set_value_file(RAINING,'1')
-  os.system("sudo reboot")
-
-def set_value_file(file_name, value):
-  if os.path.exists(file_name):
-    fopen = open(file_name,'w')
-    fopen.write(value)
-    fopen.close()
-  else:
-    return None
-

@@ -111,12 +111,12 @@ class LCD:
     Returns: None
     '''
     self.send_command('CLEAR')
-    self.send_message(self.center_message('completed'))
+    self.send_message(self.center_message('Completed'))
     self.send_command('ENTER')
-    self.send_message(self.center_message('sample'))
+    self.send_message(self.center_message('Sample'))
     sleep(3)
     self.send_command('CLEAR')
-    self.send_message(self.center_message("sleep for rest"))
+    self.send_message(self.center_message("Sleep for rest"))
     self.send_command('ENTER')
     self.send_message(self.center_message("of the month"))
     sleep(3)
@@ -130,12 +130,12 @@ class LCD:
     Returns: None
     '''
     self.send_command('CLEAR')
-    self.send_message(self.center_message(' missed'))
+    self.send_message(self.center_message(' Missed'))
     self.send_command('ENTER')
     self.send_message(self.center_message('sample'))
     sleep(3)
     self.send_command('CLEAR')
-    self.send_message(self.center_message("sleep for rest"))
+    self.send_message(self.center_message("Sleep for rest"))
     self.send_command('ENTER')
     self.send_message(self.center_message("of the day"))
     sleep(3)
@@ -148,7 +148,7 @@ class LCD:
     screen whenever the user is pressing the restart button
     Returns: None
     '''
-    self.send_message(self.center_message("Hld Restart Btn"))
+    self.send_message(self.center_message("Hld restart btn"))
     self.send_command('ENTER')
     seconds = int(3-floor(num_time)%3)
     if seconds == 1:
@@ -200,7 +200,7 @@ class LCD:
         self.send_message(self.center_message('Days left: ' + str(time_left)))
         self.send_command('ENTER')
         if voltage_flag == False:
-          self.send_message(self.center_message('Voltage: ' + str(voltage_level)+'V'))
+          self.send_message(self.center_message('Voltage: ' + str(voltage_level) + 'V'))
         else:
           self.send_message(self.center_message('Check RDS'))
         self.send_command("HOME")

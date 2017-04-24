@@ -4,6 +4,7 @@ import serial
 from transceiver import Transceiver
 from threading import Thread
 from time import time
+from time import sleep
 
 def xbee_usb_port():
   '''
@@ -28,10 +29,15 @@ def xbee_usb_port():
   else:
     return None
 
-# # def transmission(xbee):
-# #   while True:
-# #     xbee.send_message()
-# #     xbee.receive_message()
+def transmission(xbee):
+  switch_flag = False
+  while True:
+    if switch_flag == False:
+      xbee.send_message()
+      switch_flag = True
+    else:
+      xbee.receive_message()
+      switch_flag = False
 
 def sender(xbee):
   while True:
@@ -60,22 +66,22 @@ def main():
   port =  xbee_usb_port()
   sender_queue = [ ]
   receiver_queue = [ ]
-  message_count = 0
   start_time = 0
   end_time = 0
   fopen = open('times.csv','w')
-  fopen.write('Transition Time')
+  fopen.write('Transmission Time')
   fopen.write('\n')
   if port != None:
     xbee = Transceiver(9600,port,receiver_queue,sender_queue)
     thread1 = Thread(target=receiver, args=(xbee,))
     thread1.start()
+    sleep(0.5)
     thread2 = Thread(target=sender, args=(xbee,))
     thread2.start()
+    sleep(0.5)
     while True:
       user_input = raw_input('Enter (Y) to send message: ')
       if user_input.lower() ==  'y':
-        message_count += 1
         start_time = time()
         send_hey(receiver_queue,sender_queue)
         end_time = time() - start_time

@@ -5,55 +5,47 @@ import glob
 import serial
 import RPi.GPIO as gpio
 import datetime
-from time import time 
+
+global EXIT_FLAG 
+EXIT_FLAG = False
 
 ############### Global Variables #################
 
-global RESTART_HOLD 
-RESTART_HOLD = 3 
-
 OUTFALL_DATE = './config_files/outfall_date.txt'
-RAIN = './config_files/rain_val.txt'
-POOL_LEVEL = './config_files/pool_level.txt'
-RESTART = './config_files/restart.txt'
-RAINING = './config_files/raining.txt'
+PREV_VOLTAGE = './config_files/pre_voltage.txt'
 
 pin_dictionary = { 'rain': 12,
                    'flow': 10,
-                   'restart': 8
                  }
+
+start_shift = 6
+end_shift = 17  # change back to 17
+first_work_day = 0
+last_work_day = 5 # change back to 5
 
 ############### GPIO Functions #################
 gpio.setmode(gpio.BOARD)
 gpio.setup(pin_dictionary['flow'], gpio.IN)
 gpio.setup(pin_dictionary['rain'], gpio.IN)
-gpio.setup(pin_dictionary['restart'], gpio.IN)
-
-def check_restart():
-	return gpio.input(pin_dictionary['restart'])
 
 ############### Helper Functions #################
 
 def initialize_files():
-  files = {'rain': RAIN
-           ,'date': OUTFALL_DATE
-           ,'pool': POOL_LEVEL
-           ,'restart': RESTART
-           ,'raining': RAINING
+  files = {
+           'date': OUTFALL_DATE,
+           'voltage': PREV_VOLTAGE
           }
 
   if not os.path.exists('./config_files'):
     os.system('mkdir config_files')
 
   for key,value in files.items():
-    if os.path.exists(value):
+    if not os.path.exists(value):
       fopen = open(value, 'w')
       if key == 'date':
       	fopen.write('None')
-      elif key == 'rain':
-      	fopen.write('0.1690')
-      elif key == 'pool':
-      	fopen.write('12')
+      elif key == 'voltage':
+      	fopen.write('12.0')
       else:	
       	fopen.write('0')
       fopen.close()
@@ -94,138 +86,125 @@ def xbee_usb_port():
 		return None
 
 def calculate_sleep():
-	time_date = datetime.datetime.now()
-	time_sleep = (24 - time_date.hour) * 60 * 60
-	return time_sleep
+  time_date = datetime.datetime.now()
+  time_sleep = ((24 - time_date.hour) * 60 * 60) - (time_date.minute*60) - (time_date.second)
+  return time_sleep
+
+def check_operation_hours(time_date):
+  current_hour = time_date.hour
+  current_min = time_date.minute
+  working_hours = False
+  if current_hour >= start_shift and current_hour < end_shift:
+    if current_hour ==(end_shift-1) and current_min > 58:
+      working_hours = False
+    else:
+      working_hours = True
+  else:
+    working_hours = False
+  return working_hours
+
+def check_operation_days(time_date):
+  working_days = False
+  if time_date.weekday() >= first_work_day and time_date.weekday() < last_work_day:
+    working_days = True
+  else:
+    working_days = False
+  return working_days
 
 ################ Outfall Thread Functions #############
 
 def send_outfall(out_queue, send_queue):
-	message = ""
-	flag = False
-	send_flag = True
-	while not flag:
-		if len(out_queue) != 0:
-			message = out_queue.pop(0)
-			if message == "oyes":
-				flag = True
-			else:
-				send_flag = True
-		elif send_flag == True:
-				send_queue.append("out")
-                send_flag = False
-
+  message = ""
+  flag = False
+  send_flag = True
+  while not flag:
+    if len(out_queue) != 0:
+      message = out_queue.pop(0)
+      if message == "oyes":
+        flag = True
+      else:
+        send_flag = True
+    elif send_flag == True:
+      send_queue.append("out")
+      send_flag = False
 
 ############## Rainfall Thread Functions ###############
 
-def check_voltage_interval(send_queue,battery):
-	time_date = datetime.datetime.now()
-	if time_date.minute == 59:
-		if time_date.second >= 0 and time_date.second <= 2:
-			voltage = battery.get_voltage_level()
-			send_queue.append(str(voltage))
+def check_voltage(send_queue,battery):
+  time_date = datetime.datetime.now()
+  if time_date.minute == 30:
+    voltage = battery.get_voltage_level()
+    set_value_file(PREV_VOLTAGE,str(voltage))
+  previous_voltage = check_value_file(PREV_VOLTAGE)
+  voltage = battery.get_voltage_level()
+  voltage_difference = abs(round(voltage-float(previous_voltage),1))
+  if voltage_difference >= 0.1:
+    set_value_file(PREV_VOLTAGE,str(voltage))
+    send_queue.append('v'+str(voltage))
 	
 def create_trigger(trigger_queue,sender_queue):
-    message = ""
-    flag = False
-    send_flag = True
-    while not flag:
-        if len(trigger_queue) != 0:
-            message = trigger_queue.pop(0)
-            if message == "tyes":
-                flag = True
-            else:
-                send_flag = True
-        elif send_flag == True:
-          sender_queue.append("tri")
-          send_flag = False
+  message = ""
+  flag = False
+  send_flag = True
+  while not flag:
+    if len(trigger_queue) != 0:
+      message = trigger_queue.pop(0)
+      if message == "tyes":
+        flag = True
+      else:
+        send_flag = True
+    elif send_flag == True:
+      sender_queue.append("tri")
+      send_flag = False
 
 def send_data(rain_gauge,level_sensor,rain_queue,send_queue,battery):
-	tmp_pool_val = level_sensor.get_pool_level()
-	tmp_rain_val = rain_gauge.get_total_rainfall(pin_dictionary['restart'],
-		                                         RESTART_HOLD, level_sensor)
-	tmp_pool_val = level_sensor.get_pool_level()
-	pool_val = 'p' + str(tmp_pool_val)
-	rain_val = 'r' + str(tmp_rain_val)
-	message = ""
-	flag = False
-	send_flag = True
-	while not flag:
-	    if len(rain_queue) != 0:
-	        message = rain_queue.pop(0)
-	        if message == "ryes":
-	            flag = True
-	        else:
-	            send_flag = True
-	    elif send_flag:
-	        send_queue.append(rain_val)
-	        send_queue.append(pool_val)
-	        send_flag = False
-	    check_voltage_interval(send_queue,battery)
-
-def send_restart_data(rain_queue,send_queue,battery):
-	tmp_pool_val = check_value_file(POOL_LEVEL)
-	tmp_rain_val = check_value_file(RAIN)
-	set_value_file(POOL_LEVEL,'12')
-	set_value_file(RAIN,'0.1690')
-	pool_val = 'p' + str(tmp_pool_val)
-	rain_val = 'r' + str(tmp_rain_val)
-	message = ""
-	flag = False
-	send_flag = True
-	while not flag:
-	    if len(rain_queue) != 0:
-	        message = rain_queue.pop(0)
-	        if message == "ryes":
-	            flag = True
-	        else:
-	            send_flag = True
-	    elif send_flag:
-	        send_queue.append(rain_val)
-	        send_queue.append(pool_val)
-	        send_flag = False
-	    check_voltage_interval(send_queue,battery)
-
-def restart_state():
-  state  = 0
-  end_time = 0
-  start_time = time()
-  while end_time < RESTART_HOLD:
-    end_time = time() - start_time
-    state = check_restart()
-    if not state:
-      return
-  os.system("sudo reboot")
+  tmp_pool_val = level_sensor.get_pool_level()
+  tmp_rain_val = rain_gauge.get_total_rainfall()
+  tmp_pool_val = level_sensor.get_pool_level()
+  pool_val = 'p' + '%.2f'%(tmp_pool_val)
+  rain_val = 'r' + '%.3f'%(tmp_rain_val)
+  message = ""
+  flag = False
+  send_flag = True
+  while not flag:
+    if len(rain_queue) != 0:
+      message = rain_queue.pop(0)
+      if message == "ryes":
+        flag = True
+      else:
+        send_flag = True
+    elif send_flag:
+      send_queue.append(rain_val)
+      send_queue.append(pool_val)
+      send_flag = False
 
 ################# Thread Functions #####################
 
-def detect_rainfall(rain_guage, level_sensor, tri_queue, rain_queue,send_queue,battery,event):
-	while not event.is_set():
-		check_voltage_interval(send_queue,battery)
-		if check_restart():
-			restart_state()
-		elif check_value_file(RESTART) == '1' and check_value_file(RAINING) == '1':
-			set_value_file(RESTART, '0')
-			set_value_file(RAINING, '0')
-			create_trigger(tri_queue,send_queue)
-			send_restart_data(rain_queue,send_queue,battery)
-		elif rain_guage.get_tick():
-			create_trigger(tri_queue,send_queue)
-			send_data(rain_guage,level_sensor,rain_queue,send_queue,battery)
+def detect_rainfall(rain_guage, level_sensor, tri_queue, rain_queue,send_queue,battery):
+  while True:
+    if rain_guage.get_tick():
+      create_trigger(tri_queue,send_queue)
+      send_data(rain_guage,level_sensor,rain_queue,send_queue,battery)
+    check_voltage(send_queue,battery)
 
-def detect_outfall(flow_sensor,level_sensor,out_queue,send_queue,event):
-	while not event.is_set():
-		if flow_sensor.check_outfall() and level_sensor.check_overflow():
-			time_date = datetime.datetime.now()
-			outfall_date = "%s/%s"%(time_date.month,time_date.day,time_date.year)
-			if check_value_file(OUTFALL_DATE) == outfall_date:
-				time_sleep = calculate_sleep()
-				sleep(time_sleep)
-			else:
-				send_outfall(out_queue,send_queue)
-				set_value_file(OUTFALL_DATE,outfall_date)
+def detect_outfall(flow_sensor,level_sensor,out_queue,send_queue):
+  while True:
+    time_date = datetime.datetime.now()
+    outfall_date = "%s/%s/%s"%(time_date.month,time_date.day,time_date.year)
+    if check_value_file(OUTFALL_DATE) == outfall_date:
+      time_sleep = calculate_sleep()
+      sleep(time_sleep)
+    if flow_sensor.check_outfall() == 1  and level_sensor.check_overflow() == 1:
+      if check_operation_hours(time_date) and check_operation_days(time_date):
+        send_outfall(out_queue,send_queue)
+        set_value_file(OUTFALL_DATE,outfall_date)
 
-def transmission(xbee,event):
-    while not event.is_set():
-        xbee.receive_message()
-        xbee.send_message()
+def transmission(xbee):
+  switch_state_flag = False
+  while True:
+    if switch_state_flag == False:
+      xbee.receive_message()
+      switch_state_flag = True
+    else:
+      xbee.send_message()
+      switch_state_flag = False

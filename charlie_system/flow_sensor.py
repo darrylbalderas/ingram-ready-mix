@@ -28,12 +28,11 @@ class FlowSensor:
                 flopping of the value.  
                 Returns: The status of the flow_sensor
                 '''
-                previous_state = 0
+                previous_state = self.check_flow()
                 current_state = self.check_flow()
                 if current_state  > previous_state:
-                        previous_state = current_state
-                        while current_state == previous_state:
-                                current_state = self.check_flow()
+                        return 1
+                elif previous_state > current_state:
                         return 1
                 else:
                         return 0

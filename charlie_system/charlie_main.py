@@ -4,40 +4,34 @@ from flow_sensor import FlowSensor
 from rain_guage import RainGuage
 from level_sensor import LevelSensor
 from threading import Thread
-from threading import Event
 from battery import Battery
 import RPi.GPIO as gpio
+from time import sleep
 
 def main():
   pin_dictionary = ct.get_pins()
-  event = Event()
   ct.initialize_files()
-  sender_queue= []
-  out_queue = []
-  trigger_queue = []
-  rain_queue = []
+  sender_queue= [ ]
+  outfall_queue = [ ]
+  trigger_queue = [ ]
+  rain_queue = [ ]
   port = ct.xbee_usb_port()
   if port != None:
-    charlie_xbee = Transceiver(9600,port,out_queue,trigger_queue,rain_queue,sender_queue)
-    rain_guage = RainGuage(pin_dictionary['rain'],30)
+    charlie_xbee = Transceiver(9600,port,outfall_queue,trigger_queue,rain_queue,sender_queue)
+    rain_guage = RainGuage(pin_dictionary['rain'], 30)
     flow_sensor = FlowSensor(pin_dictionary['flow'])
     level_sensor = LevelSensor()
     battery = Battery()
-    thread1 = Thread(target = ct.detect_rainfall, args = (rain_guage,level_sensor,trigger_queue,rain_queue,
-                     sender_queue,battery,event,))
+    thread1 = Thread(target = ct.detect_rainfall, args = (rain_guage,level_sensor,trigger_queue,rain_queue,sender_queue,battery,))
     thread1.start()
-    thread2 = Thread(target = ct.transmission, args =(charlie_xbee,event,))
-    thread2.start()
-    thread3 = Thread(target = ct.detect_outfall, args=(flow_sensor,level_sensor,out_queue,sender_queue,event,))
+    print('started detect rainfall thread')
+    sleep(0.5)
+    thread3 = Thread(target = ct.detect_outfall, args=(flow_sensor,level_sensor,outfall_queue,sender_queue,))
     thread3.start()
-    while not event.is_set():
-      user_input = raw_input("Enter Y or N for stopping Threads")
-      if user_input.lower() == 'y':
-        event.set()
-        thread1.join()
-        thread2.join()
-        thread3.join()
-        gpio.cleanup()
+    print('started detect outfall thread')
+    sleep(0.5)
+    print('started transmission')
+    ct.transmission(charlie_xbee)
   else:
     print("Missing xbee device")
 
