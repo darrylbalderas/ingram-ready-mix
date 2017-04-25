@@ -5,6 +5,7 @@ from transceiver import Transceiver
 from threading import Thread
 from threading import Event 
 
+
 def xbee_usb_port():
   if sys.platform.startswith('linux'):
     ports = glob.glob('/dev/ttyU*')

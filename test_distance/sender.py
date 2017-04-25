@@ -88,6 +88,7 @@ def main():
         print("got confirmation")
         fopen.write(str(end_time))
         fopen.write('\n')
+        print(end_time)
       if user_input.lower() == 'n':
         fopen.close()
   else:
