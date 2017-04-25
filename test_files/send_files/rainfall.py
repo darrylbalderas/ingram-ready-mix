@@ -28,15 +28,18 @@ def create_trigger(trigger_queue,sender_queue):
     flag = False
     send_flag = True
     while not flag:
-        if len(trigger_queue) != 0:
-            message = trigger_queue.pop(0)
-            if message == "tyes":
-                flag = True
-            else:
-                send_flag = True
-        elif send_flag == True:
-          sender_queue.append("tri")
-          send_flag = False
+      time_date = datetime.datetime.now()
+      if len(trigger_queue) != 0:
+          message = trigger_queue.pop(0)
+          if message == "tyes":
+              flag = True
+          else:
+              send_flag = True
+      elif send_flag == True or time_date.second%3 == 0:
+        sender_queue.append("tri")
+        sender_queue.append('v12.3')
+        send_flag = False
+    print('got rain trigger confirmation')
 def send_data(rain_queue,send_queue):
   tmp_pool_val = 12.0
   tmp_rain_val = 2.12
@@ -46,16 +49,18 @@ def send_data(rain_queue,send_queue):
   flag = False
   send_flag = True
   while not flag:
-      if len(rain_queue) != 0:
-          message = rain_queue.pop(0)
-          if message == "ryes":
-              flag = True
-          else:
-              send_flag = True
-      elif send_flag:
-          send_queue.append(rain_val)
-          send_queue.append(pool_val)
-          send_flag = False
+    time_date = datetime.datetime.now()
+    if len(rain_queue) != 0:
+        message = rain_queue.pop(0)
+        if message == "ryes":
+            flag = True
+        else:
+            send_flag = True
+    elif send_flag == True or time_date.second%3==0:
+        send_queue.append(rain_val)
+        send_queue.append(pool_val)
+        send_flag = False
+  print('got confirmation')
 def transmission(xbee):
   switch_flag = False
   while True:
@@ -79,7 +84,7 @@ def main():
     sleep(0.5)
     while True:
       time_date = datetime.datetime.now()
-      if time_date%10 == 0:
+      if time_date.second%3 == 0:
         create_trigger(trigger_queue,sender_queue)
         send_data(rain_queue,sender_queue)
   else:

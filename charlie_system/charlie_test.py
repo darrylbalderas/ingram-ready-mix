@@ -118,13 +118,14 @@ def send_outfall(out_queue, send_queue):
   flag = False
   send_flag = True
   while not flag:
+    time_date = datetime.datetime.now()
     if len(out_queue) != 0:
       message = out_queue.pop(0)
       if message == "oyes":
         flag = True
       else:
         send_flag = True
-    elif send_flag == True:
+    elif send_flag == True or time_date.second%3==0:
       send_queue.append("out")
       send_flag = False
 
@@ -147,13 +148,14 @@ def create_trigger(trigger_queue,sender_queue):
   flag = False
   send_flag = True
   while not flag:
+    time_date = datetime.datetime.now()
     if len(trigger_queue) != 0:
       message = trigger_queue.pop(0)
       if message == "tyes":
         flag = True
       else:
         send_flag = True
-    elif send_flag == True:
+    elif send_flag == True or time_date.second%3==0:
       sender_queue.append("tri")
       send_flag = False
 
@@ -167,13 +169,14 @@ def send_data(rain_gauge,level_sensor,rain_queue,send_queue,battery):
   flag = False
   send_flag = True
   while not flag:
+    time_date = datetime.datetime.now()
     if len(rain_queue) != 0:
       message = rain_queue.pop(0)
       if message == "ryes":
         flag = True
       else:
         send_flag = True
-    elif send_flag:
+    elif send_flag == True or time_date.second%3==0:
       send_queue.append(rain_val)
       send_queue.append(pool_val)
       send_flag = False

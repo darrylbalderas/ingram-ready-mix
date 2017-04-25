@@ -19,7 +19,7 @@ class Transceiver:
     self.port_path = port_path
     self.baud_rate = baud_rate
     self.ser = serial.Serial(self.port_path, 
-                            self.baud_rate, timeout=5.0, 
+                            self.baud_rate, timeout=1.0, 
                             parity=serial.PARITY_NONE,
                             stopbits=serial.STOPBITS_ONE,
                             bytesize=serial.EIGHTBITS)
@@ -82,11 +82,9 @@ class Transceiver:
             if not message in self.out_queue:
               self.out_queue.append(message)
           elif message == "tri" or message == "tyes":
-            if not message in self.trigger_queue:
-              self.trigger_queue.append(message)
+            self.trigger_queue.append(message)
           elif message[0] == 'r' or message[0] == 'p' or message == "ryes":
-            if not message in self.rain_queue:
-              self.rain_queue.append(message)
+            self.rain_queue.append(message)
       except:
         pass
 
