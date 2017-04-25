@@ -5,10 +5,9 @@ from lcd import LCD
 import glob 
 from time import time
 
-gpio.setmode(gpio.BCM) 
 complete = 12
 buzzers = [4,17,27,22,6,13]
-gpio.setup(complete,gpio.IN)
+
 def check_complete():
   '''
   Parameters: None
@@ -60,6 +59,8 @@ def stop_buzzer():
     gpio.output(buzzer,False)
 
 def main():
+  gpio.setmode(gpio.BCM) 
+  gpio.setup(complete,gpio.IN)
   initalize_buzzers()
   led_matrix = LedMatrix()
   port = lcd_serial_port()
@@ -80,3 +81,4 @@ def main():
           lcd.send_command('CLEAR')
           led_matrix.clear_matrix()
 
+main()

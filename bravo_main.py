@@ -22,6 +22,7 @@ from threading import Lock
 # for alarm system 
 import bravo_test as bt
 import RPi.GPIO as gpio
+from time import sleep
 
 def main():
   Locks = {'voltage': Lock()
@@ -44,11 +45,12 @@ def main():
     led_matrix.clear_matrix()
     led_matrix.change_color(led_matrix.get_greenImage())
     lcd.welcome_message()
-    thread1 = Thread(target=bt.outfall_detection, args=(lcd,led_matrix,out_queue,send_queue, Locks,))
-    thread1.start()
-    #thread2 = Thread(target=bt.rain_detection, args=(trigger_queue,data_queue,voltage_queue,send_queue, Locks,))
-    #thread2.start()
-    #bt.transmission(bravo_xbee)
+    #thread1 = Thread(target=bt.outfall_detection, args=(lcd,led_matrix,out_queue,send_queue, Locks,))
+    #thread1.start()
+##    thread2 = Thread(target=bt.rain_detection, args=(trigger_queue,data_queue,voltage_queue,send_queue, Locks,))
+##    thread2.start()
+##    sleep(0.5)
+    bt.transmission(bravo_xbee)
     # thread3 = Thread(target=bt.transmission, args = (bravo_xbee,event,))
     # thread3.start()
   else:

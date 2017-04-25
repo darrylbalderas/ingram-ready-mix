@@ -405,16 +405,13 @@ def receive_voltage(voltage_queue,Locks):
   string_ping = '0'
   if len(voltage_queue) != 0:
     message = voltage_queue.pop(0)
-    if len(message)  >= 4:
+    if len(message)  >= 3:
       if message[0] == 'v':
         voltage_val = remove_character(message,'v')
+        print(voltage_val)
         Locks['voltage'].acquire()
         set_value_file(VOLTAGE,'%.2f'%(float(voltage_val)))
         Locks['voltage'].release()
-        Locks['ping'].acquire()
-        string_ping = check_value_file(PINGS)
-        set_value_file(PINGS,str(int(string_ping)+1))
-        Locks['ping'].release()
 
 
 def send_confirmation(trigger_queue,sender_queue,voltage_queue,Locks):
@@ -433,7 +430,10 @@ def send_confirmation(trigger_queue,sender_queue,voltage_queue,Locks):
     while len(trigger_queue) != 0:
       message = trigger_queue.pop(0)
       if message == "tri":
+        print(message)
         sender_queue.append("tyes")
+        sleep(0.5)
+        sender_queue.append('tyes')
         flag = True
         break
 
@@ -461,10 +461,14 @@ def receive_data(rain_queue,sender_queue,voltage_queue,Locks):
         pool_val = remove_character(message,'p')
         pool_flag = True
   sender_queue.append("ryes")
+  sleep(0.5)
+  sender_queue.append('ryes')
   Locks['data'].acquire()
   set_value_file(RAIN,'%.2f'%(float(rain_val)))
   set_value_file(POOL_LEVEL,'%.2f'%(float(pool_val)))
   Locks['data'].release()
+  print(rain_val)
+  print(pool_val)
   return (rain_val, pool_val)
 
 ################ Outfall thread Functions ##############
@@ -809,6 +813,7 @@ def rain_detection(trigger_queue,rain_queue,voltage_queue,sender_queue, Locks):
   Returns: 
   '''
   while True:
+    print('inside rain detect')
     send_confirmation(trigger_queue,sender_queue,voltage_queue,Locks)
     start_timeDate = datetime.datetime.now()
     rain_fall, pool_level = receive_data(rain_queue,sender_queue,voltage_queue,Locks)
@@ -837,9 +842,9 @@ def outfall_detection(lcd,led_matrix,out_queue,sender_queue,Locks):
     collection_time = 900
     checkmonth_sample()
     if check_value_file(STATUS) == '1':
-      stop_outfall(out_queue,sender_queue,'complete',lcd,led_matrix)
+      stop_outfall(out_queue,sender_queue,'complete',lcd,led_matrix,Locks)
     elif check_value_file(STATUS) == '0':
-      stop_outfall(out_queue,sender_queue,'missed',lcd,led_matrix)
+      stop_outfall(out_queue,sender_queue,'missed',lcd,led_matrix,Locks)
     elif check_value_file(STATUS) == '-1':
       time_date = datetime.datetime.now()
       restart_date = '%s/%s/%s'%(time_date.month,time_date.day,time_date.year)
@@ -881,7 +886,7 @@ def outfall_detection(lcd,led_matrix,out_queue,sender_queue,Locks):
         elif check_value_file(INVOKE) == '0':
           empty_queue(out_queue)
           lcd.send_command('CLEAR')
-          send_outfall_conf(out_queue,sender_queue,lcd,led_matrix) #might need to change function to waiting_outfall
+          send_outfall_conf(out_queue,sender_queue,lcd,led_matrix,Locks) #might need to change function to waiting_outfall
           time_date = datetime.datetime.now()
           if check_operation_hours(time_date) and check_operation_days(time_date):
             collection_time = led_matrix.get_collection_time()

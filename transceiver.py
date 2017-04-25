@@ -19,7 +19,7 @@ class Transceiver:
     self.port_path = port_path
     self.baud_rate = baud_rate
     self.ser = serial.Serial(self.port_path, 
-                            self.baud_rate, timeout=5.0, 
+                            self.baud_rate, timeout=1.0, 
                             parity=serial.PARITY_NONE,
                             stopbits=serial.STOPBITS_ONE,
                             bytesize=serial.EIGHTBITS)
@@ -45,7 +45,7 @@ class Transceiver:
     '''  
     self.ser.close()
     self.ser = serial.Serial(self.port_path, 
-                            self.baud_rate, timeout=5.0, 
+                            self.baud_rate, timeout=1.0, 
                             parity=serial.PARITY_NONE,
                             stopbits=serial.STOPBITS_ONE,
                             bytesize=serial.EIGHTBIT)
@@ -77,7 +77,7 @@ class Transceiver:
     if self.ser.isOpen():
       try:
         message = self.ser.readline()
-        self.flush_input()
+        print(message)
         message = message.strip('\n')
         if message != "" and len(message) >= 3:
           if message == "out" or message == "oyes":
@@ -87,8 +87,7 @@ class Transceiver:
             if not message in self.trigger_queue:
               self.trigger_queue.append(message)
           elif message == 'vyes' or message == 'vol' or message[0] == 'v':
-            if not message in self.voltage_queue:
-              self.voltage_queue.append(message)
+            self.voltage_queue.append(message)
           elif message[0] == 'r' or message[0] == 'p' or message == "ryes":
             if not message in self.rain_queue:
               self.rain_queue.append(message)
