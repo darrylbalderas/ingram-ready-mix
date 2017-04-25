@@ -6,11 +6,9 @@ import glob
 from time import time
 
 gpio.setmode(gpio.BCM) 
-complete = 32
-buzzers = [7,11,13,15,29,31,33,35]
+complete = 12
+buzzers = [4,17,27,22,6,13]
 gpio.setup(complete,gpio.IN)
-
-
 def check_complete():
   '''
   Parameters: None
@@ -66,8 +64,8 @@ def main():
   led_matrix = LedMatrix()
   port = lcd_serial_port()
   lcd = LCD(port,9600)
-
-  while True:
+  flag = False
+  while not flag:
     user_input = raw_input("Enter (Y) to invoke system: ")
     if user_input.lower() == "y":
       start_time = time()
@@ -76,8 +74,9 @@ def main():
       while time()-start_time < 900:
         lcd.display_timer(time()-start_time)
         if check_complete():
-          break
-      gpio.cleanup()
-      lcd.send_command('CLEAR')
-      led_matrix.clear_matrix()
+          flag = True
+          stop_buzzer()
+          gpio.cleanup()
+          lcd.send_command('CLEAR')
+          led_matrix.clear_matrix()
 
