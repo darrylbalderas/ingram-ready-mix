@@ -56,14 +56,14 @@ first_work_day = 0
 last_work_day = 5
 
 # Data structure that contains of the pins used for the system
-pin_dictionary = {'buzzers' : [7,11,13,15,29,31,33,35]
-                , 'complete': 32
-                , 'mute': 36
-                , 'restart': 40
-                , 'miss': 38}
+pin_dictionary = {'buzzers' : [4,17,27,22,6,13]
+                , 'complete': 12
+                , 'mute': 16
+                , 'restart': 21
+                , 'miss': 20}
 
 ################ GPIO Functions #####################
-gpio.setmode(gpio.BOARD)
+gpio.setmode(gpio.BCM)
 gpio.setup(pin_dictionary['complete'],gpio.IN)
 gpio.setup(pin_dictionary['mute'],gpio.IN)
 gpio.setup(pin_dictionary['miss'],gpio.IN)
@@ -189,7 +189,7 @@ def initialize_files():
       if key == 'invoke':
         fopen.write('0')
       elif key == 'rain':
-        fopen.write('0.1690')
+        fopen.write('0.0')
       elif key == "pool_level":
         fopen.write('12.0')
       elif key == 'restart':
@@ -254,9 +254,7 @@ def xbee_usb_port():
   Function: Looks for the port used by the XBee 
   Returns: port used by XBee
   '''
-  if sys.platform.startswith('darwin'):
-    ports = glob.glob('/dev/tty.usbserial*')
-  elif sys.platform.startswith('linux'):
+  if sys.platform.startswith('linux'):
     ports = glob.glob('/dev/ttyU*')
   if len(ports) != 0:
     result = []
@@ -327,7 +325,7 @@ def check_end_day():
   '''
   time_date = datetime.datetime.now()
   if time_date.hour == 23 and time_date.minute == 59:
-    set_value_file(RAIN,'0.011')
+    set_value_file(RAIN,'0.0')
     set_value_file(POOL_LEVEL,'12.0')
     set_value_file(PINGS,'0')
     set_value_file(INVOKE_TIME,'None')
@@ -402,7 +400,6 @@ def receive_voltage(voltage_queue,Locks):
   Returns: None
  '''
   message = ""
-  string_ping = '0'
   if len(voltage_queue) != 0:
     message = voltage_queue.pop(0)
     if len(message)  >= 3:
@@ -498,35 +495,36 @@ def send_outfall_conf(out_queue,sender_queue,lcd,led_matrix,Locks):
   '''
   message = ""
   flag = False
-  voltage_level = ""
-  low_voltage_flag = False
-  lcd_clear_flag = False
-  lcd.send_command("CLEAR")
+  # voltage_level = ""
+  # low_voltage_flag = False
+  # lcd_clear_flag = False
+  # lcd.send_command("CLEAR")
   while not flag:
-    Locks['voltage'].acquire()
-    voltage_level = check_value_file(VOLTAGE)
-    Locks['voltage'].release()
-    tmp = voltage_level.split('.')
-    tmp[0] = tmp[0].zfill(2)
-    string_voltage_level = '.'.join(tmp)
-    lcd.display_voltage(string_voltage_level,'None','None',low_voltage_flag)
-    if check_low_voltage(voltage_level) == True:
-      led_matrix.change_color(led_matrix.get_blueImage())
-      low_voltage_flag = True
-      if lcd_clear_flag == True:
-        lcd.send_command("CLEAR")
-        lcd_clear_flag = False
-    else:
-      low_voltage_flag = False
-      led_matrix.change_color(led_matrix.get_greenImage())
-      if lcd_clear_flag == False:
-        lcd.send_command("CLEAR")
-        lcd_clear_flag = True
-    if check_restart():
-      restart(lcd,led_matrix)
+    # Locks['voltage'].acquire()
+    # voltage_level = check_value_file(VOLTAGE)
+    # Locks['voltage'].release()
+    # tmp = voltage_level.split('.')
+    # tmp[0] = tmp[0].zfill(2)
+    # string_voltage_level = '.'.join(tmp)
+    # lcd.display_voltage(string_voltage_level,'None','None',low_voltage_flag)
+    # if check_low_voltage(voltage_level) == True:
+    #   led_matrix.change_color(led_matrix.get_blueImage())
+    #   low_voltage_flag = True
+    #   if lcd_clear_flag == True:
+    #     lcd.send_command("CLEAR")
+    #     lcd_clear_flag = False
+    # else:
+    #   low_voltage_flag = False
+    #   led_matrix.change_color(led_matrix.get_greenImage())
+    #   if lcd_clear_flag == False:
+    #     lcd.send_command("CLEAR")
+    #     lcd_clear_flag = True
+    # if check_restart():
+    #   restart(lcd,led_matrix)
     while len(out_queue) != 0:
       message = out_queue.pop(0)
       if message == "out":
+        print(message)
         lcd.send_command("CLEAR")
         sender_queue.append("oyes")
         flag = True
@@ -815,18 +813,18 @@ def rain_detection(trigger_queue,rain_queue,voltage_queue,sender_queue, Locks):
   while True:
     print('inside rain detect')
     send_confirmation(trigger_queue,sender_queue,voltage_queue,Locks)
-    start_timeDate = datetime.datetime.now()
+    # start_timeDate = datetime.datetime.now()
     rain_fall, pool_level = receive_data(rain_queue,sender_queue,voltage_queue,Locks)
-    end_timeDate = datetime.datetime.now()  
-    end_time = '%s:%s:%s'%(end_timeDate.hour,end_timeDate.minute,end_timeDate.second)
-    start_time = '%s:%s:%s'%(start_timeDate.hour,start_timeDate.minute,start_timeDate.second)
-    if check_operation_hours(start_timeDate) and check_operation_days(start_timeDate):
-      operation = "Yes"
-    else:
-      operation = "No"
-    Locks['logger'].acquire()
-    logger(start_time, end_time, rain_fall, pool_level, None ,"  -  ","  -  ",operation)
-    Locks['logger'].release()
+    # end_timeDate = datetime.datetime.now()  
+    # end_time = '%s:%s:%s'%(end_timeDate.hour,end_timeDate.minute,end_timeDate.second)
+    # start_time = '%s:%s:%s'%(start_timeDate.hour,start_timeDate.minute,start_timeDate.second)
+    # if check_operation_hours(start_timeDate) and check_operation_days(start_timeDate):
+    #   operation = "Yes"
+    # else:
+    #   operation = "No"
+    # Locks['logger'].acquire()
+    # logger(start_time, end_time, rain_fall, pool_level, None ,"  -  ","  -  ",operation)
+    # Locks['logger'].release()
 
 def outfall_detection(lcd,led_matrix,out_queue,sender_queue,Locks):
   '''
@@ -841,67 +839,68 @@ def outfall_detection(lcd,led_matrix,out_queue,sender_queue,Locks):
   while True:
     collection_time = 900
     checkmonth_sample()
-    if check_value_file(STATUS) == '1':
-      stop_outfall(out_queue,sender_queue,'complete',lcd,led_matrix,Locks)
-    elif check_value_file(STATUS) == '0':
-      stop_outfall(out_queue,sender_queue,'missed',lcd,led_matrix,Locks)
-    elif check_value_file(STATUS) == '-1':
-      time_date = datetime.datetime.now()
-      restart_date = '%s/%s/%s'%(time_date.month,time_date.day,time_date.year)
-      restart_time = '%s:%s:%s'%(time_date.hour,time_date.minute,time_date.second)
-      if check_value_file(RESTART) == '1' and restart_date == check_value_file(RESTART_DATE):
-        collection_time = check_time(restart_time,check_value_file(RESTART_TIME))
-        if collection_time > 0:
-          if check_operation_hours(time_date) and check_operation_days(time_date):
-            set_value_file(RESTART,'0')
-            set_value_file(RESTART_DATE,'None')
-            set_value_file(RESTART_TIME,'None')
-            invoke_system(led_matrix,lcd,collection_time,Locks)
-          else:
-            set_value_file(RESTART,'0')
-            set_value_file(RESTART_DATE,'None')
-            set_value_file(RESTART_TIME,'None')
-        else:
-            set_value_file(RESTART,'0')
-            set_value_file(RESTART_DATE,'None')
-            set_value_file(RESTART_TIME,'None')
+    # if check_value_file(STATUS) == '1':
+    #   stop_outfall(out_queue,sender_queue,'complete',lcd,led_matrix,Locks)
+    # elif check_value_file(STATUS) == '0':
+    #   stop_outfall(out_queue,sender_queue,'missed',lcd,led_matrix,Locks)
+    # elif check_value_file(STATUS) == '-1':
+    #   time_date = datetime.datetime.now()
+    #   restart_date = '%s/%s/%s'%(time_date.month,time_date.day,time_date.year)
+    #   restart_time = '%s:%s:%s'%(time_date.hour,time_date.minute,time_date.second)
+    #   if check_value_file(RESTART) == '1' and restart_date == check_value_file(RESTART_DATE):
+    #     collection_time = check_time(restart_time,check_value_file(RESTART_TIME))
+    #     if collection_time > 0:
+    #       if check_operation_hours(time_date) and check_operation_days(time_date):
+    #         set_value_file(RESTART,'0')
+    #         set_value_file(RESTART_DATE,'None')
+    #         set_value_file(RESTART_TIME,'None')
+    #         invoke_system(led_matrix,lcd,collection_time,Locks)
+    #       else:
+    #         set_value_file(RESTART,'0')
+    #         set_value_file(RESTART_DATE,'None')
+    #         set_value_file(RESTART_TIME,'None')
+    #     else:
+    #         set_value_file(RESTART,'0')
+    #         set_value_file(RESTART_DATE,'None')
+    #         set_value_file(RESTART_TIME,'None')
 
-      else:
-        time_date = datetime.datetime.now()
-        invoke_date = '%s/%s/%s'%(time_date.month,time_date.day,time_date.year)
-        invoke_time = '%s:%s:%s'%(time_date.hour,time_date.minute,time_date.second)
-        if check_value_file(INVOKE) == '1' and invoke_date == check_value_file(INVOKE_DATE):
-          collection_time = check_time(invoke_time,check_value_file(INVOKE_TIME))
-          if collection_time > 0:
-            if check_operation_hours(time_date) and check_operation_days(time_date):
-              invoke_system(led_matrix,lcd,collection_time,Locks)
-            else:
-              set_value_file(INVOKE,'0')
-              set_value_file(INVOKE_DATE,'None')
-              set_value_file(INVOKE_TIME,'None')
-          else:
-              set_value_file(INVOKE,'0')
-              set_value_file(INVOKE_DATE,'None')
-              set_value_file(INVOKE_TIME,'None')
-        elif check_value_file(INVOKE) == '0':
-          empty_queue(out_queue)
-          lcd.send_command('CLEAR')
-          send_outfall_conf(out_queue,sender_queue,lcd,led_matrix,Locks) #might need to change function to waiting_outfall
-          time_date = datetime.datetime.now()
-          if check_operation_hours(time_date) and check_operation_days(time_date):
-            collection_time = led_matrix.get_collection_time()
-            invoke_system(led_matrix,lcd,collection_time,Locks)
-          else:
-            Locks['data'].acquire()
-            rain = check_value_file(RAIN)
-            level = check_value_file(POOL_LEVEL)
-            Locks['data'].release()
-            operation = "No"
-            outfall = "Yes"
-            collection_status = "missed"
-            Locks['logger'].acquire()
-            logger("  -  ","  -  ", rain,level, None, outfall ,collection_status, operation)
-            Locks['logger'].release()
+    #   else:
+    #     time_date = datetime.datetime.now()
+    #     invoke_date = '%s/%s/%s'%(time_date.month,time_date.day,time_date.year)
+    #     invoke_time = '%s:%s:%s'%(time_date.hour,time_date.minute,time_date.second)
+    #     if check_value_file(INVOKE) == '1' and invoke_date == check_value_file(INVOKE_DATE):
+    #       collection_time = check_time(invoke_time,check_value_file(INVOKE_TIME))
+    #       if collection_time > 0:
+    #         if check_operation_hours(time_date) and check_operation_days(time_date):
+    #           invoke_system(led_matrix,lcd,collection_time,Locks)
+    #         else:
+    #           set_value_file(INVOKE,'0')
+    #           set_value_file(INVOKE_DATE,'None')
+    #           set_value_file(INVOKE_TIME,'None')
+    #       else:
+    #           set_value_file(INVOKE,'0')
+    #           set_value_file(INVOKE_DATE,'None')
+    #           set_value_file(INVOKE_TIME,'None')
+    #     elif check_value_file(INVOKE) == '0':
+    empty_queue(out_queue)    #move under the elif statement 
+    lcd.send_command('CLEAR')
+    send_outfall_conf(out_queue,sender_queue,lcd,led_matrix,Locks) #might need to change function to waiting_outfall
+    time_date = datetime.datetime.now()
+    print(time_date)
+    # if check_operation_hours(time_date) and check_operation_days(time_date):
+    #   collection_time = led_matrix.get_collection_time()
+    #   invoke_system(led_matrix,lcd,collection_time,Locks)
+    # else:
+    #   Locks['data'].acquire()
+    #   rain = check_value_file(RAIN)
+    #   level = check_value_file(POOL_LEVEL)
+    #   Locks['data'].release()
+    #   operation = "No"
+    #   outfall = "Yes"
+    #   collection_status = "missed"
+    #   Locks['logger'].acquire()
+    #   logger("  -  ","  -  ", rain,level, None, outfall ,collection_status, operation)
+    #   Locks['logger'].release()
 
 def transmission(xbee):
   '''
@@ -918,24 +917,3 @@ def transmission(xbee):
     else:
       xbee.send_message()
       switch_flag = False
-
-def sender(xbee):
-  '''
-  Paramter: xbee(object) event( Thread flag)
-  Function: sends messages in the send_queue and receieves messages and
-  places in there respect queue
-  Returns: None
-  '''
-  while True:
-      xbee.send_message()
-
-def receiver(xbee):
-  '''
-  Paramter: xbee(object) event( Thread flag)
-  Function: sends messages in the send_queue and receieves messages and
-  places in there respect queue
-  Returns: None
-  '''
-  while True:
-      xbee.receive_message()
-
