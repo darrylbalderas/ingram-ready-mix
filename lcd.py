@@ -202,7 +202,7 @@ class LCD:
         if voltage_flag == False:
           self.send_message(self.center_message('Voltage: ' + str(voltage_level) + 'V'))
         else:
-          self.send_message(self.center_message('Check RDS ' + str(voltage_level) + 'V'))
+          self.send_message(self.center_message('Check RDS' + str(voltage_level) + 'V'))
         self.send_command("HOME")
     elif status == 'missed':
         self.send_message(self.center_message('Hours left: '+ str(time_left)))
@@ -210,7 +210,7 @@ class LCD:
         if voltage_flag == False:
           self.send_message(self.center_message('Voltage: ' + str(voltage_level) + 'V'))
         else:
-          self.send_message(self.center_message('Check RDS ' + str(voltage_level) + 'V' ))
+          self.send_message(self.center_message('Check RDS' + str(voltage_level) + 'V'))
         self.send_command("HOME")
     else:
         self.send_message(self.center_message('No outfall'))
@@ -218,7 +218,7 @@ class LCD:
         if voltage_flag == False:
           self.send_message(self.center_message('Voltage: ' + str(voltage_level) + 'V'))
         else:
-          self.send_message(self.center_message('Check RDS ' + str(voltage_level) + 'V' ))
+          self.send_message(self.center_message('Check RDS' + str(voltage_level) + 'V'))
         self.send_command("HOME")
 
 
