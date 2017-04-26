@@ -353,16 +353,7 @@ def logger(start_time, end_time, amount_rain, pool_level, tag, outfall, status, 
   if not os.path.exists(month_directory):
     os.system('mkdir ' + month_directory)
   file_name = '%s_%s_%s'%(time_date.month, time_date.day,time_date.year)
-  files = glob.glob(month_directory + file_name + '*.ods')
-  tmp_file = month_directory + file_name + '.ods'
-  if len(files) != 0:
-    old_file = files[0]
-    command = "cp %s %s"%(tmp_file,old_file)
-    command2 = "rm %s"%(tmp_file)
-    os.system(command)
-    os.system(command2)
-  else:
-    old_file = tmp_file
+  old_file = month_directory + file_name + '.ods'
   if os.path.exists(old_file):
     if tag == 'C':
       collect_datafile = month_directory + file_name+'_completed.ods'
@@ -393,7 +384,15 @@ def logger(start_time, end_time, amount_rain, pool_level, tag, outfall, status, 
     elif tag == 'M':
       collect_datafile = month_directory + file_name + '_missed.ods'
     else:
-      collect_datafile = old_file
+      files = glob.glob(month_directory + file_name + '*.ods')
+      if len(files) != 0:
+        collect_datafile = files[0]
+        command = "cp %s %s"%(old_file,collect_datafile)
+        command2 = "rm %s"%(old_file)
+        os.system(command)
+        os.system(command2)
+      else:
+        collect_datafile = old_file
     fopen = open(collect_datafile, 'w')
     fopen.write('Start time, End time, Inches of Rain, Inches till Overflow,\
  Outfall status, Collection Status, Hours of Operation')
@@ -433,7 +432,6 @@ def send_confirmation(trigger_queue,sender_queue,voltage_queue,Locks):
   message = ""
   flag = False
   while not flag:
-    #check_end_day()
     receive_voltage(voltage_queue, Locks)
     while len(trigger_queue) != 0:
       message = trigger_queue.pop(0)
@@ -488,7 +486,7 @@ def check_low_voltage(voltage_level):
   Returns: True if voltage is below the threshold otherwise False
   '''
   try:
-    if float(voltage_level) >= 11.6:
+    if float(voltage_level) >= 11.6 and float(voltage_level) < 16.0:
       return False
     else:
       return True
@@ -651,6 +649,7 @@ def invoke_system(led_matrix,lcd, collection_time,Locks):
   begin_time = time()-(900-collection_time)
   while (time()-begin_time) <= led_matrix.get_collection_time():
     if check_complete():
+      led_matrix.change_color(led_matrix.get_greenImage())
       lcd.complete_message()
       complete_state(led_matrix,start_time,Locks)
       break
@@ -658,7 +657,9 @@ def invoke_system(led_matrix,lcd, collection_time,Locks):
       stop_buzzer()
     elif check_restart():
       restart_state(lcd,led_matrix,start_time,time_date)
+      break
     elif check_miss():
+      led_matrix.change_color(led_matrix.get_redImage())
       lcd.missed_message()
       missed_state(led_matrix,start_time,Locks)
       break
@@ -666,6 +667,7 @@ def invoke_system(led_matrix,lcd, collection_time,Locks):
     led_matrix.change_color(led_matrix.get_yellowImage())
     lcd.display_timer(time()-begin_time)
   if (time()-begin_time) > collection_time:
+    led_matrix.change_color(led_matrix.get_redImage())
     lcd.missed_message()
     missed_state(led_matrix,start_time,Locks)
   stop_buzzer()
