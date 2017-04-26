@@ -638,7 +638,7 @@ def invoke_system(led_matrix,lcd, collection_time,Locks):
   mute the buzzers
   Returns: None
   '''
-  #start_buzzer()
+  start_buzzer()
   blinking_delay = 0.5 #seconds
   time_date = datetime.datetime.now()
   start_time = '%s:%s:%s'%(time_date.hour,time_date.minute,time_date.second)
