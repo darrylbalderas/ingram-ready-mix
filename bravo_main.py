@@ -47,10 +47,10 @@ def main():
     lcd.welcome_message()
     thread1 = Thread(target=bt.outfall_detection, args=(lcd,led_matrix,out_queue,send_queue, Locks,))
     thread1.start()
-    sleep(0.5)
+    sleep(1)
     thread2 = Thread(target=bt.rain_detection, args=(trigger_queue,data_queue,voltage_queue,send_queue, Locks,))
     thread2.start()
-    sleep(0.5)
+    sleep(1)
     bt.transmission(bravo_xbee)
   else:
       print("Check the Xbee and LCD connection")

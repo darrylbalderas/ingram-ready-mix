@@ -420,7 +420,7 @@ def send_confirmation(trigger_queue,sender_queue,voltage_queue,Locks):
   message = ""
   flag = False
   while not flag:
-    check_end_day()
+    #check_end_day()
     receive_voltage(voltage_queue, Locks)
     while len(trigger_queue) != 0:
       message = trigger_queue.pop(0)
@@ -431,6 +431,7 @@ def send_confirmation(trigger_queue,sender_queue,voltage_queue,Locks):
         sender_queue.append('tyes')
         flag = True
         break
+    sleep(2)
 
 def receive_data(rain_queue,sender_queue,voltage_queue,Locks):
   '''
@@ -462,6 +463,7 @@ def receive_data(rain_queue,sender_queue,voltage_queue,Locks):
   set_value_file(RAIN,'%.2f'%(float(rain_val)))
   set_value_file(POOL_LEVEL,'%.2f'%(float(pool_val)))
   Locks['data'].release()
+  print('got data')
   return (rain_val, pool_val)
 
 ################ Outfall thread Functions ##############
@@ -620,13 +622,13 @@ def invoke_system(led_matrix,lcd, collection_time,Locks):
   Returns: None
   '''
   start_buzzer()
-  blinking_delay = 0.2 #seconds
+  #blinking_delay = 0.2 #seconds
   time_date = datetime.datetime.now()
   start_time = '%s:%s:%s'%(time_date.hour,time_date.minute,time_date.second)
   set_value_file(INVOKE, '1')
   set_value_file(INVOKE_DATE,'%s/%s/%s'%(time_date.month,time_date.day,time_date.year))
   set_value_file(INVOKE_TIME,start_time)
-  led_matrix.make_blink(led_matrix.get_yellowImage(), blinking_delay)
+  #led_matrix.make_blink(led_matrix.get_yellowImage(), blinking_delay)
   begin_time = time()-(900-collection_time)
   while (time()-begin_time) <= led_matrix.get_collection_time():
     if check_complete():
@@ -641,7 +643,8 @@ def invoke_system(led_matrix,lcd, collection_time,Locks):
       lcd.missed_message()
       missed_state(led_matrix,start_time,Locks)
       break
-    led_matrix.make_blink(led_matrix.get_yellowImage(), blinking_delay)
+    #led_matrix.make_blink(led_matrix.get_yellowImage(), blinking_delay)
+    led_matrix.change_color(led_matrix.get_yellowImage())
     lcd.display_timer(time()-begin_time)
   if (time()-begin_time) > collection_time:
     lcd.missed_message()
@@ -684,7 +687,7 @@ def missed_state(led_matrix,start_time,Locks):
   '''
   stop_buzzer()
   led_matrix.clear_matrix()
-  led_matrix.change_color(led_matrix.get_redImage)
+  led_matrix.change_color(led_matrix.get_redImage())
   outfall = 'Yes'
   Locks['data'].acquire()
   pool_level = check_value_file(POOL_LEVEL)
@@ -878,13 +881,14 @@ def outfall_detection(lcd,led_matrix,out_queue,sender_queue,Locks):
     #           set_value_file(INVOKE_DATE,'None')
     #           set_value_file(INVOKE_TIME,'None')
     #     elif check_value_file(INVOKE) == '0':
-    # empty_queue(out_queue)    #move under the elif statement 
-    # lcd.send_command('CLEAR')
+    empty_queue(out_queue)    #move under the elif statement 
+    lcd.send_command('CLEAR')
     send_outfall_conf(out_queue,sender_queue,lcd,led_matrix,Locks) #might need to change function to waiting_outfall
     time_date = datetime.datetime.now()
     if check_operation_hours(time_date) and check_operation_days(time_date):
       collection_time = led_matrix.get_collection_time()
       invoke_system(led_matrix,lcd,collection_time,Locks)
+      sleep(2)
     else:
       Locks['data'].acquire()
       rain = check_value_file(RAIN)

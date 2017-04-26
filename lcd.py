@@ -180,8 +180,8 @@ class LCD:
     left to collect the sample.
     Returns: None
     '''
-    hour = str(int(floor(num_time/3600))).zfill(2)
-    minute = str(int(14- floor(num_time/60))).zfill(2)
+    hour = str(int(floor(num_time/float(3600)))).zfill(2)
+    minute = str(int(14- floor(num_time/float(60)))).zfill(2)
     seconds =  str(int(59 - floor(num_time))%60).zfill(2)
     time_m = "%sh:%sm:%ss"%(hour,minute,seconds)
     self.send_message(self.center_message('Timer'))
