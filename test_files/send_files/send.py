@@ -36,7 +36,7 @@ def create_trigger(trigger_queue,sender_queue):
               flag = True
           else:
               send_flag = True
-      elif send_flag == True or time_date.second%3==0:
+      elif send_flag == True:
         sender_queue.append("tri")
         send_flag = False
 
@@ -53,10 +53,11 @@ def send_data(rain_queue,send_queue):
     if len(rain_queue) != 0:
         message = rain_queue.pop(0)
         if message == "ryes":
-            flag = True
+          print('got confirmation')
+          flag = True
         else:
             send_flag = True
-    elif send_flag == True or time_date.second%3==0:
+    elif send_flag == True:
         send_queue.append(rain_val)
         send_queue.append(pool_val)
         send_flag = False
@@ -73,7 +74,7 @@ def send_outfall(out_queue, sender_queue):
         flag = True
       else:
         send_flag = True
-    elif send_flag == True or time_date.second%3==0:
+    elif send_flag == True:
         sender_queue.append("out")
         send_flag = False
 
