@@ -29,14 +29,14 @@ def send_outfall(out_queue, sender_queue):
   flag = False
   send_flag = True
   while not flag:
+    time_date = datetime.datetime.now()
     if len(out_queue) != 0:
       message = out_queue.pop(0)
       if message == "oyes":
         flag = True
       else:
         send_flag = True
-    elif send_flag == True:
-        sender_queue.append("out")
+    elif send_flag == True or time_date.second%3==0:
         sender_queue.append("out")
         send_flag = False
 
@@ -63,7 +63,7 @@ def main():
     sleep(0.5)
     while True:
       time_date = datetime.datetime.now()
-      if time_date.minute%10 == 0:
+      if time_date.second%3== 0:
         send_outfall(out_queue,sender_queue)
   else:
     print("No Xbee connected")

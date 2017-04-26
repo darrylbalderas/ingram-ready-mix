@@ -61,6 +61,7 @@ def send_data(rain_queue,send_queue):
         send_queue.append(pool_val)
         send_flag = False
   print('got confirmation')
+  
 def transmission(xbee):
   switch_flag = False
   while True:
