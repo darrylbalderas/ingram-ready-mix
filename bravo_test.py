@@ -505,6 +505,7 @@ def send_outfall_conf(out_queue,sender_queue,lcd,led_matrix,Locks):
     tmp[0] = tmp[0].zfill(2)
     string_voltage_level = '.'.join(tmp)
     lcd.display_voltage(string_voltage_level,'None','None',low_voltage_flag)
+    check_end_day()
     if check_low_voltage(voltage_level) == True:
       led_matrix.change_color(led_matrix.get_blueImage())
       low_voltage_flag = True
@@ -523,6 +524,8 @@ def send_outfall_conf(out_queue,sender_queue,lcd,led_matrix,Locks):
       message = out_queue.pop(0)
       if message == "out":
         lcd.send_command("CLEAR")
+        sender_queue.append("oyes")
+        sleep(0.5)
         sender_queue.append("oyes")
         flag = True
         break
@@ -554,6 +557,7 @@ def stop_outfall(out_queue,sender_queue,status,lcd,led_matrix,Locks):
     elif status == "missed":
       time_left = calculate_hours()
     lcd.display_voltage(string_voltage_level,time_left,status,low_voltage_flag)
+    check_end_day()
     if check_restart():
       restart(lcd,led_matrix)
 
@@ -581,6 +585,8 @@ def stop_outfall(out_queue,sender_queue,status,lcd,led_matrix,Locks):
     while len(out_queue) != 0:
       message = out_queue.pop(0)
       if message == "out":
+        sender_queue.append("oyes")
+        sleep(0.5)
         sender_queue.append("oyes")
         flag = True
         break
@@ -622,13 +628,13 @@ def invoke_system(led_matrix,lcd, collection_time,Locks):
   Returns: None
   '''
   start_buzzer()
-  #blinking_delay = 0.2 #seconds
+  blinking_delay = 0.2 #seconds
   time_date = datetime.datetime.now()
   start_time = '%s:%s:%s'%(time_date.hour,time_date.minute,time_date.second)
   set_value_file(INVOKE, '1')
   set_value_file(INVOKE_DATE,'%s/%s/%s'%(time_date.month,time_date.day,time_date.year))
   set_value_file(INVOKE_TIME,start_time)
-  #led_matrix.make_blink(led_matrix.get_yellowImage(), blinking_delay)
+  led_matrix.make_blink(led_matrix.get_yellowImage(), blinking_delay)
   begin_time = time()-(900-collection_time)
   while (time()-begin_time) <= led_matrix.get_collection_time():
     if check_complete():
@@ -643,7 +649,7 @@ def invoke_system(led_matrix,lcd, collection_time,Locks):
       lcd.missed_message()
       missed_state(led_matrix,start_time,Locks)
       break
-    #led_matrix.make_blink(led_matrix.get_yellowImage(), blinking_delay)
+    led_matrix.make_blink(led_matrix.get_yellowImage(),blinking_delay)
     led_matrix.change_color(led_matrix.get_yellowImage())
     lcd.display_timer(time()-begin_time)
   if (time()-begin_time) > collection_time:
@@ -837,69 +843,68 @@ def outfall_detection(lcd,led_matrix,out_queue,sender_queue,Locks):
   set_value_file(STATUS,'-1')
   while True:
     collection_time = 900
-    # checkmonth_sample()
-    # if check_value_file(STATUS) == '1':
-    #   stop_outfall(out_queue,sender_queue,'complete',lcd,led_matrix,Locks)
-    # elif check_value_file(STATUS) == '0':
-    #   stop_outfall(out_queue,sender_queue,'missed',lcd,led_matrix,Locks)
-    # elif check_value_file(STATUS) == '-1':
-    #   time_date = datetime.datetime.now()
-    #   restart_date = '%s/%s/%s'%(time_date.month,time_date.day,time_date.year)
-    #   restart_time = '%s:%s:%s'%(time_date.hour,time_date.minute,time_date.second)
-    #   if check_value_file(RESTART) == '1' and restart_date == check_value_file(RESTART_DATE):
-    #     collection_time = check_time(restart_time,check_value_file(RESTART_TIME))
-    #     if collection_time > 0:
-    #       if check_operation_hours(time_date) and check_operation_days(time_date):
-    #         set_value_file(RESTART,'0')
-    #         set_value_file(RESTART_DATE,'None')
-    #         set_value_file(RESTART_TIME,'None')
-    #         invoke_system(led_matrix,lcd,collection_time,Locks)
-    #       else:
-    #         set_value_file(RESTART,'0')
-    #         set_value_file(RESTART_DATE,'None')
-    #         set_value_file(RESTART_TIME,'None')
-    #     else:
-    #         set_value_file(RESTART,'0')
-    #         set_value_file(RESTART_DATE,'None')
-    #         set_value_file(RESTART_TIME,'None')
+    checkmonth_sample()
+    if check_value_file(STATUS) == '1':
+      stop_outfall(out_queue,sender_queue,'complete',lcd,led_matrix,Locks)
+    elif check_value_file(STATUS) == '0':
+      stop_outfall(out_queue,sender_queue,'missed',lcd,led_matrix,Locks)
+    elif check_value_file(STATUS) == '-1':
+      time_date = datetime.datetime.now()
+      restart_date = '%s/%s/%s'%(time_date.month,time_date.day,time_date.year)
+      restart_time = '%s:%s:%s'%(time_date.hour,time_date.minute,time_date.second)
+      if check_value_file(RESTART) == '1' and restart_date == check_value_file(RESTART_DATE):
+        collection_time = check_time(restart_time,check_value_file(RESTART_TIME))
+        if collection_time > 0:
+          if check_operation_hours(time_date) and check_operation_days(time_date):
+            set_value_file(RESTART,'0')
+            set_value_file(RESTART_DATE,'None')
+            set_value_file(RESTART_TIME,'None')
+            invoke_system(led_matrix,lcd,collection_time,Locks)
+          else:
+            set_value_file(RESTART,'0')
+            set_value_file(RESTART_DATE,'None')
+            set_value_file(RESTART_TIME,'None')
+        else:
+            set_value_file(RESTART,'0')
+            set_value_file(RESTART_DATE,'None')
+            set_value_file(RESTART_TIME,'None')
 
-    #   else:
-    #     time_date = datetime.datetime.now()
-    #     invoke_date = '%s/%s/%s'%(time_date.month,time_date.day,time_date.year)
-    #     invoke_time = '%s:%s:%s'%(time_date.hour,time_date.minute,time_date.second)
-    #     if check_value_file(INVOKE) == '1' and invoke_date == check_value_file(INVOKE_DATE):
-    #       collection_time = check_time(invoke_time,check_value_file(INVOKE_TIME))
-    #       if collection_time > 0:
-    #         if check_operation_hours(time_date) and check_operation_days(time_date):
-    #           invoke_system(led_matrix,lcd,collection_time,Locks)
-    #         else:
-    #           set_value_file(INVOKE,'0')
-    #           set_value_file(INVOKE_DATE,'None')
-    #           set_value_file(INVOKE_TIME,'None')
-    #       else:
-    #           set_value_file(INVOKE,'0')
-    #           set_value_file(INVOKE_DATE,'None')
-    #           set_value_file(INVOKE_TIME,'None')
-    #     elif check_value_file(INVOKE) == '0':
-    empty_queue(out_queue)    #move under the elif statement 
-    lcd.send_command('CLEAR')
-    send_outfall_conf(out_queue,sender_queue,lcd,led_matrix,Locks) #might need to change function to waiting_outfall
-    time_date = datetime.datetime.now()
-    if check_operation_hours(time_date) and check_operation_days(time_date):
-      collection_time = led_matrix.get_collection_time()
-      invoke_system(led_matrix,lcd,collection_time,Locks)
-      sleep(2)
-    else:
-      Locks['data'].acquire()
-      rain = check_value_file(RAIN)
-      level = check_value_file(POOL_LEVEL)
-      Locks['data'].release()
-      operation = "No"
-      outfall = "Yes"
-      collection_status = "missed"
-      Locks['logger'].acquire()
-      logger("  -  ","  -  ", rain,level, None, outfall ,collection_status, operation)
-      Locks['logger'].release()
+      else:
+        time_date = datetime.datetime.now()
+        invoke_date = '%s/%s/%s'%(time_date.month,time_date.day,time_date.year)
+        invoke_time = '%s:%s:%s'%(time_date.hour,time_date.minute,time_date.second)
+        if check_value_file(INVOKE) == '1' and invoke_date == check_value_file(INVOKE_DATE):
+          collection_time = check_time(invoke_time,check_value_file(INVOKE_TIME))
+          if collection_time > 0:
+            if check_operation_hours(time_date) and check_operation_days(time_date):
+              invoke_system(led_matrix,lcd,collection_time,Locks)
+            else:
+              set_value_file(INVOKE,'0')
+              set_value_file(INVOKE_DATE,'None')
+              set_value_file(INVOKE_TIME,'None')
+          else:
+              set_value_file(INVOKE,'0')
+              set_value_file(INVOKE_DATE,'None')
+              set_value_file(INVOKE_TIME,'None')
+        elif check_value_file(INVOKE) == '0':
+          empty_queue(out_queue)    #move under the elif statement 
+          lcd.send_command('CLEAR')
+          send_outfall_conf(out_queue,sender_queue,lcd,led_matrix,Locks) #might need to change function to waiting_outfall
+          time_date = datetime.datetime.now()
+          if check_operation_hours(time_date) and check_operation_days(time_date):
+            collection_time = led_matrix.get_collection_time()
+            invoke_system(led_matrix,lcd,collection_time,Locks)
+          else:
+            Locks['data'].acquire()
+            rain = check_value_file(RAIN)
+            level = check_value_file(POOL_LEVEL)
+            Locks['data'].release()
+            operation = "No"
+            outfall = "Yes"
+            collection_status = "missed"
+            Locks['logger'].acquire()
+            logger("  -  ","  -  ", rain,level, None, outfall ,collection_status, operation)
+            Locks['logger'].release()
 
 def transmission(xbee):
   '''
