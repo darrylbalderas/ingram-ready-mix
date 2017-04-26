@@ -99,7 +99,7 @@ class LCD:
     self.send_command('CLEAR')
     self.send_message(self.center_message('Welcome to'))
     self.send_command('ENTER')
-    self.send_message(self.center_message("IngramReady Mix"))
+    self.send_message(self.center_message("Ingram Readymix"))
     sleep(3)
     self.send_command('CLEAR')
 
@@ -111,9 +111,9 @@ class LCD:
     Returns: None
     '''
     self.send_command('CLEAR')
-    self.send_message(self.center_message('Completed'))
-    self.send_command('ENTER')
     self.send_message(self.center_message('Sample'))
+    self.send_command('ENTER')
+    self.send_message(self.center_message('Completed'))
     sleep(3)
     self.send_command('CLEAR')
     self.send_message(self.center_message("Sleep for rest"))
@@ -130,9 +130,9 @@ class LCD:
     Returns: None
     '''
     self.send_command('CLEAR')
-    self.send_message(self.center_message(' Missed'))
+    self.send_message(self.center_message('Sample'))
     self.send_command('ENTER')
-    self.send_message(self.center_message('sample'))
+    self.send_message(self.center_message(' Missed'))
     sleep(3)
     self.send_command('CLEAR')
     self.send_message(self.center_message("Sleep for rest"))
@@ -202,7 +202,7 @@ class LCD:
         if voltage_flag == False:
           self.send_message(self.center_message('Voltage: ' + str(voltage_level) + 'V'))
         else:
-          self.send_message(self.center_message('Check RDS'))
+          self.send_message(self.center_message('Check RDS ' + str(voltage_level) + 'V'))
         self.send_command("HOME")
     elif status == 'missed':
         self.send_message(self.center_message('Hours left: '+ str(time_left)))
@@ -210,7 +210,7 @@ class LCD:
         if voltage_flag == False:
           self.send_message(self.center_message('Voltage: ' + str(voltage_level) + 'V'))
         else:
-          self.send_message(self.center_message('Check RDS'))
+          self.send_message(self.center_message('Check RDS ' + str(voltage_level) + 'V' ))
         self.send_command("HOME")
     else:
         self.send_message(self.center_message('No outfall'))
@@ -218,7 +218,7 @@ class LCD:
         if voltage_flag == False:
           self.send_message(self.center_message('Voltage: ' + str(voltage_level) + 'V'))
         else:
-          self.send_message(self.center_message('Check RDS'))
+          self.send_message(self.center_message('Check RDS ' + str(voltage_level) + 'V' ))
         self.send_command("HOME")
 
 

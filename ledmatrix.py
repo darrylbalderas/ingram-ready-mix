@@ -234,15 +234,10 @@ class LedMatrix:
   
   def make_blink(self,color_image,delay):
     self.change_color(color_image)
-    sleep(delay)
     self.clear_matrix()
+    sleep(delay)
+    self.change_color(color_image)
 
-  def blinking(self,color_image,delay,total_time):
-    current_time = 0
-    start_time = time()
-    while current_time <= total_time:
-        self.make_blink(color_image,delay)
-        current_time = time()-(start_time+delay)
 
 
 

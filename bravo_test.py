@@ -371,6 +371,10 @@ def logger(start_time, end_time, amount_rain, pool_level, tag, outfall, status, 
       files = glob.glob(month_directory + file_name + '*.ods')
       if len(files) != 0:
         collect_datafile = files[0]
+        command = "cp %s %s"%(old_file,collect_datafile)
+        command2 = "rm %s"%(old_file)
+        os.system(command)
+        os.system(command2)
       else:
         collect_datafile = old_file
     fopen = open(collect_datafile,'a')
