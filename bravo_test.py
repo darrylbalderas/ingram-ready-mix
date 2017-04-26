@@ -353,7 +353,16 @@ def logger(start_time, end_time, amount_rain, pool_level, tag, outfall, status, 
   if not os.path.exists(month_directory):
     os.system('mkdir ' + month_directory)
   file_name = '%s_%s_%s'%(time_date.month, time_date.day,time_date.year)
-  old_file = month_directory + file_name + '.ods'
+  files = glob.glob(month_directory + file_name + '*.ods')
+  tmp_file = month_directory + file_name + '.ods'
+  if len(files) != 0:
+    old_file = files[0]
+    command = "cp %s %s"%(tmp_file,old_file)
+    command2 = "rm %s"%(tmp_file)
+    os.system(command)
+    os.system(command2)
+  else:
+    old_file = tmp_file
   if os.path.exists(old_file):
     if tag == 'C':
       collect_datafile = month_directory + file_name+'_completed.ods'
