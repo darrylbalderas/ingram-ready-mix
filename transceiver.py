@@ -77,7 +77,6 @@ class Transceiver:
     if self.ser.isOpen():
       try:
         message = self.ser.readline()
-        print(message)
         message = message.strip('\n')
         if message != "" and len(message) >= 3:
           if message == "out" or message == "oyes":
