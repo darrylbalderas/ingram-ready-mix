@@ -35,6 +35,7 @@ class LCD:
                     ,'ENTER' : b'\x0D'
                     ,'NEW_LINE' : b'\x0A'
                     ,'BACKLIGHT_RED' : b'\xFE\xD0\xFF\x00\x00'
+                    ,'BACKLIGHT_GREEN' : b'\xFE\xD0\x00\xFF\x00'
                     ,'BACKLIGHT_WHITE': b'\xFE\xD0\xFF\xFF\xFF'
                     ,'BACKLIGHT_BLUE': b'\xFE\xD0\x00\x00\xFF'
                     ,'SET_BACKLIGHT': b'\xFE\xD0'
@@ -47,6 +48,7 @@ class LCD:
     if self.ser.isOpen():
       self.ser.write(self.commands['CLEAR'])
       self.ser.write(self.commands['AUTOSCROLL_OFF'])
+      self.ser.write(self.commands['BACKLIGHT_GREEN'])
       
   def send_command(self,command):
     '''

@@ -35,6 +35,7 @@ class LCD:
                     ,'ENTER' : b'\x0D'
                     ,'NEW_LINE' : b'\x0A'
                     ,'BACKLIGHT_RED' : b'\xFE\xD0\xFF\x00\x00'
+                    ,'BACKLIGHT_GREEN' : b'\xFE\xD0\x0F\xFF\x00'
                     ,'BACKLIGHT_WHITE': b'\xFE\xD0\xFF\xFF\xFF'
                     ,'BACKLIGHT_BLUE': b'\xFE\xD0\x00\x00\xFF'
                     ,'SET_BACKLIGHT': b'\xFE\xD0'
@@ -42,11 +43,18 @@ class LCD:
                     ,'BACK_CURSOR': b'\xFE\x4C'
                     ,'HOME': b'\xFE\x48'
                     ,'ON_CURSOR': b'\xFE\x53'
-                    ,'OFF_CURSOR': b'\xFE\x54'}
+                    ,'OFF_CURSOR': b'\xFE\x54'
+                    ,'CONTRAST' : b'\xFE\x91'
+                    ,'BRIGHTNESS' : b'\xFE\x98'}
 
     if self.ser.isOpen():
       self.ser.write(self.commands['CLEAR'])
       self.ser.write(self.commands['AUTOSCROLL_OFF'])
+      self.ser.write(self.commands['BACKLIGHT_GREEN'])
+      self.ser.write(self.commands['CONTRAST'])
+      self.ser.write(b'\xFF')
+      self.ser.write(self.commands['BRIGHTNESS'])
+      self.ser.write(b'\x5A')
       
   def send_command(self,command):
     '''
@@ -57,6 +65,7 @@ class LCD:
     if self.ser.isOpen():
         self.ser.write(self.commands[command])
         msleep(1)
+
 
   def send_message(self,message):
     '''
@@ -99,7 +108,7 @@ class LCD:
     self.send_command('CLEAR')
     self.send_message(self.center_message('Welcome to'))
     self.send_command('ENTER')
-    self.send_message(self.center_message("IngramReady Mix"))
+    self.send_message(self.center_message("Ingram Readymix"))
     sleep(3)
     self.send_command('CLEAR')
 
@@ -111,12 +120,12 @@ class LCD:
     Returns: None
     '''
     self.send_command('CLEAR')
-    self.send_message(self.center_message('completed'))
+    self.send_message(self.center_message('Sample'))
     self.send_command('ENTER')
-    self.send_message(self.center_message('sample'))
+    self.send_message(self.center_message('Completed'))
     sleep(3)
     self.send_command('CLEAR')
-    self.send_message(self.center_message("sleep for rest"))
+    self.send_message(self.center_message("Sleep for rest"))
     self.send_command('ENTER')
     self.send_message(self.center_message("of the month"))
     sleep(3)
@@ -130,12 +139,12 @@ class LCD:
     Returns: None
     '''
     self.send_command('CLEAR')
-    self.send_message(self.center_message(' missed'))
+    self.send_message(self.center_message('Sample'))
     self.send_command('ENTER')
-    self.send_message(self.center_message('sample'))
+    self.send_message(self.center_message(' Missed'))
     sleep(3)
     self.send_command('CLEAR')
-    self.send_message(self.center_message("sleep for rest"))
+    self.send_message(self.center_message("Sleep for rest"))
     self.send_command('ENTER')
     self.send_message(self.center_message("of the day"))
     sleep(3)
@@ -148,7 +157,7 @@ class LCD:
     screen whenever the user is pressing the restart button
     Returns: None
     '''
-    self.send_message(self.center_message("Hld Restart Btn"))
+    self.send_message(self.center_message("Hld restart btn"))
     self.send_command('ENTER')
     seconds = int(3-floor(num_time)%3)
     if seconds == 1:
@@ -180,8 +189,8 @@ class LCD:
     left to collect the sample.
     Returns: None
     '''
-    hour = str(int(floor(num_time/3600))).zfill(2)
-    minute = str(int(14- floor(num_time/60))).zfill(2)
+    hour = str(int(floor(num_time/float(3600)))).zfill(2)
+    minute = str(int(14- floor(num_time/float(60)))).zfill(2)
     seconds =  str(int(59 - floor(num_time))%60).zfill(2)
     time_m = "%sh:%sm:%ss"%(hour,minute,seconds)
     self.send_message(self.center_message('Timer'))
@@ -200,9 +209,9 @@ class LCD:
         self.send_message(self.center_message('Days left: ' + str(time_left)))
         self.send_command('ENTER')
         if voltage_flag == False:
-          self.send_message(self.center_message('Voltage: ' + str(voltage_level)+'V'))
+          self.send_message(self.center_message('Voltage: ' + str(voltage_level) + 'V'))
         else:
-          self.send_message(self.center_message('Check RDS'))
+          self.send_message('Check RDS ' + str(voltage_level) + 'V')
         self.send_command("HOME")
     elif status == 'missed':
         self.send_message(self.center_message('Hours left: '+ str(time_left)))
@@ -210,7 +219,7 @@ class LCD:
         if voltage_flag == False:
           self.send_message(self.center_message('Voltage: ' + str(voltage_level) + 'V'))
         else:
-          self.send_message(self.center_message('Check RDS'))
+          self.send_message(' Check RDS' + str(voltage_level) + 'V')
         self.send_command("HOME")
     else:
         self.send_message(self.center_message('No outfall'))
@@ -218,7 +227,7 @@ class LCD:
         if voltage_flag == False:
           self.send_message(self.center_message('Voltage: ' + str(voltage_level) + 'V'))
         else:
-          self.send_message(self.center_message('Check RDS'))
+          self.send_message('Check RDS ' + str(voltage_level) + 'V')
         self.send_command("HOME")
 
 
