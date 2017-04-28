@@ -191,7 +191,7 @@ def initialize_files():
       elif key == 'rain':
         fopen.write('0.0')
       elif key == "pool_level":
-        fopen.write('12.0')
+        fopen.write('8.0')
       elif key == 'restart':
         fopen.write('0')
       elif key == 'restart_date':
@@ -199,7 +199,7 @@ def initialize_files():
       elif key == 'restart_time':
         fopen.write('None')
       elif key == 'voltage':
-        fopen.write('12.0')
+        fopen.write('12.5')
       elif key == 'invoke_date':
         fopen.write('None')
       elif key == 'invoke_time':
@@ -326,7 +326,7 @@ def check_end_day():
   time_date = datetime.datetime.now()
   if time_date.hour == 23 and time_date.minute == 59:
     set_value_file(RAIN,'0.0')
-    set_value_file(POOL_LEVEL,'12.0')
+    set_value_file(POOL_LEVEL,'8.0')
     set_value_file(PINGS,'0')
     set_value_file(INVOKE_TIME,'None')
     set_value_file(RESTART_TIME,'None')
@@ -753,8 +753,7 @@ def restart_state(lcd,led_matrix,start_time,time_date):
   set_value_file(RESTART,'1')
   set_value_file(RESTART_TIME,start_time)
   set_value_file(RESTART_DATE,'%s/%s/%s'%(time_date.month,time_date.day,time_date.year))
-  print('restart')
-  # os.system("sudo reboot")
+  os.system("sudo reboot")
 
 def check_time(new_time_string, old_time_string):
   '''

@@ -35,7 +35,7 @@ class LCD:
                     ,'ENTER' : b'\x0D'
                     ,'NEW_LINE' : b'\x0A'
                     ,'BACKLIGHT_RED' : b'\xFE\xD0\xFF\x00\x00'
-                    ,'BACKLIGHT_GREEN' : b'\xFE\xD0\x00\xFF\x00'
+                    ,'BACKLIGHT_GREEN' : b'\xFE\xD0\x0F\xFF\x00'
                     ,'BACKLIGHT_WHITE': b'\xFE\xD0\xFF\xFF\xFF'
                     ,'BACKLIGHT_BLUE': b'\xFE\xD0\x00\x00\xFF'
                     ,'SET_BACKLIGHT': b'\xFE\xD0'
@@ -43,12 +43,18 @@ class LCD:
                     ,'BACK_CURSOR': b'\xFE\x4C'
                     ,'HOME': b'\xFE\x48'
                     ,'ON_CURSOR': b'\xFE\x53'
-                    ,'OFF_CURSOR': b'\xFE\x54'}
+                    ,'OFF_CURSOR': b'\xFE\x54'
+                    ,'CONTRAST' : b'\xFE\x91'
+                    ,'BRIGHTNESS' : b'\xFE\x98'}
 
     if self.ser.isOpen():
       self.ser.write(self.commands['CLEAR'])
       self.ser.write(self.commands['AUTOSCROLL_OFF'])
       self.ser.write(self.commands['BACKLIGHT_GREEN'])
+      self.ser.write(self.commands['CONTRAST'])
+      self.ser.write(b'\xFF')
+      self.ser.write(self.commands['BRIGHTNESS'])
+      self.ser.write(b'\x5A')
       
   def send_command(self,command):
     '''
@@ -59,6 +65,7 @@ class LCD:
     if self.ser.isOpen():
         self.ser.write(self.commands[command])
         msleep(1)
+
 
   def send_message(self,message):
     '''
@@ -212,7 +219,7 @@ class LCD:
         if voltage_flag == False:
           self.send_message(self.center_message('Voltage: ' + str(voltage_level) + 'V'))
         else:
-          self.send_message(' Check RDS' + str(voltage_level) + 'V')
+          self.send_message('Check RDS ' + str(voltage_level) + 'V')
         self.send_command("HOME")
     else:
         self.send_message(self.center_message('No outfall'))

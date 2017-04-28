@@ -115,7 +115,7 @@ def receive_data(rain_queue,sender_queue,voltage_queue):
 def outfall(out_queue,sender_queue):
   while True:
     send_outfall_conf(out_queue,sender_queue) 
-    print('got it')
+    print('got outfall it')
 
 def rain(trigger_queue,rain_queue,voltage_queue,sender_queue):
   while True:
