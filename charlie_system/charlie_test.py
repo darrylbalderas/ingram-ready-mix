@@ -191,16 +191,22 @@ def detect_rainfall(rain_guage, level_sensor, tri_queue, rain_queue,send_queue,b
     check_voltage(send_queue,battery)
 
 def detect_outfall(flow_sensor,level_sensor,out_queue,send_queue):
+  send_flag = False
+  previous_value = 0
   while True:
-    time_date = datetime.datetime.now()
-    outfall_date = "%s/%s/%s"%(time_date.month,time_date.day,time_date.year)
-    if check_value_file(OUTFALL_DATE) == outfall_date:
-      time_sleep = calculate_sleep()
-      sleep(time_sleep)
-    if flow_sensor.check_outfall() == 1  and level_sensor.check_overflow() == 1:
-      if check_operation_hours(time_date) and check_operation_days(time_date):
+    current_value = flow_sensor.check_flow()
+    if current_value > previous_value:
+      send_flag = True
+      previous_value = current_value
+    elif previous_value > current_value:
+      send_flag = True
+      previous_value = current_value
+    else:
+      send_flag = False
+
+    if send_flag == True and level_sensor.check_overflow() == 1:
         send_outfall(out_queue,send_queue)
-        set_value_file(OUTFALL_DATE,outfall_date)
+        send_flag = False
 
 def transmission(xbee):
   switch_state_flag = False
